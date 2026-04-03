@@ -1,0 +1,23 @@
+import { Link } from "wouter";
+import { AlertCircle, Home } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+export default function NotFound() {
+  return (
+    <div className="min-h-screen w-full flex items-center justify-center bg-background">
+      <div className="text-center px-4">
+        <div className="flex items-center justify-center mb-4">
+          <AlertCircle className="h-12 w-12 text-muted-foreground/40" />
+        </div>
+        <h1 className="text-5xl font-extrabold text-white mb-2">404</h1>
+        <p className="text-muted-foreground mb-6">Pagina nao encontrada</p>
+        <Link href="/">
+          <Button className="bg-primary hover:bg-primary/90 text-white">
+            <Home className="mr-2 h-4 w-4" />
+            Voltar ao inicio
+          </Button>
+        </Link>
+      </div>
+    </div>
+  );
+}
