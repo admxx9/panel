@@ -73,6 +73,10 @@ function getMessageText(msg: WAMessage): string {
   );
 }
 
+function normalizeJid(jid: string): string {
+  return jid.split("@")[0].split(":")[0];
+}
+
 async function isGroupAdmin(
   sock: ReturnType<typeof makeWASocket>,
   jid: string,
@@ -80,11 +84,13 @@ async function isGroupAdmin(
 ): Promise<boolean> {
   try {
     const meta = await sock.groupMetadata(jid);
-    const baseNum = participant.split("@")[0].split(":")[0];
+    const baseNum = normalizeJid(participant);
     return meta.participants.some(
-      (p) =>
-        p.id.split("@")[0].split(":")[0] === baseNum &&
-        (p.admin === "admin" || p.admin === "superadmin"),
+      (p) => {
+        const pNum = normalizeJid(p.id);
+        const isMatch = pNum === baseNum;
+        return isMatch && (p.admin === "admin" || p.admin === "superadmin");
+      },
     );
   } catch {
     return false;
@@ -96,8 +102,15 @@ async function isBotAdmin(
   jid: string,
 ): Promise<boolean> {
   try {
-    const botJid = sock.user?.id || "";
-    return await isGroupAdmin(sock, jid, botJid);
+    const meta = await sock.groupMetadata(jid);
+    const botPhone = normalizeJid(sock.user?.id || "");
+    const botLid = sock.user?.lid ? normalizeJid(sock.user.lid) : "";
+
+    return meta.participants.some((p) => {
+      const pNum = normalizeJid(p.id);
+      const isBot = pNum === botPhone || (botLid && pNum === botLid);
+      return isBot && (p.admin === "admin" || p.admin === "superadmin");
+    });
   } catch {
     return false;
   }
