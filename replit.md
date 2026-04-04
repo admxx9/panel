@@ -46,6 +46,8 @@
   - **Templates prontos**: 7 templates pre-configurados (Figurinha, Boas-Vindas, Moderacao, Anti-Link, Ferramentas de Grupo, Sistema de Avisos, Bot Completo) — usuario pode aplicar com 1 clique
   - **Drag from palette**: arrastar blocos da paleta direto pro canvas (mobile e desktop), ghost element durante drag
   - **Pinch-to-zoom fix**: 2 dedos detectados via touchCount global — cancela drag de bloco automaticamente
+  - **Centralized gestures**: Canvas é o único dono de gestos — NodeCard é display-only (pointerEvents:none na div principal, auto nos botões/portas). Canvas detecta hit em nós via coordenadas mundiais e decide pan vs drag via threshold de 6px. Gesto travado até o dedo levantar.
+  - **DOM-direct pan/zoom**: Pan e pinch-to-zoom manipulam CSS transform diretamente no DOM (transformDivRef), sem re-render React durante o gesto. Estado React sincronizado apenas no pointerup.
   - **Performance**: RAF throttle no handleMoveNode, will-change no container de transform e nodes
 - WhatsApp: auto-reconnect de sessoes ao iniciar servidor (restoreSessions), sessoes persistentes em `.baileys-sessions/`
 - Planos: Basico (100), Pro (250), Premium (500) moedas/30 dias
