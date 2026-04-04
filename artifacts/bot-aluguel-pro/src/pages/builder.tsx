@@ -602,53 +602,48 @@ function Port({ side, onPointerDown, isTarget, isConnecting }: {
 // ─── Node card ────────────────────────────────────────────────────────────────
 function NodeCard({
   node, selected, isTarget, isConnecting,
-  onSelect, onDelete, onEdit, onMove, onStartConnect, canvasRef, transform, touchCount,
+  onSelect, onDelete, onEdit, onMove, onStartConnect, transformRef, touchCount,
 }: {
   node: FlowNode; selected: boolean; isTarget: boolean; isConnecting: boolean;
   onSelect: () => void; onDelete: () => void; onEdit: () => void;
   onMove: (id: string, x: number, y: number) => void;
   onStartConnect: (sourceId: string, e: React.PointerEvent) => void;
-  canvasRef: React.RefObject<HTMLDivElement | null>;
-  transform: CanvasTransform;
+  transformRef: React.RefObject<CanvasTransform>;
   touchCount: React.RefObject<number>;
 }) {
   const cfg = nodeConfig[node.type];
   const Icon = cfg.icon;
-  const dragOffset = useRef<{ x: number; y: number } | null>(null);
+  const dragData = useRef<{ startX: number; startY: number; nodeX: number; nodeY: number; dragging: boolean } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clickCount = useRef(0);
 
-  const screenToWorld = (sx: number, sy: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: (sx - rect.left - transform.x) / transform.scale,
-      y: (sy - rect.top - transform.y) / transform.scale,
-    };
-  };
-
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault(); e.stopPropagation();
-    cardRef.current?.setPointerCapture(e.pointerId);
-    const world = screenToWorld(e.clientX, e.clientY);
-    dragOffset.current = { x: world.x - node.position.x, y: world.y - node.position.y };
+    dragData.current = { startX: e.clientX, startY: e.clientY, nodeX: node.position.x, nodeY: node.position.y, dragging: false };
     onSelect();
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragOffset.current) return;
+    const d = dragData.current;
+    if (!d) return;
     if (touchCount.current >= 2) {
-      dragOffset.current = null;
-      cardRef.current?.releasePointerCapture(e.pointerId);
+      if (d.dragging) cardRef.current?.releasePointerCapture(e.pointerId);
+      dragData.current = null;
       return;
     }
-    const world = screenToWorld(e.clientX, e.clientY);
-    onMove(node.id, Math.max(0, world.x - dragOffset.current.x), Math.max(0, world.y - dragOffset.current.y));
+    const dx = e.clientX - d.startX;
+    const dy = e.clientY - d.startY;
+    if (!d.dragging) {
+      if (Math.hypot(dx, dy) < 6) return;
+      d.dragging = true;
+      cardRef.current?.setPointerCapture(e.pointerId);
+    }
+    const scale = transformRef.current.scale;
+    onMove(node.id, Math.max(0, d.nodeX + dx / scale), Math.max(0, d.nodeY + dy / scale));
   };
 
-  const handlePointerUp = () => { dragOffset.current = null; };
+  const handlePointerUp = () => { dragData.current = null; };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -923,6 +918,7 @@ export default function BuilderPage() {
   const dragDropPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const wasDragged = useRef(false);
   const transformRef = useRef<CanvasTransform>({ x: 20, y: 20, scale: 1 });
+  const canvasInnerRef = useRef<HTMLDivElement>(null);
   const dragTypeRef = useRef<NodeType | null>(null);
 
   // ── Pan + Zoom ──
@@ -1210,7 +1206,12 @@ export default function BuilderPage() {
     const dx = e.clientX - panStart.current.x;
     const dy = e.clientY - panStart.current.y;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didPan.current = true;
-    setTransform((prev) => ({ ...prev, x: panOrigin.current.x + dx, y: panOrigin.current.y + dy }));
+    const newX = panOrigin.current.x + dx;
+    const newY = panOrigin.current.y + dy;
+    transformRef.current = { ...transformRef.current, x: newX, y: newY };
+    if (canvasInnerRef.current) {
+      canvasInnerRef.current.style.transform = `translate(${newX}px, ${newY}px) scale(${transformRef.current.scale})`;
+    }
   };
 
   const handleCanvasPointerUp = (e: React.PointerEvent) => {
@@ -1227,6 +1228,7 @@ export default function BuilderPage() {
       setConnectingEdge(null); setHoverTargetId(null);
     }
     isPanning.current = false;
+    setTransform({ ...transformRef.current });
     // Clean up pointer tracking
     activePointers.current.delete(e.pointerId);
     if (activePointers.current.size < 2) {
@@ -1237,7 +1239,7 @@ export default function BuilderPage() {
     if (activePointers.current.size === 1) {
       const remaining = [...activePointers.current.values()][0];
       panStart.current = { x: remaining.x, y: remaining.y };
-      setTransform((prev) => { panOrigin.current = { x: prev.x, y: prev.y }; return prev; });
+      panOrigin.current = { x: transformRef.current.x, y: transformRef.current.y };
       isPanning.current = true;
     }
   };
