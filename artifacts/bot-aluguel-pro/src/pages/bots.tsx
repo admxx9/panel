@@ -74,7 +74,7 @@ export default function BotsPage() {
           ))}
         </div>
       ) : bots && bots.length > 0 ? (
-        <motion.div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
           {bots.map((bot, i) => {
             const status = statusConfig[bot.status] || statusConfig.disconnected;
             const StatusIcon = status.icon;
@@ -118,7 +118,7 @@ export default function BotsPage() {
               </motion.div>
             );
           })}
-        </motion.div>
+        </div>
       ) : (
         <div className="text-center py-24 border border-dashed border-white/10 rounded-xl">
           <Bot className="h-12 w-12 text-muted-foreground/30 mx-auto mb-4" />

@@ -31,11 +31,17 @@ export interface AuthRequest extends Request {
 
 export function requireAuth(req: AuthRequest, res: Response, next: NextFunction): void {
   const authHeader = req.headers["authorization"];
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  const queryToken = req.query?.["token"] as string | undefined;
+  let token: string | undefined;
+  if (authHeader && authHeader.startsWith("Bearer ")) {
+    token = authHeader.slice(7);
+  } else if (queryToken) {
+    token = queryToken;
+  }
+  if (!token) {
     res.status(401).json({ message: "Token não fornecido" });
     return;
   }
-  const token = authHeader.slice(7);
   const payload = verifyToken(token);
   if (!payload) {
     res.status(401).json({ message: "Token inválido ou expirado" });
