@@ -311,7 +311,7 @@ function Port({ side, onPointerDown, isTarget, isConnecting }: {
 // ─── Node card ────────────────────────────────────────────────────────────────
 function NodeCard({
   node, selected, isTarget, isConnecting,
-  onSelect, onDelete, onEdit, onMove, onStartConnect, canvasRef, transform,
+  onSelect, onDelete, onEdit, onMove, onStartConnect, canvasRef, transform, touchCount,
 }: {
   node: FlowNode; selected: boolean; isTarget: boolean; isConnecting: boolean;
   onSelect: () => void; onDelete: () => void; onEdit: () => void;
@@ -319,6 +319,7 @@ function NodeCard({
   onStartConnect: (sourceId: string, e: React.PointerEvent) => void;
   canvasRef: React.RefObject<HTMLDivElement | null>;
   transform: CanvasTransform;
+  touchCount: React.RefObject<number>;
 }) {
   const cfg = nodeConfig[node.type];
   const Icon = cfg.icon;
@@ -347,6 +348,11 @@ function NodeCard({
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
     if (!dragOffset.current) return;
+    if (touchCount.current >= 2) {
+      dragOffset.current = null;
+      cardRef.current?.releasePointerCapture(e.pointerId);
+      return;
+    }
     const world = screenToWorld(e.clientX, e.clientY);
     onMove(node.id, Math.max(0, world.x - dragOffset.current.x), Math.max(0, world.y - dragOffset.current.y));
   };
@@ -380,7 +386,7 @@ function NodeCard({
         ${cfg.color} ${cfg.border}
         ${selected ? "ring-2 ring-primary ring-offset-1 ring-offset-background shadow-xl" : "shadow-md"}
         ${isTarget ? "ring-2 ring-green-400 ring-offset-1 ring-offset-background" : ""}`}
-      style={{ left: node.position.x, top: node.position.y, width: NODE_W, minHeight: NODE_H, cursor: "grab", touchAction: "none" }}
+      style={{ left: node.position.x, top: node.position.y, width: NODE_W, minHeight: NODE_H, cursor: "grab", touchAction: "none", willChange: "left, top" }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -591,6 +597,13 @@ export default function BuilderPage() {
   const [connectingEdge, setConnectingEdge] = useState<ConnectingEdge | null>(null);
   const [hoverTargetId, setHoverTargetId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [dragType, setDragType] = useState<NodeType | null>(null);
+  const ghostRef = useRef<HTMLDivElement>(null);
+  const paletteDragStart = useRef<{ x: number; y: number; type: NodeType } | null>(null);
+  const dragDropPos = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const wasDragged = useRef(false);
+  const transformRef = useRef<CanvasTransform>({ x: 20, y: 20, scale: 1 });
+  const dragTypeRef = useRef<NodeType | null>(null);
 
   // ── Pan + Zoom ──
   const [transform, setTransform] = useState<CanvasTransform>({ x: 20, y: 20, scale: 1 });
@@ -603,6 +616,7 @@ export default function BuilderPage() {
   const activePointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const lastPinchDist = useRef<number | null>(null);
   const lastPinchMid = useRef<{ x: number; y: number } | null>(null);
+  const touchCount = useRef(0);
 
   // Init smaller scale on mobile + detect mobile
   useEffect(() => {
@@ -617,6 +631,20 @@ export default function BuilderPage() {
       setTransform({ x: 12, y: 12, scale: 0.72 });
     }
   }, [isMobile]);
+
+  useEffect(() => { transformRef.current = transform; }, [transform]);
+
+  useEffect(() => {
+    const onTouch = (e: TouchEvent) => { touchCount.current = e.touches.length; };
+    document.addEventListener("touchstart", onTouch, { passive: true });
+    document.addEventListener("touchend", onTouch, { passive: true });
+    document.addEventListener("touchcancel", onTouch, { passive: true });
+    return () => {
+      document.removeEventListener("touchstart", onTouch);
+      document.removeEventListener("touchend", onTouch);
+      document.removeEventListener("touchcancel", onTouch);
+    };
+  }, []);
 
   const currentPrefix = botData?.prefix ?? ".";
 
@@ -709,8 +737,81 @@ export default function BuilderPage() {
     setNodes((prev) => prev.map((n) => n.id === id ? { ...n, label, config } : n));
   };
 
+  const moveRaf = useRef(0);
+  const pendingMove = useRef<{ id: string; x: number; y: number } | null>(null);
+
   const handleMoveNode = useCallback((id: string, x: number, y: number) => {
-    setNodes((prev) => prev.map((n) => n.id === id ? { ...n, position: { x, y } } : n));
+    pendingMove.current = { id, x, y };
+    if (!moveRaf.current) {
+      moveRaf.current = requestAnimationFrame(() => {
+        moveRaf.current = 0;
+        const m = pendingMove.current;
+        if (m) setNodes((prev) => prev.map((n) => n.id === m.id ? { ...n, position: { x: m.x, y: m.y } } : n));
+      });
+    }
+  }, []);
+
+  // ── Palette drag-to-canvas ──
+  const handlePaletteDragStart = useCallback((type: NodeType, e: React.PointerEvent) => {
+    paletteDragStart.current = { x: e.clientX, y: e.clientY, type };
+    wasDragged.current = false;
+  }, []);
+
+  useEffect(() => {
+    const NODE_DEFAULTS: Record<NodeType, { label: string; config: Record<string, unknown> }> = {
+      command: { label: "novocomando", config: { trigger: "novocomando" } },
+      action: { label: "Criar Figurinha", config: { action: "make_sticker" } },
+      condition: { label: "Tem imagem?", config: { condition: "has_image" } },
+      response: { label: "Mensagem", config: { text: "Mensagem de resposta" } },
+    };
+
+    const onMove = (e: PointerEvent) => {
+      if (!paletteDragStart.current) return;
+      const dx = e.clientX - paletteDragStart.current.x;
+      const dy = e.clientY - paletteDragStart.current.y;
+      if (Math.abs(dx) > 8 || Math.abs(dy) > 8) {
+        wasDragged.current = true;
+        if (!dragTypeRef.current) {
+          dragTypeRef.current = paletteDragStart.current.type;
+          setDragType(paletteDragStart.current.type);
+        }
+        if (ghostRef.current) {
+          ghostRef.current.style.left = `${e.clientX - NODE_W / 2}px`;
+          ghostRef.current.style.top = `${e.clientY - NODE_H / 2}px`;
+        }
+        dragDropPos.current = { x: e.clientX, y: e.clientY };
+      }
+    };
+
+    const onUp = () => {
+      const dt = dragTypeRef.current;
+      if (dt && canvasRef.current) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        const cx = dragDropPos.current.x;
+        const cy = dragDropPos.current.y;
+        if (cx >= rect.left && cx <= rect.right && cy >= rect.top && cy <= rect.bottom) {
+          const t = transformRef.current;
+          const wx = (cx - rect.left - t.x) / t.scale;
+          const wy = (cy - rect.top - t.y) / t.scale;
+          const d = NODE_DEFAULTS[dt];
+          setNodes((prev) => [...prev, {
+            id: `n${Date.now()}`, type: dt, label: d.label, config: d.config,
+            position: { x: Math.max(0, wx - NODE_W / 2), y: Math.max(0, wy - NODE_H / 2) },
+          }]);
+        }
+      }
+      setDragType(null);
+      dragTypeRef.current = null;
+      paletteDragStart.current = null;
+      setTimeout(() => { wasDragged.current = false; }, 0);
+    };
+
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+    return () => {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+    };
   }, []);
 
   // ── Pan handlers ──
@@ -924,7 +1025,7 @@ export default function BuilderPage() {
 
   // ── Canvas content (with transform) ──
   const canvasContent = (
-    <div style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`, transformOrigin: "0 0", position: "absolute", inset: 0 }}>
+    <div style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`, transformOrigin: "0 0", position: "absolute", inset: 0, willChange: "transform" }}>
       <svg style={{ position: "absolute", inset: 0, width: "9999px", height: "9999px", overflow: "visible", pointerEvents: "none" }}>
         {edges.map((edge) => {
           const src = nodes.find((n) => n.id === edge.source);
@@ -970,6 +1071,7 @@ export default function BuilderPage() {
           onStartConnect={handleStartConnect}
           canvasRef={canvasRef}
           transform={transform}
+          touchCount={touchCount}
         />
       ))}
     </div>
@@ -1149,8 +1251,11 @@ export default function BuilderPage() {
               const cfg = nodeConfig[type];
               const Icon = cfg.icon;
               return (
-                <button key={type} onClick={() => handleAddNode(type)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-left active:scale-95 flex-shrink-0 ${cfg.color} ${cfg.border}`}>
+                <button key={type}
+                  onClick={() => { if (!wasDragged.current) handleAddNode(type); }}
+                  onPointerDown={(e) => handlePaletteDragStart(type, e)}
+                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-left active:scale-95 flex-shrink-0 ${cfg.color} ${cfg.border}`}
+                  style={{ touchAction: "none" }}>
                   <Icon className="h-3 w-3 text-white/70 flex-shrink-0" />
                   <span className="text-white text-[11px] font-semibold">{cfg.label}</span>
                   <Plus className="h-2.5 w-2.5 text-white/30" />
@@ -1160,7 +1265,7 @@ export default function BuilderPage() {
           </div>
           <p className="text-muted-foreground/50 text-[10px] mt-1.5 flex items-center gap-1">
             <Info className="h-2.5 w-2.5 flex-shrink-0 text-primary" />
-            1 dedo: mover · 2 dedos: zoom · <span className="text-primary">bolinha roxa</span>: conectar
+            Arraste blocos pro canvas · 2 dedos: zoom · <span className="text-primary">bolinha roxa</span>: conectar
           </p>
         </div>
         {canvasArea}
@@ -1176,8 +1281,11 @@ export default function BuilderPage() {
               const cfg = nodeConfig[type];
               const Icon = cfg.icon;
               return (
-                <button key={type} onClick={() => handleAddNode(type)}
-                  className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 text-left transition-all hover:scale-[1.02] active:scale-95 ${cfg.color} ${cfg.border}`}>
+                <button key={type}
+                  onClick={() => { if (!wasDragged.current) handleAddNode(type); }}
+                  onPointerDown={(e) => handlePaletteDragStart(type, e)}
+                  className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 text-left transition-all hover:scale-[1.02] active:scale-95 ${cfg.color} ${cfg.border}`}
+                  style={{ touchAction: "none" }}>
                   <Icon className="h-3.5 w-3.5 text-white/70 flex-shrink-0" />
                   <span className="text-white text-xs font-semibold">{cfg.label}</span>
                   <Plus className="h-3 w-3 text-white/30 ml-auto" />
@@ -1221,6 +1329,20 @@ export default function BuilderPage() {
           </div>
         )}
       </div>
+
+      {/* Drag ghost overlay */}
+      {dragType && (
+        <div ref={ghostRef} className="fixed pointer-events-none z-[100]" style={{ left: -9999, top: -9999 }}>
+          <div className={`rounded-xl border-2 p-3 opacity-80 shadow-2xl backdrop-blur-sm ${nodeConfig[dragType].color} ${nodeConfig[dragType].border}`}
+            style={{ width: NODE_W, minHeight: NODE_H }}>
+            <div className="flex items-center gap-1.5">
+              {(() => { const Icon = nodeConfig[dragType].icon; return <Icon className="h-3.5 w-3.5 text-white/70" />; })()}
+              <span className="text-white text-xs font-semibold">{nodeConfig[dragType].label}</span>
+            </div>
+            <p className="text-white/40 text-[10px] mt-0.5">{nodeConfig[dragType].description}</p>
+          </div>
+        </div>
+      )}
 
       {/* MOBILE ONLY: edit + settings bottom sheets — NOT rendered on desktop */}
       {isMobile && (
