@@ -290,7 +290,7 @@ function Port({ side, onPointerDown, isTarget, isConnecting }: {
   return (
     <div
       className={`absolute top-1/2 -translate-y-1/2 z-10 flex items-center justify-center ${isRight ? "-right-3" : "-left-3"}`}
-      style={{ touchAction: "none" }}
+      style={{ touchAction: "none", pointerEvents: "auto" }}
     >
       {isRight && !isTarget && <span className="absolute w-5 h-5 rounded-full bg-primary/20 animate-ping" />}
       <div
@@ -311,85 +311,14 @@ function Port({ side, onPointerDown, isTarget, isConnecting }: {
 // ─── Node card ────────────────────────────────────────────────────────────────
 function NodeCard({
   node, selected, isTarget, isConnecting,
-  onSelect, onDelete, onEdit, onMove, onStartConnect, canvasRef, transform, touchCount,
+  onDelete, onEdit, onStartConnect,
 }: {
   node: FlowNode; selected: boolean; isTarget: boolean; isConnecting: boolean;
-  onSelect: () => void; onDelete: () => void; onEdit: () => void;
-  onMove: (id: string, x: number, y: number) => void;
+  onDelete: () => void; onEdit: () => void;
   onStartConnect: (sourceId: string, e: React.PointerEvent) => void;
-  canvasRef: React.RefObject<HTMLDivElement | null>;
-  transform: CanvasTransform;
-  touchCount: React.RefObject<number>;
 }) {
   const cfg = nodeConfig[node.type];
   const Icon = cfg.icon;
-  const dragOffset = useRef<{ x: number; y: number } | null>(null);
-  const pointerDownPos = useRef<{ x: number; y: number; id: number } | null>(null);
-  const dragLocked = useRef(false);
-  const cardRef = useRef<HTMLDivElement>(null);
-  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const clickCount = useRef(0);
-
-  const screenToWorld = (sx: number, sy: number) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return { x: 0, y: 0 };
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: (sx - rect.left - transform.x) / transform.scale,
-      y: (sy - rect.top - transform.y) / transform.scale,
-    };
-  };
-
-  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
-    e.preventDefault(); e.stopPropagation();
-    // Record down position but don't capture yet — wait for drag threshold
-    pointerDownPos.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
-    dragLocked.current = false;
-    const world = screenToWorld(e.clientX, e.clientY);
-    dragOffset.current = { x: world.x - node.position.x, y: world.y - node.position.y };
-    onSelect();
-  };
-
-  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragOffset.current || !pointerDownPos.current) return;
-    // Cancel drag if multi-touch
-    if (touchCount.current >= 2) {
-      dragOffset.current = null;
-      dragLocked.current = false;
-      pointerDownPos.current = null;
-      cardRef.current?.releasePointerCapture(e.pointerId);
-      return;
-    }
-    const dx = e.clientX - pointerDownPos.current.x;
-    const dy = e.clientY - pointerDownPos.current.y;
-    const dist = Math.hypot(dx, dy);
-    // Lock to drag only after 6px threshold
-    if (!dragLocked.current) {
-      if (dist < 6) return;
-      dragLocked.current = true;
-      cardRef.current?.setPointerCapture(e.pointerId);
-    }
-    const world = screenToWorld(e.clientX, e.clientY);
-    onMove(node.id, Math.max(0, world.x - dragOffset.current.x), Math.max(0, world.y - dragOffset.current.y));
-  };
-
-  const handlePointerUp = () => {
-    dragOffset.current = null;
-    dragLocked.current = false;
-    pointerDownPos.current = null;
-  };
-
-  const handleClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    clickCount.current += 1;
-    if (clickCount.current === 1) {
-      clickTimer.current = setTimeout(() => { clickCount.current = 0; onSelect(); }, 250);
-    } else if (clickCount.current >= 2) {
-      if (clickTimer.current) clearTimeout(clickTimer.current);
-      clickCount.current = 0;
-      onEdit();
-    }
-  };
 
   const displayLabel = node.config?.trigger
     ? String(node.config.trigger)
@@ -401,16 +330,11 @@ function NodeCard({
 
   return (
     <div
-      ref={cardRef}
       className={`absolute rounded-xl border-2 p-3 select-none transition-shadow
         ${cfg.color} ${cfg.border}
         ${selected ? "ring-2 ring-primary ring-offset-1 ring-offset-background shadow-xl" : "shadow-md"}
         ${isTarget ? "ring-2 ring-green-400 ring-offset-1 ring-offset-background" : ""}`}
-      style={{ left: node.position.x, top: node.position.y, width: NODE_W, minHeight: NODE_H, cursor: "grab", touchAction: "none", willChange: "left, top" }}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={handlePointerUp}
-      onClick={handleClick}
+      style={{ left: node.position.x, top: node.position.y, width: NODE_W, minHeight: NODE_H, cursor: "grab", touchAction: "none", willChange: "left, top", pointerEvents: "none" }}
     >
       <Port side="left" isTarget={isTarget} />
       <Port side="right" isConnecting={isConnecting}
@@ -421,7 +345,7 @@ function NodeCard({
           <Icon className="h-3.5 w-3.5 text-white/70 flex-shrink-0" />
           <span className="text-[10px] font-semibold text-white/60 uppercase tracking-wider">{cfg.label}</span>
         </div>
-        <div className="flex items-center gap-0.5">
+        <div className="flex items-center gap-0.5" style={{ pointerEvents: "auto" }}>
           <button onPointerDown={(e) => e.stopPropagation()} onClick={(e) => { e.stopPropagation(); onEdit(); }}
             className="text-white/60 hover:text-primary transition-colors p-1 rounded hover:bg-white/10">
             <Pencil className="h-3 w-3" />
@@ -631,12 +555,23 @@ export default function BuilderPage() {
   const panStart = useRef({ x: 0, y: 0 });
   const panOrigin = useRef({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
-  const didPan = useRef(false); // flag to skip click after pan
+  const didPan = useRef(false);
   // Pinch-to-zoom tracking
   const activePointers = useRef<Map<number, { x: number; y: number }>>(new Map());
   const lastPinchDist = useRef<number | null>(null);
   const lastPinchMid = useRef<{ x: number; y: number } | null>(null);
   const touchCount = useRef(0);
+
+  // ── Centralized gesture state (canvas is the sole gesture owner) ──
+  // gestureMode: "undecided" until finger moves > GESTURE_THRESHOLD, then "pan" or "drag"
+  const GESTURE_THRESHOLD = 6;
+  const gestureMode = useRef<"undecided" | "pan" | "drag">("undecided");
+  const hitNodeId = useRef<string | null>(null);
+  const hitNodeDragOffset = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  // Tap detection for node select / double-tap edit
+  const tapCount = useRef(0);
+  const tapTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const tapNodeId = useRef<string | null>(null);
 
   // Init smaller scale on mobile + detect mobile
   useEffect(() => {
@@ -854,13 +789,22 @@ export default function BuilderPage() {
   }, []);
 
   // ── Pan handlers ──
+  // ── Canvas is the SOLE gesture owner ──
+  // On pointerdown: canvas captures the pointer, detects if a node was hit, and
+  // records gesture context. gestureMode stays "undecided" until movement exceeds
+  // GESTURE_THRESHOLD, then locks to either "pan" (empty-space touch) or "drag"
+  // (node touch). Once locked, the mode cannot change until the finger is lifted.
+  // This prevents any "mid-pan node drag" scenario.
+
   const handleCanvasPointerDown = (e: React.PointerEvent) => {
     e.preventDefault();
     activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 
     if (activePointers.current.size === 2) {
-      // Two fingers — start pinch
+      // Two fingers — start pinch; reset gesture state
+      gestureMode.current = "undecided";
+      hitNodeId.current = null;
       isPanning.current = false;
       const pts = [...activePointers.current.values()];
       lastPinchDist.current = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
@@ -873,16 +817,31 @@ export default function BuilderPage() {
     }
 
     if (connectingEdge) return;
-    isPanning.current = true;
+
+    // Detect which node (if any) the touch landed on
+    const canvas = canvasRef.current;
+    const rect = canvas?.getBoundingClientRect();
+    if (rect) {
+      const wx = (e.clientX - rect.left - transformRef.current.x) / transformRef.current.scale;
+      const wy = (e.clientY - rect.top - transformRef.current.y) / transformRef.current.scale;
+      const nodeId = findNodeAtWorldPoint(wx, wy);
+      hitNodeId.current = nodeId;
+      if (nodeId) {
+        const node = nodes.find(n => n.id === nodeId);
+        if (node) {
+          hitNodeDragOffset.current = { x: wx - node.position.x, y: wy - node.position.y };
+        }
+      }
+    }
+
+    gestureMode.current = "undecided";
     didPan.current = false;
     panStart.current = { x: e.clientX, y: e.clientY };
     panOrigin.current = { x: transformRef.current.x, y: transformRef.current.y };
   };
 
-  // ── Canvas pointer events (pan + connecting edge + pinch) ──
   const handleCanvasPointerMove = (e: React.PointerEvent) => {
     e.preventDefault();
-    // Update pointer position
     activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
     // ── Pinch-to-zoom (2 fingers) ──
@@ -913,30 +872,50 @@ export default function BuilderPage() {
       return;
     }
 
+    // ── Connecting edge drag ──
     if (connectingEdge) {
       const world = screenToWorld(e.clientX, e.clientY);
       setConnectingEdge((prev) => prev ? { ...prev, mouseX: world.x, mouseY: world.y } : null);
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
-      const sx = e.clientX - rect.left;
-      const sy = e.clientY - rect.top;
-      const wx = (sx - transformRef.current.x) / transformRef.current.scale;
-      const wy = (sy - transformRef.current.y) / transformRef.current.scale;
+      const wx = (e.clientX - rect.left - transformRef.current.x) / transformRef.current.scale;
+      const wy = (e.clientY - rect.top - transformRef.current.y) / transformRef.current.scale;
       const target = findNodeAtWorldPoint(wx, wy, connectingEdge.sourceId);
       setHoverTargetId(target);
       return;
     }
-    if (!isPanning.current) return;
+
     const dx = e.clientX - panStart.current.x;
     const dy = e.clientY - panStart.current.y;
-    if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didPan.current = true;
-    const newX = panOrigin.current.x + dx;
-    const newY = panOrigin.current.y + dy;
-    setTransform((prev) => ({ ...prev, x: newX, y: newY }));
+    const dist = Math.hypot(dx, dy);
+
+    // Commit gesture mode once threshold is exceeded
+    if (gestureMode.current === "undecided") {
+      if (dist < GESTURE_THRESHOLD) return;
+      // Lock gesture: node drag or canvas pan
+      gestureMode.current = hitNodeId.current ? "drag" : "pan";
+      if (gestureMode.current === "pan") {
+        isPanning.current = true;
+      }
+    }
+
+    if (gestureMode.current === "pan") {
+      didPan.current = true;
+      setTransform((prev) => ({ ...prev, x: panOrigin.current.x + dx, y: panOrigin.current.y + dy }));
+    } else if (gestureMode.current === "drag" && hitNodeId.current) {
+      didPan.current = true; // treat drag as "moved" so we don't fire deselect
+      const canvas = canvasRef.current;
+      if (!canvas) return;
+      const rect = canvas.getBoundingClientRect();
+      const wx = (e.clientX - rect.left - transformRef.current.x) / transformRef.current.scale;
+      const wy = (e.clientY - rect.top - transformRef.current.y) / transformRef.current.scale;
+      handleMoveNode(hitNodeId.current, Math.max(0, wx - hitNodeDragOffset.current.x), Math.max(0, wy - hitNodeDragOffset.current.y));
+    }
   };
 
   const handleCanvasPointerUp = (e: React.PointerEvent) => {
+    // ── Finish connecting edge ──
     if (connectingEdge) {
       const canvas = canvasRef.current;
       if (!canvas) return;
@@ -949,8 +928,40 @@ export default function BuilderPage() {
       }
       setConnectingEdge(null); setHoverTargetId(null);
     }
+
+    // ── Tap detection: select or double-tap to edit ──
+    const dx = e.clientX - panStart.current.x;
+    const dy = e.clientY - panStart.current.y;
+    const wasTap = Math.hypot(dx, dy) < GESTURE_THRESHOLD && gestureMode.current === "undecided";
+
+    if (wasTap) {
+      if (hitNodeId.current) {
+        // Tap on a node: single tap = select, double tap = edit
+        const nodeId = hitNodeId.current;
+        setSelectedNode(nodeId);
+        tapCount.current += 1;
+        tapNodeId.current = nodeId;
+        if (tapCount.current === 1) {
+          tapTimer.current = setTimeout(() => {
+            tapCount.current = 0;
+          }, 280);
+        } else if (tapCount.current >= 2) {
+          if (tapTimer.current) clearTimeout(tapTimer.current);
+          tapCount.current = 0;
+          setEditingNodeId(nodeId);
+        }
+      } else {
+        // Tap on empty canvas = deselect
+        setSelectedNode(null);
+      }
+    }
+
+    // ── Cleanup ──
     isPanning.current = false;
+    gestureMode.current = "undecided";
+    hitNodeId.current = null;
     activePointers.current.delete(e.pointerId);
+
     if (activePointers.current.size < 2) {
       lastPinchDist.current = null;
       lastPinchMid.current = null;
@@ -960,13 +971,9 @@ export default function BuilderPage() {
       const remaining = [...activePointers.current.values()][0];
       panStart.current = { x: remaining.x, y: remaining.y };
       panOrigin.current = { x: transformRef.current.x, y: transformRef.current.y };
-      isPanning.current = true;
+      gestureMode.current = "undecided";
+      hitNodeId.current = null;
     }
-  };
-
-  const handleCanvasClick = () => {
-    if (didPan.current) return; // don't deselect if we just panned
-    setSelectedNode(null);
   };
 
   const findNodeAtWorldPoint = (wx: number, wy: number, excludeId?: string): string | null => {
@@ -1106,14 +1113,9 @@ export default function BuilderPage() {
           selected={selectedNode === node.id}
           isTarget={hoverTargetId === node.id}
           isConnecting={!!connectingEdge}
-          onSelect={() => setSelectedNode(node.id)}
           onDelete={() => handleDeleteNode(node.id)}
           onEdit={() => { setEditingNodeId(editingNodeId === node.id ? null : node.id); setShowSettings(false); }}
-          onMove={handleMoveNode}
           onStartConnect={handleStartConnect}
-          canvasRef={canvasRef}
-          transform={transform}
-          touchCount={touchCount}
         />
       ))}
     </div>
@@ -1134,7 +1136,6 @@ export default function BuilderPage() {
         onPointerDown={handleCanvasPointerDown}
         onPointerMove={handleCanvasPointerMove}
         onPointerUp={handleCanvasPointerUp}
-        onClick={handleCanvasClick}
       >
         {canvasContent}
 
