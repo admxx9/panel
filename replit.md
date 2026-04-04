@@ -39,11 +39,14 @@
 - Dashboard: stats (moedas, bots, plano ativo, mensagens), atividade recente
 - Bots: listar, criar, deletar, gerenciar (QR Code / codigo de 8 digitos)
 - Builder Visual: editor drag-and-drop de no-code com blocos (Comando, Acao, Condicao, Resposta)
-  - Acoes: figurinha (sharp WebP), kick, ban, promote, demote, warn, mute/unmute grupo, abrir/fechar grupo, link do grupo, revogar link, hidetag, info grupo, anti-link, reagir, apagar mensagem, enviar imagem
+  - **74+ tipos de acao** implementados no backend: menus (show_menu_photo/admin/games/owner), 12 jogos (moeda, dado, sorteio, amor, ship, nota, sorte, V/D, roleta, top5, rank, piada), moderacao completa (kick, ban, warn, reset_warns, promover, rebaixar, mutar, desmutar, apagar), grupo (fechar, abrir, info, link, revogar, nome, desc, membros, admins), dono (ligar, desligar, moedas, broadcast, bloquear, desbloquear), boas-vindas/despedida, enquete, CEP, calculadora, figurinha, hidetag, reagir, imagem
+  - **16 variaveis** substituidas no backend: {nome}, {numero}, {user}, {grupo}, {membros}, {admins}, {moedas}, {plano}, {prefix}, {bot}, {data}, {hora}, {dono}, {args}, {quoted}, {botname}
+  - **Permissoes de comando**: owner_only, admin_only, group_only, private_only aplicadas antes da execucao
   - Condicoes: e grupo, e privado, e admin, nao e admin, bot e admin, tem imagem/video/sticker/midia, contem link, contem texto, tem mencao, e reply
   - Campos condicionais: showWhen mostra campos extras conforme tipo selecionado
   - Dicas contextuais para cada tipo de acao/condicao
-  - **Templates prontos**: 7 templates pre-configurados (Figurinha, Boas-Vindas, Moderacao, Anti-Link, Ferramentas de Grupo, Sistema de Avisos, Bot Completo) — usuario pode aplicar com 1 clique
+  - **Templates prontos**: 9 templates (Figurinha, Menu com Foto, Moderacao, Protecao Total, Sistema de Dono, Diversao, Ferramentas de Grupo, Mensagens Interativas, TUDO INCLUSO com 96+ blocos)
+  - **Botao Limpar Tudo**: remove todos os blocos do canvas com confirmacao
   - **Drag from palette**: arrastar blocos da paleta direto pro canvas (mobile e desktop), ghost element durante drag
   - **Pinch-to-zoom fix**: 2 dedos detectados via touchCount global — cancela drag de bloco automaticamente
   - **Performance**: RAF throttle no handleMoveNode, will-change no container de transform e nodes
