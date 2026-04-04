@@ -1,14 +1,11 @@
-import { useState, useRef, useCallback } from "react";
-import { motion } from "framer-motion";
+import { useState, useRef, useCallback, startTransition } from "react";
 import { Save, Plus, Trash2, Bot, Loader2, MessageSquare, Zap, GitBranch, Reply, Info } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useListBots, useGetBotCommands, useSaveBotCommands, getGetBotCommandsQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 
 type NodeType = "command" | "action" | "condition" | "response";
 type Position = { x: number; y: number };
@@ -53,22 +50,67 @@ const DEFAULT_FLOW: { nodes: FlowNode[]; edges: FlowEdge[] } = {
   ],
 };
 
-function NodeCard({ node, selected, onSelect, onDelete, onUpdate }: {
+function NodeCard({
+  node,
+  selected,
+  onSelect,
+  onDelete,
+  onUpdate,
+  onMove,
+  canvasRef,
+}: {
   node: FlowNode;
   selected: boolean;
   onSelect: () => void;
   onDelete: () => void;
   onUpdate: (label: string) => void;
+  onMove: (id: string, x: number, y: number) => void;
+  canvasRef: React.RefObject<HTMLDivElement | null>;
 }) {
   const cfg = nodeConfig[node.type];
   const Icon = cfg.icon;
   const [editing, setEditing] = useState(false);
   const [labelVal, setLabelVal] = useState(node.label);
+  const dragOffset = useRef<{ x: number; y: number } | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (editing) return;
+    e.preventDefault();
+    e.stopPropagation();
+    cardRef.current?.setPointerCapture(e.pointerId);
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    dragOffset.current = {
+      x: e.clientX - rect.left - node.position.x,
+      y: e.clientY - rect.top - node.position.y,
+    };
+    onSelect();
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!dragOffset.current) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const x = Math.max(0, e.clientX - rect.left - dragOffset.current.x);
+    const y = Math.max(0, e.clientY - rect.top - dragOffset.current.y);
+    onMove(node.id, x, y);
+  };
+
+  const handlePointerUp = () => {
+    dragOffset.current = null;
+  };
 
   return (
     <div
-      className={`absolute cursor-pointer rounded-xl border-2 p-3 w-44 transition-all select-none ${cfg.color} ${selected ? "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg" : "hover:shadow-md"}`}
-      style={{ left: node.position.x, top: node.position.y }}
+      ref={cardRef}
+      className={`absolute rounded-xl border-2 p-3 w-44 transition-shadow select-none ${cfg.color} ${selected ? "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-lg" : "hover:shadow-md"}`}
+      style={{ left: node.position.x, top: node.position.y, cursor: editing ? "text" : "grab", touchAction: "none" }}
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
       onClick={onSelect}
     >
       <div className="flex items-center justify-between mb-1">
@@ -76,7 +118,11 @@ function NodeCard({ node, selected, onSelect, onDelete, onUpdate }: {
           <Icon className="h-3.5 w-3.5 text-white/70" />
           <span className="text-xs font-medium text-white/70 uppercase tracking-wider">{node.type}</span>
         </div>
-        <button onClick={(e) => { e.stopPropagation(); onDelete(); }} className="text-white/30 hover:text-red-400 transition-colors">
+        <button
+          onPointerDown={(e) => e.stopPropagation()}
+          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          className="text-white/30 hover:text-red-400 transition-colors"
+        >
           <Trash2 className="h-3 w-3" />
         </button>
       </div>
@@ -88,10 +134,14 @@ function NodeCard({ node, selected, onSelect, onDelete, onUpdate }: {
           onBlur={() => { setEditing(false); onUpdate(labelVal); }}
           onKeyDown={(e) => { if (e.key === "Enter") { setEditing(false); onUpdate(labelVal); } e.stopPropagation(); }}
           onClick={(e) => e.stopPropagation()}
+          onPointerDown={(e) => e.stopPropagation()}
           className="w-full bg-transparent text-white text-sm font-semibold outline-none border-b border-primary"
         />
       ) : (
-        <p className="text-white text-sm font-semibold truncate cursor-text" onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}>
+        <p
+          className="text-white text-sm font-semibold truncate cursor-text"
+          onDoubleClick={(e) => { e.stopPropagation(); setEditing(true); }}
+        >
           {node.label}
         </p>
       )}
@@ -114,10 +164,11 @@ export default function BuilderPage() {
   const [edges, setEdges] = useState<FlowEdge[]>(DEFAULT_FLOW.edges);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
-  const dragging = useRef<{ id: string; offsetX: number; offsetY: number } | null>(null);
 
   const handleBotSelect = (botId: string) => {
-    setSelectedBotId(botId);
+    startTransition(() => {
+      setSelectedBotId(botId);
+    });
   };
 
   const handleAddNode = (type: NodeType) => {
@@ -132,7 +183,7 @@ export default function BuilderPage() {
       type,
       label: defaultLabels[type],
       config: {},
-      position: { x: 80 + nodes.length * 30, y: 80 + nodes.length * 30 },
+      position: { x: 80 + (nodes.length % 5) * 30, y: 80 + (nodes.length % 5) * 30 },
     };
     setNodes((prev) => [...prev, newNode]);
   };
@@ -147,27 +198,9 @@ export default function BuilderPage() {
     setNodes((prev) => prev.map((n) => n.id === nodeId ? { ...n, label } : n));
   };
 
-  const handleMouseDown = (e: React.MouseEvent, nodeId: string) => {
-    if (!canvasRef.current) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    const node = nodes.find((n) => n.id === nodeId);
-    if (!node) return;
-    dragging.current = {
-      id: nodeId,
-      offsetX: e.clientX - rect.left - node.position.x,
-      offsetY: e.clientY - rect.top - node.position.y,
-    };
-  };
-
-  const handleMouseMove = useCallback((e: React.MouseEvent) => {
-    if (!dragging.current || !canvasRef.current) return;
-    const rect = canvasRef.current.getBoundingClientRect();
-    const x = Math.max(0, e.clientX - rect.left - dragging.current.offsetX);
-    const y = Math.max(0, e.clientY - rect.top - dragging.current.offsetY);
-    setNodes((prev) => prev.map((n) => n.id === dragging.current!.id ? { ...n, position: { x, y } } : n));
+  const handleMoveNode = useCallback((id: string, x: number, y: number) => {
+    setNodes((prev) => prev.map((n) => n.id === id ? { ...n, position: { x, y } } : n));
   }, []);
-
-  const handleMouseUp = () => { dragging.current = null; };
 
   const handleSave = async () => {
     if (!selectedBotId) {
@@ -257,12 +290,13 @@ export default function BuilderPage() {
               <Info className="h-3 w-3" />
               <p className="text-xs">Dica</p>
             </div>
-            <p className="text-xs text-muted-foreground/70">Clique para adicionar blocos. Duplo clique para editar o nome.</p>
+            <p className="text-xs text-muted-foreground/70">Clique para adicionar blocos. Duplo clique para editar o nome. Arraste para mover.</p>
           </div>
         </div>
 
         <div className="flex-1 bg-card border border-white/5 rounded-xl overflow-hidden relative">
-          <div className="absolute inset-0 pointer-events-none"
+          <div
+            className="absolute inset-0 pointer-events-none"
             style={{
               backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.03) 1px, transparent 1px)",
               backgroundSize: "32px 32px",
@@ -270,10 +304,8 @@ export default function BuilderPage() {
           />
           <div
             ref={canvasRef}
-            className="absolute inset-0 cursor-default"
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
+            className="absolute inset-0"
+            onClick={() => setSelectedNode(null)}
           >
             <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ overflow: "visible" }}>
               {edges.map((edge) => (
@@ -283,28 +315,25 @@ export default function BuilderPage() {
                   fill="none"
                   stroke="rgba(139, 92, 246, 0.4)"
                   strokeWidth="2"
-                  strokeDasharray="none"
                 />
               ))}
             </svg>
 
             {nodes.map((node) => (
-              <div
+              <NodeCard
                 key={node.id}
-                onMouseDown={(e) => { e.preventDefault(); handleMouseDown(e, node.id); setSelectedNode(node.id); }}
-              >
-                <NodeCard
-                  node={node}
-                  selected={selectedNode === node.id}
-                  onSelect={() => setSelectedNode(node.id)}
-                  onDelete={() => handleDeleteNode(node.id)}
-                  onUpdate={(label) => handleUpdateLabel(node.id, label)}
-                />
-              </div>
+                node={node}
+                selected={selectedNode === node.id}
+                onSelect={() => setSelectedNode(node.id)}
+                onDelete={() => handleDeleteNode(node.id)}
+                onUpdate={(label) => handleUpdateLabel(node.id, label)}
+                onMove={handleMoveNode}
+                canvasRef={canvasRef}
+              />
             ))}
 
             {nodes.length === 0 && (
-              <div className="absolute inset-0 flex items-center justify-center">
+              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <div className="text-center">
                   <Bot className="h-12 w-12 text-muted-foreground/20 mx-auto mb-3" />
                   <p className="text-muted-foreground text-sm">Adicione blocos do painel esquerdo</p>
@@ -314,7 +343,7 @@ export default function BuilderPage() {
             )}
           </div>
 
-          <div className="absolute bottom-3 right-3 flex items-center gap-2">
+          <div className="absolute bottom-3 right-3 flex items-center gap-2 pointer-events-none">
             {Object.entries(nodeConfig).map(([type, cfg]) => {
               const Icon = cfg.icon;
               return (
