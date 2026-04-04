@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Users, Bot, DollarSign, Clock, ShieldAlert, Coins } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useAdminGetStats, useAdminListUsers, useAdminListPayments } from "@workspace/api-client-react";
@@ -46,19 +45,16 @@ export default function AdminPage() {
             { label: "Pagamentos Pendentes", value: stats.pendingPayments, icon: Clock },
             { label: "Planos Disponiveis", value: stats.totalPlans, icon: Coins },
           ].map((item, i) => (
-            <motion.div
+            <div
               key={item.label}
               className="bg-card border border-white/5 rounded-xl p-5"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.05 }}
             >
               <div className="flex items-center gap-3 mb-2">
                 <item.icon className="h-4 w-4 text-muted-foreground" />
                 <p className="text-muted-foreground text-sm">{item.label}</p>
               </div>
               <p className="text-2xl font-bold text-white">{item.value}</p>
-            </motion.div>
+            </div>
           ))}
         </div>
       )}

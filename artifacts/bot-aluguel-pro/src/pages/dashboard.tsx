@@ -1,9 +1,7 @@
-import { motion } from "framer-motion";
 import { Bot, Coins, Shield, TrendingUp, Activity, Clock } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { useGetDashboardStats } from "@workspace/api-client-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -11,13 +9,7 @@ function StatCard({ label, value, icon: Icon, sub, accent = false }: {
   label: string; value: string | number; icon: React.ElementType; sub?: string; accent?: boolean;
 }) {
   return (
-    <motion.div
-      className={`rounded-xl p-6 border ${accent ? "border-primary/20 bg-primary/5" : "border-white/5 bg-card"}`}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
-      transition={{ duration: 0.2 }}
-    >
+    <div className={`rounded-xl p-6 border transition-all hover:scale-[1.01] ${accent ? "border-primary/20 bg-primary/5" : "border-white/5 bg-card"}`}>
       <div className="flex items-start justify-between mb-4">
         <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${accent ? "bg-primary/20" : "bg-white/5"}`}>
           <Icon className={`h-5 w-5 ${accent ? "text-primary" : "text-muted-foreground"}`} />
@@ -26,7 +18,7 @@ function StatCard({ label, value, icon: Icon, sub, accent = false }: {
       <p className="text-sm text-muted-foreground mb-1">{label}</p>
       <p className={`text-3xl font-bold ${accent ? "text-primary" : "text-white"}`}>{value}</p>
       {sub && <p className="text-xs text-muted-foreground mt-1">{sub}</p>}
-    </motion.div>
+    </div>
   );
 }
 
@@ -52,31 +44,10 @@ export default function DashboardPage() {
         </div>
       ) : (
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <StatCard
-            label="Moedas"
-            value={stats?.coins ?? 0}
-            icon={Coins}
-            accent
-            sub="Saldo disponivel"
-          />
-          <StatCard
-            label="Total de Bots"
-            value={stats?.totalBots ?? 0}
-            icon={Bot}
-            sub={`${stats?.activeBots ?? 0} conectados`}
-          />
-          <StatCard
-            label="Plano Ativo"
-            value={stats?.activePlan ?? "Nenhum"}
-            icon={Shield}
-            sub={planExpiry ? `Expira em ${planExpiry}` : "Adquira um plano"}
-          />
-          <StatCard
-            label="Mensagens"
-            value={stats?.totalMessages ?? 0}
-            icon={TrendingUp}
-            sub="Total processado"
-          />
+          <StatCard label="Moedas" value={stats?.coins ?? 0} icon={Coins} accent sub="Saldo disponivel" />
+          <StatCard label="Total de Bots" value={stats?.totalBots ?? 0} icon={Bot} sub={`${stats?.activeBots ?? 0} conectados`} />
+          <StatCard label="Plano Ativo" value={stats?.activePlan ?? "Nenhum"} icon={Shield} sub={planExpiry ? `Expira em ${planExpiry}` : "Adquira um plano"} />
+          <StatCard label="Mensagens" value={stats?.totalMessages ?? 0} icon={TrendingUp} sub="Total processado" />
         </div>
       )}
 
@@ -94,11 +65,9 @@ export default function DashboardPage() {
         ) : stats?.recentActivity && stats.recentActivity.length > 0 ? (
           <div className="space-y-3">
             {stats.recentActivity.map((item) => (
-              <motion.div
+              <div
                 key={item.id}
                 className="flex items-center justify-between p-3 rounded-lg bg-background border border-white/5"
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
               >
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
@@ -110,7 +79,7 @@ export default function DashboardPage() {
                   <Clock className="h-3 w-3" />
                   {format(new Date(item.createdAt), "dd/MM HH:mm", { locale: ptBR })}
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
         ) : (

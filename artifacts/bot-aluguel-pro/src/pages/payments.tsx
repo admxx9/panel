@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
 import { Coins, CreditCard, Copy, CheckCircle, Clock, Loader2, History } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -133,7 +132,7 @@ export default function PaymentsPage() {
               </Button>
             </div>
           ) : (
-            <motion.div className="space-y-4" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+            <div className="space-y-4">
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-center">
                 <p className="text-primary text-2xl font-bold">{pixData.coins} moedas</p>
                 <p className="text-muted-foreground text-sm">R$ {pixData.amount.toFixed(2)}</p>
@@ -172,7 +171,7 @@ export default function PaymentsPage() {
               >
                 Gerar novo PIX
               </Button>
-            </motion.div>
+            </div>
           )}
         </div>
 

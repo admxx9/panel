@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { motion } from "framer-motion";
 import { Bot, Plus, Wifi, WifiOff, Loader2, Trash2, ExternalLink } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -75,16 +74,13 @@ export default function BotsPage() {
         </div>
       ) : bots && bots.length > 0 ? (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {bots.map((bot, i) => {
+          {bots.map((bot) => {
             const status = statusConfig[bot.status] || statusConfig.disconnected;
             const StatusIcon = status.icon;
             return (
-              <motion.div
+              <div
                 key={bot.id}
                 className="bg-card border border-white/5 rounded-xl p-5 hover:border-white/10 transition-all"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -115,7 +111,7 @@ export default function BotsPage() {
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
         </div>

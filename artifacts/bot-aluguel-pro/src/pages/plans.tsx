@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { CheckCircle, Loader2, Crown, Star, Zap } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -57,11 +56,7 @@ export default function PlansPage() {
       </div>
 
       {activePlan && "planId" in activePlan && activePlan.planId && (
-        <motion.div
-          className="bg-green-500/5 border border-green-500/20 rounded-xl p-4 mb-6 flex items-center gap-3"
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-4 mb-6 flex items-center gap-3">
           <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0" />
           <div>
             <p className="text-green-400 font-medium text-sm">
@@ -73,7 +68,7 @@ export default function PlansPage() {
               </p>
             )}
           </div>
-        </motion.div>
+        </div>
       )}
 
       {plansLoading || planLoading ? (
@@ -82,12 +77,12 @@ export default function PlansPage() {
         </div>
       ) : (
         <div className="grid md:grid-cols-3 gap-6">
-          {plans?.map((plan, i) => {
+          {plans?.map((plan) => {
             const PlanIcon = planIcons[plan.id] || Star;
             const active = isActivePlan(plan.id);
             const isPro = plan.id === "pro";
             return (
-              <motion.div
+              <div
                 key={plan.id}
                 className={`relative p-6 rounded-xl border transition-all duration-300 ${
                   isPro
@@ -96,9 +91,6 @@ export default function PlansPage() {
                     ? "border-green-500/30 bg-green-500/5"
                     : "border-white/5 bg-card hover:border-white/10"
                 }`}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
               >
                 {isPro && (
                   <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white border-0 text-xs">
@@ -143,7 +135,7 @@ export default function PlansPage() {
                   {activatePlan.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                   {active ? "Plano Ativo" : `Ativar por ${plan.coins} moedas`}
                 </Button>
-              </motion.div>
+              </div>
             );
           })}
         </div>

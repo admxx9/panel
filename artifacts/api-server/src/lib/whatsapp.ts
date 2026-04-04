@@ -74,7 +74,15 @@ export async function startWhatsAppSession(
   });
 
   sessions.set(botId, sock);
-  sock.ev.on("creds.update", saveCreds);
+  sock.ev.on("creds.update", async () => {
+    try {
+      await saveCreds();
+    } catch (err: any) {
+      if (err?.code !== "ENOENT") {
+        logger.error({ err, botId }, "Error saving creds");
+      }
+    }
+  });
 
   if (type === "code" && phone) {
     const cleanPhone = phone.replace(/\D/g, "");

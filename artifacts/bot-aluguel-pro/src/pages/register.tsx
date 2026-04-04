@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { motion } from "framer-motion";
 import { Bot, Phone, Lock, User, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,12 +35,7 @@ export default function RegisterPage() {
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/8 rounded-full blur-[100px]" />
       </div>
-      <motion.div
-        className="relative w-full max-w-md"
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.4 }}
-      >
+      <div className="relative w-full max-w-md">
         <div className="text-center mb-8">
           <Link href="/" className="inline-flex items-center gap-2 mb-6">
             <div className="h-9 w-9 rounded-md bg-primary flex items-center justify-center">
@@ -117,7 +111,7 @@ export default function RegisterPage() {
             Entrar
           </Link>
         </p>
-      </motion.div>
+      </div>
     </div>
   );
 }
