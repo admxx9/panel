@@ -20,4 +20,6 @@ export interface Bot {
   totalGroups: number;
   createdAt: Date;
   connectedAt?: Date | null;
+  prefix: string;
+  ownerPhone?: string | null;
 }

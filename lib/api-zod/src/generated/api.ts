@@ -90,6 +90,8 @@ export const ListBotsResponseItem = zod.object({
   totalGroups: zod.number(),
   createdAt: zod.coerce.date(),
   connectedAt: zod.coerce.date().nullish(),
+  prefix: zod.string(),
+  ownerPhone: zod.string().nullish(),
 });
 export const ListBotsResponse = zod.array(ListBotsResponseItem);
 
@@ -119,6 +121,8 @@ export const GetBotResponse = zod.object({
   totalGroups: zod.number(),
   createdAt: zod.coerce.date(),
   connectedAt: zod.coerce.date().nullish(),
+  prefix: zod.string(),
+  ownerPhone: zod.string().nullish(),
 });
 
 /**
@@ -166,6 +170,37 @@ export const DisconnectBotResponse = zod.object({
   totalGroups: zod.number(),
   createdAt: zod.coerce.date(),
   connectedAt: zod.coerce.date().nullish(),
+  prefix: zod.string(),
+  ownerPhone: zod.string().nullish(),
+});
+
+/**
+ * @summary Update bot settings (name, prefix, ownerPhone)
+ */
+export const UpdateBotSettingsParams = zod.object({
+  botId: zod.coerce.string(),
+});
+
+export const UpdateBotSettingsBody = zod.object({
+  name: zod.string().optional(),
+  prefix: zod.string().optional(),
+  ownerPhone: zod.string().nullish(),
+});
+
+export const UpdateBotSettingsResponse = zod.object({
+  id: zod.string(),
+  userId: zod.string(),
+  name: zod.string(),
+  phone: zod.string().nullish(),
+  status: zod.enum(["disconnected", "connecting", "connected", "error"]),
+  connectionType: zod.enum(["qrcode", "code"]).nullish(),
+  qrCode: zod.string().nullish(),
+  pairCode: zod.string().nullish(),
+  totalGroups: zod.number(),
+  createdAt: zod.coerce.date(),
+  connectedAt: zod.coerce.date().nullish(),
+  prefix: zod.string(),
+  ownerPhone: zod.string().nullish(),
 });
 
 /**

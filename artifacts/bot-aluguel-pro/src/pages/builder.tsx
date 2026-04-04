@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, startTransition } from "react";
 import {
   Save, Plus, Trash2, Bot, Loader2, MessageSquare, Zap, GitBranch,
-  Reply, Info, Pencil, X, ChevronRight,
+  Reply, Info, Pencil, X, ChevronRight, Settings2, Link2,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useListBots, useGetBotCommands, useSaveBotCommands, getGetBotCommandsQueryKey } from "@workspace/api-client-react";
+import {
+  useListBots, useGetBotCommands, useSaveBotCommands, getGetBotCommandsQueryKey,
+  useUpdateBotSettings, useGetBot, getGetBotQueryKey,
+} from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
@@ -36,8 +39,8 @@ interface ConnectingEdge {
   mouseY: number;
 }
 
-const NODE_W = 176;
-const NODE_H = 88;
+const NODE_W = 184;
+const NODE_H = 92;
 const PORT_Y = NODE_H / 2;
 
 const nodeConfig: Record<NodeType, { color: string; border: string; icon: React.ElementType; label: string; description: string }> = {
@@ -80,8 +83,8 @@ const CONFIG_FIELDS: Record<NodeType, { key: string; label: string; type: "text"
 const DEFAULT_FLOW: { nodes: FlowNode[]; edges: FlowEdge[] } = {
   nodes: [
     { id: "n1", type: "command", label: "sticker", config: { trigger: "sticker" }, position: { x: 60, y: 120 } },
-    { id: "n2", type: "action", label: "Criar Figurinha", config: { action: "make_sticker" }, position: { x: 300, y: 120 } },
-    { id: "n3", type: "response", label: "Aqui está sua figurinha!", config: { text: "Aqui está sua figurinha! 🎉" }, position: { x: 540, y: 120 } },
+    { id: "n2", type: "action", label: "Criar Figurinha", config: { action: "make_sticker" }, position: { x: 310, y: 120 } },
+    { id: "n3", type: "response", label: "Aqui está sua figurinha!", config: { text: "Aqui está sua figurinha! 🎉" }, position: { x: 560, y: 120 } },
   ],
   edges: [
     { id: "e1", source: "n1", target: "n2" },
@@ -89,24 +92,42 @@ const DEFAULT_FLOW: { nodes: FlowNode[]; edges: FlowEdge[] } = {
   ],
 };
 
-function Port({ side, onPointerDown, isTarget }: {
+function Port({ side, onPointerDown, isTarget, isConnecting }: {
   side: "left" | "right";
   onPointerDown?: (e: React.PointerEvent) => void;
   isTarget?: boolean;
+  isConnecting?: boolean;
 }) {
+  const isRight = side === "right";
   return (
     <div
-      className={`absolute top-1/2 -translate-y-1/2 w-3 h-3 rounded-full border-2 transition-all z-10
-        ${side === "left" ? "-left-1.5" : "-right-1.5"}
-        ${isTarget
-          ? "bg-green-400 border-green-300 scale-125"
-          : side === "right"
-            ? "bg-primary/60 border-primary hover:bg-primary hover:scale-125 cursor-crosshair"
-            : "bg-white/20 border-white/30"
-        }`}
-      onPointerDown={onPointerDown}
+      className={`absolute top-1/2 -translate-y-1/2 z-10 flex items-center justify-center
+        ${isRight ? "-right-3" : "-left-3"}
+      `}
       style={{ touchAction: "none" }}
-    />
+    >
+      {/* Outer pulse ring for the right (connection) port */}
+      {isRight && !isTarget && (
+        <span className="absolute w-5 h-5 rounded-full bg-primary/20 animate-ping" />
+      )}
+      <div
+        className={`relative w-5 h-5 rounded-full border-2 transition-all duration-150 flex items-center justify-center
+          ${isTarget
+            ? "bg-green-400 border-green-300 scale-125 shadow-lg shadow-green-400/40"
+            : isRight
+              ? "bg-primary border-primary/80 hover:scale-125 hover:shadow-lg hover:shadow-primary/40 cursor-crosshair"
+              : "bg-background border-white/20 cursor-default"
+          }
+          ${isConnecting && isRight ? "scale-125 bg-primary shadow-primary/60 shadow-lg" : ""}
+        `}
+        onPointerDown={onPointerDown}
+        style={{ touchAction: "none" }}
+      >
+        {isRight && (
+          <Link2 className="w-2.5 h-2.5 text-white/80" />
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -120,6 +141,7 @@ function NodeCard({
   onMove,
   onStartConnect,
   canvasRef,
+  isConnecting,
 }: {
   node: FlowNode;
   selected: boolean;
@@ -130,11 +152,14 @@ function NodeCard({
   onMove: (id: string, x: number, y: number) => void;
   onStartConnect: (sourceId: string, e: React.PointerEvent) => void;
   canvasRef: React.RefObject<HTMLDivElement | null>;
+  isConnecting: boolean;
 }) {
   const cfg = nodeConfig[node.type];
   const Icon = cfg.icon;
   const dragOffset = useRef<{ x: number; y: number } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
+  const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const clickCount = useRef(0);
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -164,6 +189,21 @@ function NodeCard({
     dragOffset.current = null;
   };
 
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    clickCount.current += 1;
+    if (clickCount.current === 1) {
+      clickTimer.current = setTimeout(() => {
+        clickCount.current = 0;
+        onSelect();
+      }, 250);
+    } else if (clickCount.current === 2) {
+      if (clickTimer.current) clearTimeout(clickTimer.current);
+      clickCount.current = 0;
+      onEdit();
+    }
+  };
+
   const displayLabel = node.config?.trigger
     ? String(node.config.trigger)
     : node.config?.action
@@ -177,19 +217,19 @@ function NodeCard({
       ref={cardRef}
       className={`absolute rounded-xl border-2 p-3 select-none transition-shadow
         ${cfg.color} ${cfg.border}
-        ${selected ? "ring-2 ring-primary ring-offset-1 ring-offset-background shadow-xl" : ""}
-        ${isTarget ? "ring-2 ring-green-400 ring-offset-1 ring-offset-background" : ""}
+        ${selected ? "ring-2 ring-primary ring-offset-1 ring-offset-background shadow-xl" : "shadow-md"}
+        ${isTarget ? "ring-2 ring-green-400 ring-offset-1 ring-offset-background scale-[1.03]" : ""}
       `}
       style={{ left: node.position.x, top: node.position.y, width: NODE_W, minHeight: NODE_H, cursor: "grab", touchAction: "none" }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
-      onClick={(e) => { e.stopPropagation(); onSelect(); }}
+      onClick={handleClick}
     >
-      <Port side="left" />
+      <Port side="left" isTarget={isTarget} />
       <Port
         side="right"
-        isTarget={false}
+        isConnecting={isConnecting}
         onPointerDown={(e) => {
           e.stopPropagation();
           onStartConnect(node.id, e);
@@ -205,31 +245,35 @@ function NodeCard({
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onEdit(); }}
-            className="text-white/30 hover:text-primary transition-colors p-0.5"
+            className="text-white/60 hover:text-primary transition-colors p-1 rounded hover:bg-white/10"
             title="Editar bloco"
           >
-            <Pencil className="h-3 w-3" />
+            <Pencil className="h-3.5 w-3.5" />
           </button>
           <button
             onPointerDown={(e) => e.stopPropagation()}
             onClick={(e) => { e.stopPropagation(); onDelete(); }}
-            className="text-white/30 hover:text-red-400 transition-colors p-0.5"
+            className="text-white/40 hover:text-red-400 transition-colors p-1 rounded hover:bg-red-400/10"
             title="Deletar bloco"
           >
-            <Trash2 className="h-3 w-3" />
+            <Trash2 className="h-3.5 w-3.5" />
           </button>
         </div>
       </div>
       <p className="text-white text-sm font-semibold truncate leading-tight">{displayLabel}</p>
       <p className="text-white/40 text-xs mt-0.5 truncate">{cfg.description}</p>
+
+      {/* Double-click hint */}
+      <p className="text-white/20 text-[10px] mt-1.5">Clique duplo para editar</p>
     </div>
   );
 }
 
-function EditPanel({ node, onUpdate, onClose }: {
+function EditPanel({ node, onUpdate, onClose, prefix }: {
   node: FlowNode;
   onUpdate: (id: string, label: string, config: Record<string, unknown>) => void;
   onClose: () => void;
+  prefix: string;
 }) {
   const cfg = nodeConfig[node.type];
   const Icon = cfg.icon;
@@ -298,15 +342,17 @@ function EditPanel({ node, onUpdate, onClose }: {
         {node.type === "command" && (
           <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs text-muted-foreground">
             <p className="font-semibold text-white/60 mb-1">💡 Como funciona</p>
-            <p>O gatilho <span className="text-white/70 font-mono">{String(localConfig.trigger || "sticker")}</span> é acionado quando alguém envia o prefixo + gatilho no grupo.</p>
-            <p className="mt-1 text-white/50">Ex: <span className="font-mono text-white/70">.{String(localConfig.trigger || "sticker")}</span></p>
+            <p>O comando é acionado quando alguém enviar no grupo:</p>
+            <p className="mt-1 font-mono text-white/80 text-sm bg-background/60 px-2 py-1 rounded mt-2">
+              {prefix}{String(localConfig.trigger || "sticker")}
+            </p>
           </div>
         )}
 
         {node.type === "action" && localConfig.action === "make_sticker" && (
           <div className="rounded-lg bg-violet-500/5 border border-violet-500/20 p-3 text-xs text-muted-foreground">
-            <p className="font-semibold text-white/60 mb-1">🖼️ Figurinha</p>
-            <p>O usuário precisa responder (<span className="text-white/70">reply</span>) a uma imagem ou vídeo com o comando. O bot converte para figurinha automaticamente.</p>
+            <p className="font-semibold text-white/60 mb-1">🖼️ Como usar</p>
+            <p>Responda (<span className="text-white/70 font-semibold">reply</span>) a uma imagem ou vídeo com o comando e o bot vai converter em figurinha automaticamente.</p>
           </div>
         )}
       </div>
@@ -320,11 +366,117 @@ function EditPanel({ node, onUpdate, onClose }: {
   );
 }
 
+function SettingsPanel({ botId, onClose }: { botId: string; onClose: () => void }) {
+  const { data: bot } = useGetBot(botId, { query: { enabled: !!botId } });
+  const updateSettings = useUpdateBotSettings();
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  const [name, setName] = useState("");
+  const [prefix, setPrefix] = useState("");
+  const [ownerPhone, setOwnerPhone] = useState("");
+  const [initialized, setInitialized] = useState(false);
+
+  if (bot && !initialized) {
+    setName(bot.name ?? "");
+    setPrefix(bot.prefix ?? ".");
+    setOwnerPhone(bot.ownerPhone ?? "");
+    setInitialized(true);
+  }
+
+  const handleSave = async () => {
+    try {
+      await updateSettings.mutateAsync({
+        botId,
+        data: { name: name.trim() || undefined, prefix: prefix || ".", ownerPhone: ownerPhone || undefined },
+      });
+      queryClient.invalidateQueries({ queryKey: getGetBotQueryKey(botId) });
+      toast({ title: "Configurações salvas!", description: "Bot atualizado com sucesso." });
+      onClose();
+    } catch {
+      toast({ title: "Erro", description: "Não foi possível salvar as configurações.", variant: "destructive" });
+    }
+  };
+
+  return (
+    <div className="w-72 flex-shrink-0 bg-card border border-white/5 rounded-xl flex flex-col overflow-hidden">
+      <div className="flex items-center justify-between p-4 border-b border-white/5 bg-violet-500/10">
+        <div className="flex items-center gap-2">
+          <Settings2 className="h-4 w-4 text-violet-400" />
+          <span className="text-white font-semibold text-sm">Configurações do Bot</span>
+        </div>
+        <button onClick={onClose} className="text-white/40 hover:text-white transition-colors">
+          <X className="h-4 w-4" />
+        </button>
+      </div>
+      <div className="flex-1 overflow-auto p-4 space-y-4">
+        <div>
+          <Label className="text-white/70 text-xs mb-1.5 block">Nome do Bot</Label>
+          <Input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Ex: MeuBot"
+            className="bg-background border-white/10 text-white h-9 text-sm"
+          />
+        </div>
+
+        <div>
+          <Label className="text-white/70 text-xs mb-1.5 block">Prefixo dos comandos</Label>
+          <Input
+            value={prefix}
+            onChange={(e) => setPrefix(e.target.value)}
+            placeholder="."
+            maxLength={3}
+            className="bg-background border-white/10 text-white h-9 text-sm font-mono"
+          />
+          <p className="text-muted-foreground text-xs mt-1">
+            Exemplo: <span className="font-mono text-white/60">{prefix || "."}sticker</span>
+          </p>
+        </div>
+
+        <div>
+          <Label className="text-white/70 text-xs mb-1.5 block">Número do Dono</Label>
+          <Input
+            value={ownerPhone}
+            onChange={(e) => setOwnerPhone(e.target.value)}
+            placeholder="5511999999999"
+            className="bg-background border-white/10 text-white h-9 text-sm"
+          />
+          <p className="text-muted-foreground text-xs mt-1">
+            DDD + número, sem espaços ou traços
+          </p>
+        </div>
+
+        <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs text-muted-foreground">
+          <p className="font-semibold text-white/60 mb-1">💡 Comandos disponíveis</p>
+          <ul className="space-y-1 text-white/50">
+            <li><span className="font-mono text-white/70">{prefix || "."}sticker</span> — cria figurinha (reply em imagem/vídeo)</li>
+            <li><span className="font-mono text-white/70">{prefix || "."}kick</span> — remove membro (admin)</li>
+            <li><span className="font-mono text-white/70">{prefix || "."}ban</span> — bane membro (admin)</li>
+          </ul>
+        </div>
+      </div>
+      <div className="p-4 border-t border-white/5">
+        <Button
+          onClick={handleSave}
+          disabled={updateSettings.isPending}
+          size="sm"
+          className="w-full bg-primary hover:bg-primary/90 text-white"
+        >
+          {updateSettings.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
+          Salvar Configurações
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 const BLOCK_TYPES: NodeType[] = ["command", "action", "condition", "response"];
 
 export default function BuilderPage() {
   const { data: bots } = useListBots();
   const [selectedBotId, setSelectedBotId] = useState<string>("");
+  const { data: botData } = useGetBot(selectedBotId, { query: { enabled: !!selectedBotId } });
   useGetBotCommands(selectedBotId, { query: { enabled: !!selectedBotId } });
   const saveCommands = useSaveBotCommands();
   const queryClient = useQueryClient();
@@ -334,12 +486,17 @@ export default function BuilderPage() {
   const [edges, setEdges] = useState<FlowEdge[]>(DEFAULT_FLOW.edges);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
+  const [showSettings, setShowSettings] = useState(false);
   const [connectingEdge, setConnectingEdge] = useState<ConnectingEdge | null>(null);
   const [hoverTargetId, setHoverTargetId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
+  const currentPrefix = botData?.prefix ?? ".";
+
   const handleBotSelect = (botId: string) => {
     startTransition(() => setSelectedBotId(botId));
+    setEditingNodeId(null);
+    setShowSettings(false);
   };
 
   const handleAddNode = (type: NodeType) => {
@@ -455,17 +612,24 @@ export default function BuilderPage() {
   };
 
   const editingNode = editingNodeId ? nodes.find((n) => n.id === editingNodeId) : null;
+  const rightPanel = showSettings
+    ? "settings"
+    : editingNode
+      ? "edit"
+      : null;
 
   return (
     <DashboardLayout>
       <div className="flex items-center justify-between mb-5">
         <div>
           <h1 className="text-2xl font-bold text-white">Construtor Visual</h1>
-          <p className="text-muted-foreground text-sm mt-0.5">Monte o fluxo do bot — ligue os blocos pelas bolinhas</p>
+          <p className="text-muted-foreground text-sm mt-0.5">
+            Arraste a <span className="text-primary font-semibold">bolinha direita</span> de um bloco até outro para conectar
+          </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <Select onValueChange={handleBotSelect} value={selectedBotId}>
-            <SelectTrigger className="w-48 bg-background border-white/10 text-white">
+            <SelectTrigger className="w-44 bg-background border-white/10 text-white">
               <SelectValue placeholder="Selecionar bot" />
             </SelectTrigger>
             <SelectContent className="bg-card border-white/10">
@@ -477,6 +641,16 @@ export default function BuilderPage() {
               )}
             </SelectContent>
           </Select>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => { setShowSettings((v) => !v); setEditingNodeId(null); }}
+            disabled={!selectedBotId}
+            className="border-white/10 text-white/70 hover:text-white hover:bg-white/5"
+            title="Configurações do bot"
+          >
+            <Settings2 className="h-4 w-4" />
+          </Button>
           <Button onClick={handleSave} disabled={saveCommands.isPending} className="bg-primary hover:bg-primary/90 text-white">
             {saveCommands.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
             Salvar
@@ -505,10 +679,14 @@ export default function BuilderPage() {
               );
             })}
           </div>
-          <div className="mt-auto pt-3 border-t border-white/5">
+          <div className="mt-auto pt-3 border-t border-white/5 space-y-3">
             <div className="flex items-start gap-1.5 text-muted-foreground">
-              <Info className="h-3 w-3 flex-shrink-0 mt-0.5" />
-              <p className="text-xs leading-relaxed">Arraste a <span className="text-white/60">bolinha direita</span> de um bloco até outro para conectar</p>
+              <Info className="h-3 w-3 flex-shrink-0 mt-0.5 text-primary" />
+              <p className="text-xs leading-relaxed">Arraste a <span className="text-primary font-semibold">bolinha direita</span> de um bloco para outro para conectar</p>
+            </div>
+            <div className="flex items-start gap-1.5 text-muted-foreground">
+              <Pencil className="h-3 w-3 flex-shrink-0 mt-0.5" />
+              <p className="text-xs leading-relaxed">Clique no <span className="text-white/60">lápis</span> ou dê <span className="text-white/60">duplo clique</span> no bloco para editar</p>
             </div>
           </div>
         </div>
@@ -529,7 +707,6 @@ export default function BuilderPage() {
           >
             {/* SVG for edges + preview line */}
             <svg className="absolute inset-0 w-full h-full" style={{ overflow: "visible", pointerEvents: "none" }}>
-              {/* Existing edges */}
               {edges.map((edge) => {
                 const src = nodes.find((n) => n.id === edge.source);
                 const tgt = nodes.find((n) => n.id === edge.target);
@@ -538,28 +715,25 @@ export default function BuilderPage() {
                 const p2 = getNodePortPos(tgt, "left");
                 return (
                   <g key={edge.id} style={{ pointerEvents: "stroke" }}>
-                    {/* Invisible wider path for easier clicking */}
                     <path
                       d={buildCurve(p1.x, p1.y, p2.x, p2.y)}
                       fill="none"
                       stroke="transparent"
-                      strokeWidth="12"
+                      strokeWidth="14"
                       style={{ pointerEvents: "stroke", cursor: "pointer" }}
                       onClick={(e) => { e.stopPropagation(); handleDeleteEdge(edge.id); }}
                     />
                     <path
                       d={buildCurve(p1.x, p1.y, p2.x, p2.y)}
                       fill="none"
-                      stroke="rgba(139, 92, 246, 0.5)"
-                      strokeWidth="2"
-                      strokeDasharray="none"
+                      stroke="rgba(139, 92, 246, 0.6)"
+                      strokeWidth="2.5"
                       markerEnd="url(#arrow)"
                       style={{ pointerEvents: "none" }}
                     />
                   </g>
                 );
               })}
-              {/* Preview edge while connecting */}
               {connectingEdge && (() => {
                 const src = nodes.find((n) => n.id === connectingEdge.sourceId);
                 if (!src) return null;
@@ -568,16 +742,16 @@ export default function BuilderPage() {
                   <path
                     d={buildCurve(p1.x, p1.y, connectingEdge.mouseX, connectingEdge.mouseY)}
                     fill="none"
-                    stroke="rgba(139, 92, 246, 0.8)"
-                    strokeWidth="2"
-                    strokeDasharray="6 3"
+                    stroke="rgba(139, 92, 246, 0.9)"
+                    strokeWidth="2.5"
+                    strokeDasharray="7 3"
                     style={{ pointerEvents: "none" }}
                   />
                 );
               })()}
               <defs>
                 <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-                  <path d="M0,0 L0,6 L8,3 z" fill="rgba(139, 92, 246, 0.6)" />
+                  <path d="M0,0 L0,6 L8,3 z" fill="rgba(139, 92, 246, 0.7)" />
                 </marker>
               </defs>
             </svg>
@@ -588,9 +762,13 @@ export default function BuilderPage() {
                 node={node}
                 selected={selectedNode === node.id}
                 isTarget={hoverTargetId === node.id}
+                isConnecting={!!connectingEdge}
                 onSelect={() => setSelectedNode(node.id)}
                 onDelete={() => handleDeleteNode(node.id)}
-                onEdit={() => setEditingNodeId(editingNodeId === node.id ? null : node.id)}
+                onEdit={() => {
+                  setEditingNodeId(editingNodeId === node.id ? null : node.id);
+                  setShowSettings(false);
+                }}
                 onMove={handleMoveNode}
                 onStartConnect={handleStartConnect}
                 canvasRef={canvasRef}
@@ -608,18 +786,30 @@ export default function BuilderPage() {
             )}
           </div>
 
-          {/* Edge delete hint */}
-          <div className="absolute bottom-3 left-3 text-xs text-muted-foreground/50 pointer-events-none">
+          <div className="absolute bottom-3 left-3 text-xs text-muted-foreground/40 pointer-events-none">
             Clique em uma conexão para removê-la
           </div>
+
+          {connectingEdge && (
+            <div className="absolute top-3 left-1/2 -translate-x-1/2 bg-primary/90 text-white text-xs px-3 py-1.5 rounded-full pointer-events-none shadow-lg">
+              Arraste até outro bloco para conectar
+            </div>
+          )}
         </div>
 
-        {/* Right — edit panel */}
-        {editingNode && (
+        {/* Right — edit or settings panel */}
+        {rightPanel === "edit" && editingNode && (
           <EditPanel
             node={editingNode}
             onUpdate={handleUpdateNode}
             onClose={() => setEditingNodeId(null)}
+            prefix={currentPrefix}
+          />
+        )}
+        {rightPanel === "settings" && selectedBotId && (
+          <SettingsPanel
+            botId={selectedBotId}
+            onClose={() => setShowSettings(false)}
           />
         )}
       </div>

@@ -86,10 +86,18 @@ export interface Bot {
   totalGroups: number;
   createdAt: string;
   connectedAt?: string | null;
+  prefix: string;
+  ownerPhone?: string | null;
 }
 
 export interface CreateBotBody {
   name: string;
+}
+
+export interface UpdateBotSettingsBody {
+  name?: string;
+  prefix?: string;
+  ownerPhone?: string | null;
 }
 
 export type ConnectBotBodyType =

@@ -244,6 +244,33 @@ paths:
               schema:
                 $ref: "#/components/schemas/Bot"
 
+  /bots/{botId}/settings:
+    patch:
+      operationId: updateBotSettings
+      tags: [bots]
+      summary: Update bot settings (name, prefix, ownerPhone)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBotSettingsBody"
+      responses:
+        "200":
+          description: Bot updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bot"
+
   /bots/{botId}/commands:
     get:
       operationId: getBotCommands
@@ -624,6 +651,11 @@ components:
           type: string
           nullable: true
           format: date-time
+        prefix:
+          type: string
+        ownerPhone:
+          type: string
+          nullable: true
       required:
         - id
         - userId
@@ -631,6 +663,7 @@ components:
         - status
         - totalGroups
         - createdAt
+        - prefix
 
     CreateBotBody:
       type: object
@@ -639,6 +672,17 @@ components:
           type: string
       required:
         - name
+
+    UpdateBotSettingsBody:
+      type: object
+      properties:
+        name:
+          type: string
+        prefix:
+          type: string
+        ownerPhone:
+          type: string
+          nullable: true
 
     ConnectBotBody:
       type: object

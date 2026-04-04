@@ -37,4 +37,5 @@ export * from "./pixStatus";
 export * from "./pixStatusStatus";
 export * from "./plan";
 export * from "./registerBody";
+export * from "./updateBotSettingsBody";
 export * from "./user";

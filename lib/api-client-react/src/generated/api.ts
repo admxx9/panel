@@ -35,6 +35,7 @@ import type {
   PixStatus,
   Plan,
   RegisterBody,
+  UpdateBotSettingsBody,
   User,
 } from "./api.schemas";
 
@@ -911,6 +912,93 @@ export const useDisconnectBot = <
   TContext
 > => {
   return useMutation(getDisconnectBotMutationOptions(options));
+};
+
+/**
+ * @summary Update bot settings (name, prefix, ownerPhone)
+ */
+export const getUpdateBotSettingsUrl = (botId: string) => {
+  return `/api/bots/${botId}/settings`;
+};
+
+export const updateBotSettings = async (
+  botId: string,
+  updateBotSettingsBody: UpdateBotSettingsBody,
+  options?: RequestInit,
+): Promise<Bot> => {
+  return customFetch<Bot>(getUpdateBotSettingsUrl(botId), {
+    ...options,
+    method: "PATCH",
+    headers: { "Content-Type": "application/json", ...options?.headers },
+    body: JSON.stringify(updateBotSettingsBody),
+  });
+};
+
+export const getUpdateBotSettingsMutationOptions = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateBotSettings>>,
+    TError,
+    { botId: string; data: BodyType<UpdateBotSettingsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationOptions<
+  Awaited<ReturnType<typeof updateBotSettings>>,
+  TError,
+  { botId: string; data: BodyType<UpdateBotSettingsBody> },
+  TContext
+> => {
+  const mutationKey = ["updateBotSettings"];
+  const { mutation: mutationOptions, request: requestOptions } = options
+    ? options.mutation &&
+      "mutationKey" in options.mutation &&
+      options.mutation.mutationKey
+      ? options
+      : { ...options, mutation: { ...options.mutation, mutationKey } }
+    : { mutation: { mutationKey }, request: undefined };
+
+  const mutationFn: MutationFunction<
+    Awaited<ReturnType<typeof updateBotSettings>>,
+    { botId: string; data: BodyType<UpdateBotSettingsBody> }
+  > = (props) => {
+    const { botId, data } = props ?? {};
+
+    return updateBotSettings(botId, data, requestOptions);
+  };
+
+  return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateBotSettingsMutationResult = NonNullable<
+  Awaited<ReturnType<typeof updateBotSettings>>
+>;
+export type UpdateBotSettingsMutationBody = BodyType<UpdateBotSettingsBody>;
+export type UpdateBotSettingsMutationError = ErrorType<unknown>;
+
+/**
+ * @summary Update bot settings (name, prefix, ownerPhone)
+ */
+export const useUpdateBotSettings = <
+  TError = ErrorType<unknown>,
+  TContext = unknown,
+>(options?: {
+  mutation?: UseMutationOptions<
+    Awaited<ReturnType<typeof updateBotSettings>>,
+    TError,
+    { botId: string; data: BodyType<UpdateBotSettingsBody> },
+    TContext
+  >;
+  request?: SecondParameter<typeof customFetch>;
+}): UseMutationResult<
+  Awaited<ReturnType<typeof updateBotSettings>>,
+  TError,
+  { botId: string; data: BodyType<UpdateBotSettingsBody> },
+  TContext
+> => {
+  return useMutation(getUpdateBotSettingsMutationOptions(options));
 };
 
 /**
