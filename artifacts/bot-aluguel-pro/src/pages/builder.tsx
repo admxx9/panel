@@ -916,41 +916,44 @@ export default function BuilderPage() {
         )}
       </div>
 
-      {/* MOBILE: edit bottom sheet */}
-      <Sheet open={isMobile && !!editingNode} onOpenChange={(open) => { if (!open) setEditingNodeId(null); }}>
-        <SheetContent side="bottom" className="bg-card border-t border-white/10 rounded-t-2xl p-0 max-h-[80dvh] flex flex-col md:hidden">
-          {editingNode && (
-            <>
-              <SheetHeader className={`p-4 border-b border-white/5 flex-shrink-0 ${nodeConfig[editingNode.type].color}`}>
+      {/* MOBILE ONLY: edit + settings bottom sheets — NOT rendered on desktop */}
+      {isMobile && (
+        <>
+          <Sheet open={!!editingNode} onOpenChange={(open) => { if (!open) setEditingNodeId(null); }}>
+            <SheetContent side="bottom" className="bg-card border-t border-white/10 rounded-t-2xl p-0 max-h-[80dvh] flex flex-col">
+              {editingNode && (
+                <>
+                  <SheetHeader className={`p-4 border-b border-white/5 flex-shrink-0 ${nodeConfig[editingNode.type].color}`}>
+                    <SheetTitle className="text-white text-sm flex items-center gap-2">
+                      {(() => { const Icon = nodeConfig[editingNode.type].icon; return <Icon className="h-4 w-4 text-white/70" />; })()}
+                      Editar — {nodeConfig[editingNode.type].label}
+                      <ChevronDown className="h-4 w-4 ml-auto text-white/40" />
+                    </SheetTitle>
+                  </SheetHeader>
+                  <div className="flex-1 min-h-0 overflow-auto">
+                    <EditFormContent node={editingNode} onUpdate={handleUpdateNode} onClose={() => setEditingNodeId(null)} prefix={currentPrefix} />
+                  </div>
+                </>
+              )}
+            </SheetContent>
+          </Sheet>
+
+          <Sheet open={showSettings} onOpenChange={setShowSettings}>
+            <SheetContent side="bottom" className="bg-card border-t border-white/10 rounded-t-2xl p-0 max-h-[80dvh] flex flex-col">
+              <SheetHeader className="p-4 border-b border-white/5 flex-shrink-0 bg-violet-500/10">
                 <SheetTitle className="text-white text-sm flex items-center gap-2">
-                  {(() => { const Icon = nodeConfig[editingNode.type].icon; return <Icon className="h-4 w-4 text-white/70" />; })()}
-                  Editar — {nodeConfig[editingNode.type].label}
+                  <Settings2 className="h-4 w-4 text-violet-400" />
+                  Configurações do Bot
                   <ChevronDown className="h-4 w-4 ml-auto text-white/40" />
                 </SheetTitle>
               </SheetHeader>
               <div className="flex-1 min-h-0 overflow-auto">
-                <EditFormContent node={editingNode} onUpdate={handleUpdateNode} onClose={() => setEditingNodeId(null)} prefix={currentPrefix} />
+                {selectedBotId && <SettingsFormContent botId={selectedBotId} onClose={() => setShowSettings(false)} />}
               </div>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
-
-      {/* MOBILE: settings bottom sheet */}
-      <Sheet open={isMobile && showSettings} onOpenChange={setShowSettings}>
-        <SheetContent side="bottom" className="bg-card border-t border-white/10 rounded-t-2xl p-0 max-h-[80dvh] flex flex-col md:hidden">
-          <SheetHeader className="p-4 border-b border-white/5 flex-shrink-0 bg-violet-500/10">
-            <SheetTitle className="text-white text-sm flex items-center gap-2">
-              <Settings2 className="h-4 w-4 text-violet-400" />
-              Configurações do Bot
-              <ChevronDown className="h-4 w-4 ml-auto text-white/40" />
-            </SheetTitle>
-          </SheetHeader>
-          <div className="flex-1 min-h-0 overflow-auto">
-            {selectedBotId && <SettingsFormContent botId={selectedBotId} onClose={() => setShowSettings(false)} />}
-          </div>
-        </SheetContent>
-      </Sheet>
+            </SheetContent>
+          </Sheet>
+        </>
+      )}
     </DashboardLayout>
   );
 }
