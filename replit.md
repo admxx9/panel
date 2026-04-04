@@ -17,6 +17,7 @@
 - **Frontend**: React + Vite, Tailwind CSS, Framer Motion, shadcn/ui, Wouter
 - **Auth**: JWT (`jsonwebtoken` + `bcryptjs`), token em `localStorage` como `bot_token`
 - **Build**: esbuild (CJS bundle)
+- **Image processing**: sharp (WebP conversion for stickers)
 
 ## Artifacts
 
@@ -38,11 +39,12 @@
 - Dashboard: stats (moedas, bots, plano ativo, mensagens), atividade recente
 - Bots: listar, criar, deletar, gerenciar (QR Code / codigo de 8 digitos)
 - Builder Visual: editor drag-and-drop de no-code com blocos (Comando, Acao, Condicao, Resposta)
-  - Acoes: figurinha, kick, ban, promote, demote, warn, mute/unmute grupo, abrir/fechar grupo, link do grupo, revogar link, hidetag, info grupo, anti-link, reagir, apagar mensagem, enviar imagem
+  - Acoes: figurinha (sharp WebP), kick, ban, promote, demote, warn, mute/unmute grupo, abrir/fechar grupo, link do grupo, revogar link, hidetag, info grupo, anti-link, reagir, apagar mensagem, enviar imagem
   - Condicoes: e grupo, e privado, e admin, nao e admin, bot e admin, tem imagem/video/sticker/midia, contem link, contem texto, tem mencao, e reply
   - Campos condicionais: showWhen mostra campos extras conforme tipo selecionado
   - Dicas contextuais para cada tipo de acao/condicao
-- WhatsApp: auto-reconnect de sessoes ao iniciar servidor (restoreSessions)
+  - **Templates prontos**: 7 templates pre-configurados (Figurinha, Boas-Vindas, Moderacao, Anti-Link, Ferramentas de Grupo, Sistema de Avisos, Bot Completo) — usuario pode aplicar com 1 clique
+- WhatsApp: auto-reconnect de sessoes ao iniciar servidor (restoreSessions), sessoes persistentes em `.baileys-sessions/`
 - Planos: Basico (100), Pro (250), Premium (500) moedas/30 dias
 - Pagamentos: recarga PIX com codigo copia-e-cola, historico
 - Admin: stats da plataforma, tabela de usuarios e pagamentos
@@ -55,7 +57,8 @@
 ## Notas Importantes
 
 - PIX: implementacao mock (sem cert EFI Bank real)
-- Bot connection: mock (sem Baileys real), QR code renderizado via api.qrserver.com
+- Sticker: imagens convertidas para WebP 512x512 via sharp; video nao suportado
+- Sessoes WhatsApp: salvas em `artifacts/api-server/.baileys-sessions/` (gitignored)
 - 1 BRL = 100 moedas
 - Planos hardcoded em `artifacts/api-server/src/routes/plans.ts`
 

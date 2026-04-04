@@ -10,6 +10,7 @@ import { Boom } from "@hapi/boom";
 import { toDataURL } from "qrcode";
 import path from "path";
 import fs from "fs";
+import sharp from "sharp";
 import { logger } from "./logger.js";
 import { db, botsTable, botCommandsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
@@ -174,31 +175,42 @@ async function executeFlow(
         switch (action) {
           case "make_sticker": {
             const quoted = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+            const contextInfo = msg.message?.extendedTextMessage?.contextInfo;
             const directImage = msg.message?.imageMessage;
-            const directVideo = msg.message?.videoMessage;
             const hasQuotedImage = !!quoted?.imageMessage;
-            const hasQuotedVideo = !!quoted?.videoMessage;
 
-            if (!directImage && !directVideo && !hasQuotedImage && !hasQuotedVideo) {
+            if (!directImage && !hasQuotedImage) {
               await sock.sendMessage(jid, {
-                text: actionMessage || "⚠️ Responda a uma imagem ou vídeo para criar uma figurinha!",
+                text: actionMessage || "⚠️ Envie ou responda a uma *imagem* para criar uma figurinha!",
               }, { quoted: msg });
             } else {
-              let buffer: Buffer;
-              if (directImage || directVideo) {
-                buffer = await downloadMediaMessage(msg, "buffer", {}) as Buffer;
-              } else {
-                const quotedMsg: WAMessage = {
-                  key: {
-                    remoteJid: jid,
-                    id: msg.message?.extendedTextMessage?.contextInfo?.stanzaId,
-                    fromMe: false,
-                  },
-                  message: quoted,
-                };
-                buffer = await downloadMediaMessage(quotedMsg, "buffer", {}) as Buffer;
+              try {
+                let buffer: Buffer;
+                if (directImage) {
+                  buffer = await downloadMediaMessage(msg, "buffer", {}) as Buffer;
+                } else {
+                  const quotedMsg: WAMessage = {
+                    key: {
+                      remoteJid: jid,
+                      id: contextInfo?.stanzaId,
+                      fromMe: false,
+                      participant: contextInfo?.participant || msg.key.participant,
+                    },
+                    message: quoted,
+                  };
+                  buffer = await downloadMediaMessage(quotedMsg, "buffer", {}) as Buffer;
+                }
+                const webpBuffer = await sharp(buffer)
+                  .resize(512, 512, { fit: "contain", background: { r: 0, g: 0, b: 0, alpha: 0 } })
+                  .webp({ quality: 80 })
+                  .toBuffer();
+                await sock.sendMessage(jid, { sticker: webpBuffer }, { quoted: msg });
+              } catch (stickerErr) {
+                logger.error({ err: stickerErr, botId }, "Error creating sticker");
+                await sock.sendMessage(jid, {
+                  text: "❌ Erro ao criar figurinha. Tente com outra imagem.",
+                }, { quoted: msg });
               }
-              await sock.sendMessage(jid, { sticker: buffer }, { quoted: msg });
             }
             break;
           }
@@ -307,14 +319,17 @@ async function executeFlow(
 
           case "reset_warns": {
             if (!isGroup) break;
+            const resetSenderAdmin = await isGroupAdmin(sock, jid, sender);
+            if (!resetSenderAdmin) { await sock.sendMessage(jid, { text: "❌ Apenas admins podem usar este comando." }, { quoted: msg }); break; }
             const resetTarget = getMentionedJid(msg);
-            if (resetTarget && warnCounts.has(jid)) {
+            if (!resetTarget) { await sock.sendMessage(jid, { text: "⚠️ Mencione o membro para resetar avisos." }, { quoted: msg }); break; }
+            if (warnCounts.has(jid)) {
               warnCounts.get(jid)!.delete(resetTarget);
-              await sock.sendMessage(jid, {
-                text: actionMessage || `✅ Avisos de @${resetTarget.split("@")[0]} foram resetados.`,
-                mentions: [resetTarget],
-              });
             }
+            await sock.sendMessage(jid, {
+              text: actionMessage || `✅ Avisos de @${resetTarget.split("@")[0]} foram resetados.`,
+              mentions: [resetTarget],
+            });
             break;
           }
 

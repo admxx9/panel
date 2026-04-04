@@ -2,7 +2,7 @@ import { useState, useRef, useCallback, startTransition, useEffect } from "react
 import {
   Save, Plus, Trash2, Bot, Loader2, MessageSquare, Zap, GitBranch,
   Reply, Info, Pencil, X, ChevronRight, Settings2, Link2, ChevronDown,
-  ZoomIn, ZoomOut, Maximize2,
+  ZoomIn, ZoomOut, Maximize2, LayoutTemplate, Image, Shield, Users, Star, HandMetal,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -117,6 +117,167 @@ const CONFIG_FIELDS: Record<NodeType, { key: string; label: string; type: "text"
 };
 
 const BLOCK_TYPES: NodeType[] = ["command", "action", "condition", "response"];
+
+interface FlowTemplate {
+  id: string;
+  name: string;
+  description: string;
+  icon: React.ElementType;
+  color: string;
+  nodes: FlowNode[];
+  edges: FlowEdge[];
+}
+
+const TEMPLATES: FlowTemplate[] = [
+  {
+    id: "sticker",
+    name: "Criar Figurinha",
+    description: "Comando para converter imagem em figurinha",
+    icon: Image,
+    color: "from-pink-500/20 to-violet-500/20 border-pink-500/30",
+    nodes: [
+      { id: "t_cmd_1", type: "command", label: "sticker", config: { trigger: "sticker" }, position: { x: 40, y: 100 } },
+      { id: "t_cond_1", type: "condition", label: "Tem imagem?", config: { condition: "has_image" }, position: { x: 280, y: 100 } },
+      { id: "t_act_1", type: "action", label: "Criar Figurinha", config: { action: "make_sticker", message: "Aqui está sua figurinha!" }, position: { x: 520, y: 50 } },
+      { id: "t_res_1", type: "response", label: "Sem imagem", config: { text: "📷 Envie ou responda a uma imagem com o comando para criar uma figurinha!" }, position: { x: 520, y: 180 } },
+    ],
+    edges: [
+      { id: "t_e1", source: "t_cmd_1", target: "t_cond_1" },
+      { id: "t_e2", source: "t_cond_1", target: "t_act_1" },
+      { id: "t_e3", source: "t_cond_1", target: "t_res_1" },
+    ],
+  },
+  {
+    id: "welcome",
+    name: "Boas-Vindas",
+    description: "Resposta automática de boas-vindas",
+    icon: Star,
+    color: "from-yellow-500/20 to-orange-500/20 border-yellow-500/30",
+    nodes: [
+      { id: "t_cmd_2", type: "command", label: "menu", config: { trigger: "menu" }, position: { x: 40, y: 100 } },
+      { id: "t_res_2", type: "response", label: "Menu", config: { text: "👋 Olá {user}!\n\n📋 *Menu de comandos:*\n\n🖼️ *#sticker* — Criar figurinha\n📋 *#menu* — Ver este menu\n\n_Bot feito com BotAluguel Pro_" }, position: { x: 280, y: 100 } },
+    ],
+    edges: [
+      { id: "t_e4", source: "t_cmd_2", target: "t_res_2" },
+    ],
+  },
+  {
+    id: "moderation",
+    name: "Moderação Completa",
+    description: "Kick, ban, promover e rebaixar membros",
+    icon: Shield,
+    color: "from-red-500/20 to-orange-500/20 border-red-500/30",
+    nodes: [
+      { id: "t_cmd_3", type: "command", label: "kick", config: { trigger: "kick" }, position: { x: 40, y: 40 } },
+      { id: "t_act_3", type: "action", label: "Remover Membro", config: { action: "kick_member", message: "👋 Membro removido!" }, position: { x: 280, y: 40 } },
+      { id: "t_cmd_4", type: "command", label: "ban", config: { trigger: "ban" }, position: { x: 40, y: 160 } },
+      { id: "t_act_4", type: "action", label: "Banir Membro", config: { action: "ban_member", message: "🔨 Membro banido!" }, position: { x: 280, y: 160 } },
+      { id: "t_cmd_5", type: "command", label: "promover", config: { trigger: "promover" }, position: { x: 40, y: 280 } },
+      { id: "t_act_5", type: "action", label: "Promover", config: { action: "promote_member" }, position: { x: 280, y: 280 } },
+      { id: "t_cmd_6", type: "command", label: "rebaixar", config: { trigger: "rebaixar" }, position: { x: 40, y: 400 } },
+      { id: "t_act_6", type: "action", label: "Rebaixar", config: { action: "demote_member" }, position: { x: 280, y: 400 } },
+    ],
+    edges: [
+      { id: "t_e5", source: "t_cmd_3", target: "t_act_3" },
+      { id: "t_e6", source: "t_cmd_4", target: "t_act_4" },
+      { id: "t_e7", source: "t_cmd_5", target: "t_act_5" },
+      { id: "t_e8", source: "t_cmd_6", target: "t_act_6" },
+    ],
+  },
+  {
+    id: "antilink",
+    name: "Anti-Link",
+    description: "Remove links automaticamente e avisa o membro",
+    icon: Shield,
+    color: "from-blue-500/20 to-cyan-500/20 border-blue-500/30",
+    nodes: [
+      { id: "t_act_7", type: "action", label: "Anti-Link", config: { action: "antilink", message: "🚫 Links não são permitidos neste grupo!", kick_on_link: false }, position: { x: 100, y: 100 } },
+    ],
+    edges: [],
+  },
+  {
+    id: "group_tools",
+    name: "Ferramentas de Grupo",
+    description: "Info, link, marcar todos, silenciar",
+    icon: Users,
+    color: "from-green-500/20 to-emerald-500/20 border-green-500/30",
+    nodes: [
+      { id: "t_cmd_8", type: "command", label: "todos", config: { trigger: "todos" }, position: { x: 40, y: 40 } },
+      { id: "t_act_8", type: "action", label: "Marcar Todos", config: { action: "hidetag", message: "📢 Atenção todos!" }, position: { x: 280, y: 40 } },
+      { id: "t_cmd_9", type: "command", label: "info", config: { trigger: "info" }, position: { x: 40, y: 160 } },
+      { id: "t_act_9", type: "action", label: "Info do Grupo", config: { action: "group_info" }, position: { x: 280, y: 160 } },
+      { id: "t_cmd_10", type: "command", label: "link", config: { trigger: "link" }, position: { x: 40, y: 280 } },
+      { id: "t_act_10", type: "action", label: "Link do Grupo", config: { action: "get_group_link" }, position: { x: 280, y: 280 } },
+      { id: "t_cmd_11", type: "command", label: "fechar", config: { trigger: "fechar" }, position: { x: 40, y: 400 } },
+      { id: "t_act_11", type: "action", label: "Fechar Grupo", config: { action: "close_group", message: "🔒 Grupo fechado!" }, position: { x: 280, y: 400 } },
+    ],
+    edges: [
+      { id: "t_e9", source: "t_cmd_8", target: "t_act_8" },
+      { id: "t_e10", source: "t_cmd_9", target: "t_act_9" },
+      { id: "t_e11", source: "t_cmd_10", target: "t_act_10" },
+      { id: "t_e12", source: "t_cmd_11", target: "t_act_11" },
+    ],
+  },
+  {
+    id: "warn_system",
+    name: "Sistema de Avisos",
+    description: "Avisa membros com auto-kick após limite",
+    icon: HandMetal,
+    color: "from-amber-500/20 to-yellow-500/20 border-amber-500/30",
+    nodes: [
+      { id: "t_cmd_12", type: "command", label: "warn", config: { trigger: "warn" }, position: { x: 40, y: 80 } },
+      { id: "t_act_12", type: "action", label: "Dar Aviso", config: { action: "warn_member", max_warns: "3" }, position: { x: 280, y: 80 } },
+      { id: "t_cmd_13", type: "command", label: "resetwarn", config: { trigger: "resetwarn" }, position: { x: 40, y: 220 } },
+      { id: "t_act_13", type: "action", label: "Resetar Avisos", config: { action: "reset_warns" }, position: { x: 280, y: 220 } },
+    ],
+    edges: [
+      { id: "t_e13", source: "t_cmd_12", target: "t_act_12" },
+      { id: "t_e14", source: "t_cmd_13", target: "t_act_13" },
+    ],
+  },
+  {
+    id: "complete_bot",
+    name: "Bot Completo",
+    description: "Sticker + menu + moderação + ferramentas",
+    icon: Bot,
+    color: "from-violet-500/20 to-purple-500/20 border-violet-500/30",
+    nodes: [
+      { id: "t_cmd_20", type: "command", label: "sticker", config: { trigger: "sticker" }, position: { x: 40, y: 40 } },
+      { id: "t_act_20", type: "action", label: "Criar Figurinha", config: { action: "make_sticker" }, position: { x: 280, y: 40 } },
+      { id: "t_cmd_21", type: "command", label: "menu", config: { trigger: "menu" }, position: { x: 40, y: 160 } },
+      { id: "t_res_21", type: "response", label: "Menu", config: { text: "👋 Olá {user}!\n\n📋 *Comandos:*\n🖼️ *#sticker* — Figurinha\n🚪 *#kick* — Remover\n🔨 *#ban* — Banir\n⬆️ *#promover* — Promover\n⬇️ *#rebaixar* — Rebaixar\n⚠️ *#warn* — Avisar\n📢 *#todos* — Marcar todos\n📋 *#info* — Info do grupo\n🔗 *#link* — Link do grupo" }, position: { x: 280, y: 160 } },
+      { id: "t_cmd_22", type: "command", label: "kick", config: { trigger: "kick" }, position: { x: 40, y: 300 } },
+      { id: "t_act_22", type: "action", label: "Remover", config: { action: "kick_member", message: "👋 Removido!" }, position: { x: 280, y: 300 } },
+      { id: "t_cmd_23", type: "command", label: "ban", config: { trigger: "ban" }, position: { x: 40, y: 420 } },
+      { id: "t_act_23", type: "action", label: "Banir", config: { action: "ban_member", message: "🔨 Banido!" }, position: { x: 280, y: 420 } },
+      { id: "t_cmd_24", type: "command", label: "promover", config: { trigger: "promover" }, position: { x: 540, y: 40 } },
+      { id: "t_act_24", type: "action", label: "Promover", config: { action: "promote_member" }, position: { x: 780, y: 40 } },
+      { id: "t_cmd_25", type: "command", label: "rebaixar", config: { trigger: "rebaixar" }, position: { x: 540, y: 160 } },
+      { id: "t_act_25", type: "action", label: "Rebaixar", config: { action: "demote_member" }, position: { x: 780, y: 160 } },
+      { id: "t_cmd_26", type: "command", label: "warn", config: { trigger: "warn" }, position: { x: 540, y: 280 } },
+      { id: "t_act_26", type: "action", label: "Avisar", config: { action: "warn_member", max_warns: "3" }, position: { x: 780, y: 280 } },
+      { id: "t_cmd_27", type: "command", label: "todos", config: { trigger: "todos" }, position: { x: 540, y: 400 } },
+      { id: "t_act_27", type: "action", label: "Marcar Todos", config: { action: "hidetag", message: "📢 Atenção!" }, position: { x: 780, y: 400 } },
+      { id: "t_cmd_28", type: "command", label: "info", config: { trigger: "info" }, position: { x: 40, y: 540 } },
+      { id: "t_act_28", type: "action", label: "Info Grupo", config: { action: "group_info" }, position: { x: 280, y: 540 } },
+      { id: "t_cmd_29", type: "command", label: "link", config: { trigger: "link" }, position: { x: 540, y: 520 } },
+      { id: "t_act_29", type: "action", label: "Link", config: { action: "get_group_link" }, position: { x: 780, y: 520 } },
+      { id: "t_act_30", type: "action", label: "Anti-Link", config: { action: "antilink", message: "🚫 Links proibidos!", kick_on_link: false }, position: { x: 300, y: 660 } },
+    ],
+    edges: [
+      { id: "t_e20", source: "t_cmd_20", target: "t_act_20" },
+      { id: "t_e21", source: "t_cmd_21", target: "t_res_21" },
+      { id: "t_e22", source: "t_cmd_22", target: "t_act_22" },
+      { id: "t_e23", source: "t_cmd_23", target: "t_act_23" },
+      { id: "t_e24", source: "t_cmd_24", target: "t_act_24" },
+      { id: "t_e25", source: "t_cmd_25", target: "t_act_25" },
+      { id: "t_e26", source: "t_cmd_26", target: "t_act_26" },
+      { id: "t_e27", source: "t_cmd_27", target: "t_act_27" },
+      { id: "t_e28", source: "t_cmd_28", target: "t_act_28" },
+      { id: "t_e29", source: "t_cmd_29", target: "t_act_29" },
+    ],
+  },
+];
 
 // ─── Port dot ─────────────────────────────────────────────────────────────────
 function Port({ side, onPointerDown, isTarget, isConnecting }: {
@@ -426,6 +587,7 @@ export default function BuilderPage() {
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
   const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
   const [showSettings, setShowSettings] = useState(false);
+  const [showTemplates, setShowTemplates] = useState(false);
   const [connectingEdge, setConnectingEdge] = useState<ConnectingEdge | null>(null);
   const [hoverTargetId, setHoverTargetId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -480,7 +642,38 @@ export default function BuilderPage() {
 
   const handleBotSelect = (botId: string) => {
     startTransition(() => setSelectedBotId(botId));
-    setEditingNodeId(null); setShowSettings(false); setSelectedNode(null);
+    setEditingNodeId(null); setShowSettings(false); setSelectedNode(null); setShowTemplates(false);
+  };
+
+  const handleApplyTemplate = (template: FlowTemplate, append: boolean) => {
+    const ts = Date.now();
+    const idMap = new Map<string, string>();
+    const maxY = append && nodes.length > 0
+      ? Math.max(...nodes.map((n) => n.position.y + NODE_H)) + 40
+      : 0;
+
+    const newNodes = template.nodes.map((n) => {
+      const newId = `n${ts}_${n.id}`;
+      idMap.set(n.id, newId);
+      return { ...n, id: newId, position: { x: n.position.x, y: n.position.y + maxY } };
+    });
+
+    const newEdges = template.edges.map((e) => ({
+      ...e,
+      id: `e${ts}_${e.id}`,
+      source: idMap.get(e.source) || e.source,
+      target: idMap.get(e.target) || e.target,
+    }));
+
+    if (append) {
+      setNodes((prev) => [...prev, ...newNodes]);
+      setEdges((prev) => [...prev, ...newEdges]);
+    } else {
+      setNodes(newNodes);
+      setEdges(newEdges);
+    }
+    setShowTemplates(false);
+    toast({ title: `Template "${template.name}" aplicado!` });
   };
 
   const handleAddNode = (type: NodeType) => {
@@ -816,12 +1009,15 @@ export default function BuilderPage() {
             <Loader2 className="h-8 w-8 text-primary/40 animate-spin" />
           </div>
         )}
-        {selectedBotId && !commandsLoading && nodes.length === 0 && (
+        {selectedBotId && !commandsLoading && nodes.length === 0 && !showTemplates && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-center px-6">
-              <Plus className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
+            <div className="text-center px-6 pointer-events-auto">
+              <LayoutTemplate className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
               <p className="text-muted-foreground text-sm font-medium">Nenhum bloco ainda</p>
-              <p className="text-muted-foreground/50 text-xs mt-1">Toque em um tipo de bloco para adicionar</p>
+              <p className="text-muted-foreground/50 text-xs mt-1 mb-4">Comece com um template pronto ou adicione blocos manualmente</p>
+              <Button onClick={() => setShowTemplates(true)} size="sm" className="bg-primary hover:bg-primary/90 text-white">
+                <LayoutTemplate className="h-4 w-4 mr-1.5" /> Usar Template Pronto
+              </Button>
             </div>
           </div>
         )}
@@ -845,6 +1041,47 @@ export default function BuilderPage() {
           {Math.round(transform.scale * 100)}%
         </span>
       </div>
+
+      {/* Template picker overlay */}
+      {showTemplates && selectedBotId && (
+        <div className="absolute inset-0 z-30 bg-background/80 backdrop-blur-sm overflow-auto">
+          <div className="max-w-2xl mx-auto p-4 sm:p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-white text-lg font-bold flex items-center gap-2">
+                  <LayoutTemplate className="h-5 w-5 text-primary" /> Templates Prontos
+                </h2>
+                <p className="text-muted-foreground text-xs mt-0.5">
+                  {nodes.length > 0 ? "Escolha para adicionar ao fluxo existente" : "Escolha um template para começar rapidamente"}
+                </p>
+              </div>
+              <button onClick={() => setShowTemplates(false)} className="text-white/40 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {TEMPLATES.map((tpl) => {
+                const Icon = tpl.icon;
+                return (
+                  <button key={tpl.id} onClick={() => handleApplyTemplate(tpl, nodes.length > 0)}
+                    className={`text-left p-4 rounded-xl border-2 bg-gradient-to-br ${tpl.color} hover:scale-[1.02] active:scale-95 transition-all`}>
+                    <div className="flex items-center gap-2.5 mb-2">
+                      <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                        <Icon className="h-4 w-4 text-white" />
+                      </div>
+                      <div>
+                        <p className="text-white text-sm font-semibold">{tpl.name}</p>
+                        <p className="text-white/40 text-[10px]">{tpl.nodes.length} blocos · {tpl.edges.length} conexões</p>
+                      </div>
+                    </div>
+                    <p className="text-white/60 text-xs leading-relaxed">{tpl.description}</p>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Hints */}
       <div className="absolute bottom-3 left-3 text-[10px] text-muted-foreground/30 pointer-events-none hidden sm:block">
@@ -882,6 +1119,13 @@ export default function BuilderPage() {
               )}
             </SelectContent>
           </Select>
+          <Button variant="outline" size="sm"
+            onClick={() => { setShowTemplates(true); setEditingNodeId(null); setShowSettings(false); }}
+            disabled={!selectedBotId}
+            className="border-white/10 text-white/70 hover:text-white hover:bg-white/5">
+            <LayoutTemplate className="h-4 w-4 mr-1.5" />
+            <span className="hidden sm:inline">Templates</span>
+          </Button>
           <Button variant="outline" size="sm"
             onClick={() => { setShowSettings((v) => !v); setEditingNodeId(null); }}
             disabled={!selectedBotId}
