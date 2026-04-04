@@ -374,6 +374,10 @@ export default function BuilderPage() {
   const panOrigin = useRef({ x: 0, y: 0 });
   const canvasRef = useRef<HTMLDivElement>(null);
   const didPan = useRef(false); // flag to skip click after pan
+  // Pinch-to-zoom tracking
+  const activePointers = useRef<Map<number, { x: number; y: number }>>(new Map());
+  const lastPinchDist = useRef<number | null>(null);
+  const lastPinchMid = useRef<{ x: number; y: number } | null>(null);
 
   // Init smaller scale on mobile
   useEffect(() => {
@@ -448,16 +452,62 @@ export default function BuilderPage() {
 
   // ── Pan handlers ──
   const handleCanvasPointerDown = (e: React.PointerEvent) => {
+    activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+
+    if (activePointers.current.size === 2) {
+      // Two fingers — start pinch
+      isPanning.current = false;
+      const pts = [...activePointers.current.values()];
+      lastPinchDist.current = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      const canvas = canvasRef.current;
+      const rect = canvas?.getBoundingClientRect();
+      lastPinchMid.current = rect
+        ? { x: (pts[0].x + pts[1].x) / 2 - rect.left, y: (pts[0].y + pts[1].y) / 2 - rect.top }
+        : null;
+      return;
+    }
+
     if (connectingEdge) return;
     isPanning.current = true;
     didPan.current = false;
     panStart.current = { x: e.clientX, y: e.clientY };
     panOrigin.current = { x: transform.x, y: transform.y };
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
 
-  // ── Canvas pointer events (pan + connecting edge) ──
+  // ── Canvas pointer events (pan + connecting edge + pinch) ──
   const handleCanvasPointerMove = (e: React.PointerEvent) => {
+    // Update pointer position
+    activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    // ── Pinch-to-zoom (2 fingers) ──
+    if (activePointers.current.size === 2 && lastPinchDist.current !== null) {
+      const pts = [...activePointers.current.values()];
+      const newDist = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
+      const ratio = newDist / lastPinchDist.current;
+      lastPinchDist.current = newDist;
+
+      const canvas = canvasRef.current;
+      const rect = canvas?.getBoundingClientRect();
+      if (rect) {
+        const mid = {
+          x: (pts[0].x + pts[1].x) / 2 - rect.left,
+          y: (pts[0].y + pts[1].y) / 2 - rect.top,
+        };
+        didPan.current = true;
+        setTransform((prev) => {
+          const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev.scale * ratio));
+          const actualRatio = newScale / prev.scale;
+          return {
+            scale: newScale,
+            x: mid.x - actualRatio * (mid.x - prev.x),
+            y: mid.y - actualRatio * (mid.y - prev.y),
+          };
+        });
+      }
+      return;
+    }
+
     if (connectingEdge) {
       const world = screenToWorld(e.clientX, e.clientY);
       setConnectingEdge((prev) => prev ? { ...prev, mouseX: world.x, mouseY: world.y } : null);
@@ -493,6 +543,19 @@ export default function BuilderPage() {
       setConnectingEdge(null); setHoverTargetId(null);
     }
     isPanning.current = false;
+    // Clean up pointer tracking
+    activePointers.current.delete(e.pointerId);
+    if (activePointers.current.size < 2) {
+      lastPinchDist.current = null;
+      lastPinchMid.current = null;
+    }
+    // If one finger remains, restart pan from current position
+    if (activePointers.current.size === 1) {
+      const remaining = [...activePointers.current.values()][0];
+      panStart.current = { x: remaining.x, y: remaining.y };
+      setTransform((prev) => { panOrigin.current = { x: prev.x, y: prev.y }; return prev; });
+      isPanning.current = true;
+    }
   };
 
   const handleCanvasClick = () => {
@@ -783,7 +846,7 @@ export default function BuilderPage() {
           </div>
           <p className="text-muted-foreground/50 text-[10px] mt-1.5 flex items-center gap-1">
             <Info className="h-2.5 w-2.5 flex-shrink-0 text-primary" />
-            Arraste o fundo para navegar · Arraste a <span className="text-primary">bolinha roxa</span> para conectar
+            1 dedo: mover · 2 dedos: zoom · <span className="text-primary">bolinha roxa</span>: conectar
           </p>
         </div>
         {canvasArea}
