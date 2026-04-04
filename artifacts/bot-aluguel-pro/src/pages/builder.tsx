@@ -920,7 +920,12 @@ export default function BuilderPage() {
       {isMobile && (
         <>
           <Sheet open={!!editingNode} onOpenChange={(open) => { if (!open) setEditingNodeId(null); }}>
-            <SheetContent side="bottom" className="bg-card border-t border-white/10 rounded-t-2xl p-0 max-h-[80dvh] flex flex-col">
+            <SheetContent
+              side="bottom"
+              className="bg-card border-t border-white/10 rounded-t-2xl p-0 max-h-[80dvh] flex flex-col"
+              onInteractOutside={(e) => e.preventDefault()}
+              onPointerDownOutside={(e) => e.preventDefault()}
+            >
               {editingNode && (
                 <>
                   <SheetHeader className={`p-4 border-b border-white/5 flex-shrink-0 ${nodeConfig[editingNode.type].color}`}>
@@ -939,7 +944,12 @@ export default function BuilderPage() {
           </Sheet>
 
           <Sheet open={showSettings} onOpenChange={setShowSettings}>
-            <SheetContent side="bottom" className="bg-card border-t border-white/10 rounded-t-2xl p-0 max-h-[80dvh] flex flex-col">
+            <SheetContent
+              side="bottom"
+              className="bg-card border-t border-white/10 rounded-t-2xl p-0 max-h-[80dvh] flex flex-col"
+              onInteractOutside={(e) => e.preventDefault()}
+              onPointerDownOutside={(e) => e.preventDefault()}
+            >
               <SheetHeader className="p-4 border-b border-white/5 flex-shrink-0 bg-violet-500/10">
                 <SheetTitle className="text-white text-sm flex items-center gap-2">
                   <Settings2 className="h-4 w-4 text-violet-400" />
