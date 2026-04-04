@@ -15,7 +15,7 @@ import { db, botsTable, botCommandsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import type { Response } from "express";
 
-const SESSION_DIR = "/tmp/baileys-sessions";
+const SESSION_DIR = path.join(process.cwd(), ".baileys-sessions");
 
 if (!fs.existsSync(SESSION_DIR)) {
   fs.mkdirSync(SESSION_DIR, { recursive: true });
