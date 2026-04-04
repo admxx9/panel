@@ -324,6 +324,8 @@ function NodeCard({
   const cfg = nodeConfig[node.type];
   const Icon = cfg.icon;
   const dragOffset = useRef<{ x: number; y: number } | null>(null);
+  const pointerDownPos = useRef<{ x: number; y: number; id: number } | null>(null);
+  const dragLocked = useRef(false);
   const cardRef = useRef<HTMLDivElement>(null);
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clickCount = useRef(0);
@@ -340,24 +342,42 @@ function NodeCard({
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault(); e.stopPropagation();
-    cardRef.current?.setPointerCapture(e.pointerId);
+    // Record down position but don't capture yet — wait for drag threshold
+    pointerDownPos.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
+    dragLocked.current = false;
     const world = screenToWorld(e.clientX, e.clientY);
     dragOffset.current = { x: world.x - node.position.x, y: world.y - node.position.y };
     onSelect();
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (!dragOffset.current) return;
+    if (!dragOffset.current || !pointerDownPos.current) return;
+    // Cancel drag if multi-touch
     if (touchCount.current >= 2) {
       dragOffset.current = null;
+      dragLocked.current = false;
+      pointerDownPos.current = null;
       cardRef.current?.releasePointerCapture(e.pointerId);
       return;
+    }
+    const dx = e.clientX - pointerDownPos.current.x;
+    const dy = e.clientY - pointerDownPos.current.y;
+    const dist = Math.hypot(dx, dy);
+    // Lock to drag only after 6px threshold
+    if (!dragLocked.current) {
+      if (dist < 6) return;
+      dragLocked.current = true;
+      cardRef.current?.setPointerCapture(e.pointerId);
     }
     const world = screenToWorld(e.clientX, e.clientY);
     onMove(node.id, Math.max(0, world.x - dragOffset.current.x), Math.max(0, world.y - dragOffset.current.y));
   };
 
-  const handlePointerUp = () => { dragOffset.current = null; };
+  const handlePointerUp = () => {
+    dragOffset.current = null;
+    dragLocked.current = false;
+    pointerDownPos.current = null;
+  };
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -814,8 +834,28 @@ export default function BuilderPage() {
     };
   }, []);
 
+  // ── Native touch prevention (non-passive so we can call preventDefault) ──
+  // Prevents mobile browser from scroll-hijacking the canvas pan gestures.
+  // Skips interactive elements so button taps still fire click events.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const prevent = (e: TouchEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("button, a, input, select, textarea")) return;
+      e.preventDefault();
+    };
+    canvas.addEventListener("touchstart", prevent, { passive: false });
+    canvas.addEventListener("touchmove", prevent, { passive: false });
+    return () => {
+      canvas.removeEventListener("touchstart", prevent);
+      canvas.removeEventListener("touchmove", prevent);
+    };
+  }, []);
+
   // ── Pan handlers ──
   const handleCanvasPointerDown = (e: React.PointerEvent) => {
+    e.preventDefault();
     activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 
@@ -836,11 +876,12 @@ export default function BuilderPage() {
     isPanning.current = true;
     didPan.current = false;
     panStart.current = { x: e.clientX, y: e.clientY };
-    panOrigin.current = { x: transform.x, y: transform.y };
+    panOrigin.current = { x: transformRef.current.x, y: transformRef.current.y };
   };
 
   // ── Canvas pointer events (pan + connecting edge + pinch) ──
   const handleCanvasPointerMove = (e: React.PointerEvent) => {
+    e.preventDefault();
     // Update pointer position
     activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
@@ -880,8 +921,8 @@ export default function BuilderPage() {
       const rect = canvas.getBoundingClientRect();
       const sx = e.clientX - rect.left;
       const sy = e.clientY - rect.top;
-      const wx = (sx - transform.x) / transform.scale;
-      const wy = (sy - transform.y) / transform.scale;
+      const wx = (sx - transformRef.current.x) / transformRef.current.scale;
+      const wy = (sy - transformRef.current.y) / transformRef.current.scale;
       const target = findNodeAtWorldPoint(wx, wy, connectingEdge.sourceId);
       setHoverTargetId(target);
       return;
@@ -890,7 +931,9 @@ export default function BuilderPage() {
     const dx = e.clientX - panStart.current.x;
     const dy = e.clientY - panStart.current.y;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didPan.current = true;
-    setTransform((prev) => ({ ...prev, x: panOrigin.current.x + dx, y: panOrigin.current.y + dy }));
+    const newX = panOrigin.current.x + dx;
+    const newY = panOrigin.current.y + dy;
+    setTransform((prev) => ({ ...prev, x: newX, y: newY }));
   };
 
   const handleCanvasPointerUp = (e: React.PointerEvent) => {
@@ -898,8 +941,8 @@ export default function BuilderPage() {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
-      const wx = (e.clientX - rect.left - transform.x) / transform.scale;
-      const wy = (e.clientY - rect.top - transform.y) / transform.scale;
+      const wx = (e.clientX - rect.left - transformRef.current.x) / transformRef.current.scale;
+      const wy = (e.clientY - rect.top - transformRef.current.y) / transformRef.current.scale;
       const targetId = findNodeAtWorldPoint(wx, wy, connectingEdge.sourceId);
       if (targetId && !edges.some((ed) => ed.source === connectingEdge.sourceId && ed.target === targetId)) {
         setEdges((prev) => [...prev, { id: `e${Date.now()}`, source: connectingEdge.sourceId, target: targetId }]);
@@ -907,17 +950,16 @@ export default function BuilderPage() {
       setConnectingEdge(null); setHoverTargetId(null);
     }
     isPanning.current = false;
-    // Clean up pointer tracking
     activePointers.current.delete(e.pointerId);
     if (activePointers.current.size < 2) {
       lastPinchDist.current = null;
       lastPinchMid.current = null;
     }
-    // If one finger remains, restart pan from current position
+    // If one finger remains after pinch, restart pan from its current position
     if (activePointers.current.size === 1) {
       const remaining = [...activePointers.current.values()][0];
       panStart.current = { x: remaining.x, y: remaining.y };
-      setTransform((prev) => { panOrigin.current = { x: prev.x, y: prev.y }; return prev; });
+      panOrigin.current = { x: transformRef.current.x, y: transformRef.current.y };
       isPanning.current = true;
     }
   };
