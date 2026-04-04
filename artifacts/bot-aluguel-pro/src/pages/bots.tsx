@@ -96,12 +96,12 @@ export default function BotsPage() {
                   {bot.phone ? `+${bot.phone}` : "Sem telefone vinculado"} &bull; {bot.totalGroups} grupos
                 </p>
                 <div className="flex gap-2">
-                  <Link href={`/dashboard/bots/${bot.id}`} className="flex-1">
-                    <Button size="sm" variant="outline" className="w-full border-white/10 bg-white/5 hover:bg-white/10 text-white text-xs">
+                  <Button asChild size="sm" variant="outline" className="flex-1 border-white/10 bg-white/5 hover:bg-white/10 text-white text-xs">
+                    <Link href={`/dashboard/bots/${bot.id}`}>
                       <ExternalLink className="h-3 w-3 mr-1" />
                       Gerenciar
-                    </Button>
-                  </Link>
+                    </Link>
+                  </Button>
                   <Button
                     size="sm"
                     variant="ghost"

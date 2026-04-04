@@ -21,11 +21,9 @@ export function Navbar() {
           <Link href="/login" className="text-sm font-medium text-white hover:text-primary transition-colors">
             Entrar
           </Link>
-          <Link href="/register" className="hidden sm:inline-flex">
-            <Button className="bg-primary hover:bg-primary/90 text-white font-medium glow-primary">
-              Começar Agora
-            </Button>
-          </Link>
+          <Button asChild className="hidden sm:inline-flex bg-primary hover:bg-primary/90 text-white font-medium glow-primary">
+            <Link href="/register">Começar Agora</Link>
+          </Button>
         </div>
       </div>
     </header>

@@ -86,16 +86,12 @@ export default function LandingPage() {
             <span className="font-bold text-lg text-white">BotAluguel<span className="text-primary">.Pro</span></span>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/login">
-              <Button variant="ghost" size="sm" className="text-muted-foreground hover:text-white">
-                Entrar
-              </Button>
-            </Link>
-            <Link href="/register">
-              <Button size="sm" className="bg-primary hover:bg-primary/90 text-white">
-                Comecar Gratis
-              </Button>
-            </Link>
+            <Button asChild variant="ghost" size="sm" className="text-muted-foreground hover:text-white">
+              <Link href="/login">Entrar</Link>
+            </Button>
+            <Button asChild size="sm" className="bg-primary hover:bg-primary/90 text-white">
+              <Link href="/register">Comecar Gratis</Link>
+            </Button>
           </div>
         </div>
       </header>
@@ -137,17 +133,15 @@ export default function LandingPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <Link href="/register">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-base font-semibold group">
+            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white px-8 py-6 text-base font-semibold group">
+              <Link href="/register">
                 Criar conta gratis
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
-              </Button>
-            </Link>
-            <Link href="/login">
-              <Button size="lg" variant="outline" className="border-white/10 bg-white/5 hover:bg-white/10 text-white px-8 py-6 text-base">
-                Ja tenho conta
-              </Button>
-            </Link>
+              </Link>
+            </Button>
+            <Button asChild size="lg" variant="outline" className="border-white/10 bg-white/5 hover:bg-white/10 text-white px-8 py-6 text-base">
+              <Link href="/login">Ja tenho conta</Link>
+            </Button>
           </motion.div>
           <motion.div
             className="mt-8 text-sm text-muted-foreground"
@@ -248,14 +242,13 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link href="/register">
-                  <Button
-                    className={`w-full ${plan.popular ? "bg-primary hover:bg-primary/90 text-white" : "border-white/10 bg-white/5 hover:bg-white/10 text-white"}`}
-                    variant={plan.popular ? "default" : "outline"}
-                  >
-                    Comecar Agora
-                  </Button>
-                </Link>
+                <Button
+                  asChild
+                  className={`w-full ${plan.popular ? "bg-primary hover:bg-primary/90 text-white" : "border-white/10 bg-white/5 hover:bg-white/10 text-white"}`}
+                  variant={plan.popular ? "default" : "outline"}
+                >
+                  <Link href="/register">Comecar Agora</Link>
+                </Button>
               </motion.div>
             ))}
           </motion.div>
@@ -275,12 +268,12 @@ export default function LandingPage() {
             <p className="text-muted-foreground mb-8">
               Junte-se a centenas de usuarios que ja usam o BotAluguel Pro para automatizar atendimentos e grupos.
             </p>
-            <Link href="/register">
-              <Button size="lg" className="bg-primary hover:bg-primary/90 text-white px-10 py-6 text-base font-semibold">
+            <Button asChild size="lg" className="bg-primary hover:bg-primary/90 text-white px-10 py-6 text-base font-semibold">
+              <Link href="/register">
                 <Smartphone className="mr-2 h-5 w-5" />
                 Criar meu bot agora
-              </Button>
-            </Link>
+              </Link>
+            </Button>
           </motion.div>
         </div>
       </section>

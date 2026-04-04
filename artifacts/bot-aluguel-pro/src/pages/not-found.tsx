@@ -11,12 +11,12 @@ export default function NotFound() {
         </div>
         <h1 className="text-5xl font-extrabold text-white mb-2">404</h1>
         <p className="text-muted-foreground mb-6">Pagina nao encontrada</p>
-        <Link href="/">
-          <Button className="bg-primary hover:bg-primary/90 text-white">
+        <Button asChild className="bg-primary hover:bg-primary/90 text-white">
+          <Link href="/">
             <Home className="mr-2 h-4 w-4" />
             Voltar ao inicio
-          </Button>
-        </Link>
+          </Link>
+        </Button>
       </div>
     </div>
   );
