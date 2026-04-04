@@ -1,5 +1,6 @@
 import app from "./app";
 import { logger } from "./lib/logger";
+import { restoreSessions } from "./lib/whatsapp.js";
 
 const rawPort = process.env["PORT"];
 
@@ -22,4 +23,10 @@ app.listen(port, (err) => {
   }
 
   logger.info({ port }, "Server listening");
+
+  setTimeout(() => {
+    restoreSessions().catch((err) => {
+      logger.error({ err }, "Failed to restore sessions on startup");
+    });
+  }, 3000);
 });

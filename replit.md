@@ -38,6 +38,11 @@
 - Dashboard: stats (moedas, bots, plano ativo, mensagens), atividade recente
 - Bots: listar, criar, deletar, gerenciar (QR Code / codigo de 8 digitos)
 - Builder Visual: editor drag-and-drop de no-code com blocos (Comando, Acao, Condicao, Resposta)
+  - Acoes: figurinha, kick, ban, promote, demote, warn, mute/unmute grupo, abrir/fechar grupo, link do grupo, revogar link, hidetag, info grupo, anti-link, reagir, apagar mensagem, enviar imagem
+  - Condicoes: e grupo, e privado, e admin, nao e admin, bot e admin, tem imagem/video/sticker/midia, contem link, contem texto, tem mencao, e reply
+  - Campos condicionais: showWhen mostra campos extras conforme tipo selecionado
+  - Dicas contextuais para cada tipo de acao/condicao
+- WhatsApp: auto-reconnect de sessoes ao iniciar servidor (restoreSessions)
 - Planos: Basico (100), Pro (250), Premium (500) moedas/30 dias
 - Pagamentos: recarga PIX com codigo copia-e-cola, historico
 - Admin: stats da plataforma, tabela de usuarios e pagamentos

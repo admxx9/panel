@@ -61,30 +61,59 @@ const nodeConfig: Record<NodeType, { color: string; border: string; icon: React.
   response: { color: "bg-green-500/10", border: "border-green-500/40", icon: Reply, label: "Resposta", description: "Envia texto" },
 };
 
-const CONFIG_FIELDS: Record<NodeType, { key: string; label: string; type: "text" | "textarea" | "select"; placeholder?: string; options?: { value: string; label: string }[] }[]> = {
+const CONFIG_FIELDS: Record<NodeType, { key: string; label: string; type: "text" | "textarea" | "select" | "checkbox"; placeholder?: string; options?: { value: string; label: string }[]; showWhen?: (config: Record<string, unknown>) => boolean }[]> = {
   command: [{ key: "trigger", label: "Gatilho (sem prefixo)", type: "text", placeholder: "ex: sticker" }],
   action: [
     {
       key: "action", label: "Tipo de Ação", type: "select", options: [
         { value: "make_sticker", label: "🖼️ Criar Figurinha" },
-        { value: "send_text", label: "💬 Enviar Texto" },
         { value: "kick_member", label: "🚪 Remover Membro" },
         { value: "ban_member", label: "🔨 Banir Membro" },
+        { value: "promote_member", label: "⬆️ Promover a Admin" },
+        { value: "demote_member", label: "⬇️ Rebaixar Admin" },
+        { value: "warn_member", label: "⚠️ Dar Aviso (Warn)" },
+        { value: "reset_warns", label: "🔄 Resetar Avisos" },
+        { value: "mute_group", label: "🔇 Silenciar Grupo" },
+        { value: "unmute_group", label: "🔊 Abrir Grupo" },
+        { value: "close_group", label: "🔒 Fechar Grupo" },
+        { value: "open_group", label: "🔓 Abrir Grupo" },
+        { value: "get_group_link", label: "🔗 Link do Grupo" },
+        { value: "revoke_group_link", label: "🔄 Revogar Link" },
+        { value: "hidetag", label: "📢 Marcar Todos (Hidetag)" },
+        { value: "group_info", label: "📋 Info do Grupo" },
+        { value: "antilink", label: "🚫 Anti-Link" },
+        { value: "react_message", label: "😀 Reagir à Mensagem" },
+        { value: "delete_message", label: "🗑️ Apagar Mensagem" },
+        { value: "send_image", label: "🖼️ Enviar Imagem" },
       ],
     },
-    { key: "message", label: "Mensagem adicional (opcional)", type: "text", placeholder: "ex: Figurinha criada!" },
+    { key: "message", label: "Mensagem (opcional)", type: "text", placeholder: "ex: Ação executada!" },
+    { key: "max_warns", label: "Máx. avisos antes de kick", type: "text", placeholder: "3", showWhen: (c) => c.action === "warn_member" },
+    { key: "emoji", label: "Emoji para reação", type: "text", placeholder: "👍", showWhen: (c) => c.action === "react_message" },
+    { key: "image_url", label: "URL da imagem", type: "text", placeholder: "https://...", showWhen: (c) => c.action === "send_image" },
+    { key: "kick_on_link", label: "Remover quem enviar link", type: "checkbox", showWhen: (c) => c.action === "antilink" },
   ],
   condition: [
     {
       key: "condition", label: "Condição", type: "select", options: [
-        { value: "has_image", label: "📷 Tem imagem/vídeo" },
-        { value: "is_admin", label: "👑 Usuário é admin" },
-        { value: "contains_text", label: "🔍 Mensagem contém..." },
+        { value: "is_group", label: "👥 É grupo" },
+        { value: "is_private", label: "💬 É privado" },
+        { value: "is_admin", label: "👑 Remetente é admin" },
+        { value: "is_not_admin", label: "🚫 Remetente NÃO é admin" },
+        { value: "is_bot_admin", label: "🤖 Bot é admin" },
+        { value: "has_image", label: "📷 Tem imagem" },
+        { value: "has_video", label: "🎥 Tem vídeo" },
+        { value: "has_sticker", label: "🏷️ Tem figurinha" },
+        { value: "has_media", label: "📎 Tem qualquer mídia" },
+        { value: "contains_link", label: "🔗 Contém link" },
+        { value: "contains_text", label: "🔍 Contém texto..." },
+        { value: "has_mention", label: "📌 Menciona alguém" },
+        { value: "is_reply", label: "↩️ É resposta (reply)" },
       ],
     },
-    { key: "value", label: "Valor", type: "text", placeholder: "ex: palavra-chave" },
+    { key: "value", label: "Valor", type: "text", placeholder: "ex: palavra-chave", showWhen: (c) => c.condition === "contains_text" },
   ],
-  response: [{ key: "text", label: "Texto da Resposta", type: "textarea", placeholder: "Digite a mensagem..." }],
+  response: [{ key: "text", label: "Texto da Resposta", type: "textarea", placeholder: "Use {user} para mencionar, {group} para o grupo" }],
 };
 
 const BLOCK_TYPES: NodeType[] = ["command", "action", "condition", "response"];
@@ -241,24 +270,35 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-auto p-4 space-y-4">
-        {fields.map((field) => (
+        {fields.filter((field) => !field.showWhen || field.showWhen(localConfig)).map((field) => (
           <div key={field.key}>
-            <Label className="text-white/70 text-xs mb-1.5 block">{field.label}</Label>
-            {field.type === "select" && field.options ? (
-              <Select value={String(localConfig[field.key] ?? "")} onValueChange={(v) => setLocalConfig((c) => ({ ...c, [field.key]: v }))}>
-                <SelectTrigger className="bg-background border-white/10 text-white h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                <SelectContent className="bg-card border-white/10">
-                  {field.options.map((opt) => <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-white/5 text-sm">{opt.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            ) : field.type === "textarea" ? (
-              <Textarea value={String(localConfig[field.key] ?? "")}
-                onChange={(e) => setLocalConfig((c) => ({ ...c, [field.key]: e.target.value }))}
-                placeholder={field.placeholder} className="bg-background border-white/10 text-white text-sm min-h-[80px] resize-none" />
+            {field.type === "checkbox" ? (
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={!!localConfig[field.key]}
+                  onChange={(e) => setLocalConfig((c) => ({ ...c, [field.key]: e.target.checked }))}
+                  className="w-4 h-4 rounded border-white/20 bg-background accent-primary" />
+                <span className="text-white/70 text-xs">{field.label}</span>
+              </label>
             ) : (
-              <Input value={String(localConfig[field.key] ?? "")}
-                onChange={(e) => setLocalConfig((c) => ({ ...c, [field.key]: e.target.value }))}
-                placeholder={field.placeholder} className="bg-background border-white/10 text-white h-9 text-sm" />
+              <>
+                <Label className="text-white/70 text-xs mb-1.5 block">{field.label}</Label>
+                {field.type === "select" && field.options ? (
+                  <Select value={String(localConfig[field.key] ?? "")} onValueChange={(v) => setLocalConfig((c) => ({ ...c, [field.key]: v }))}>
+                    <SelectTrigger className="bg-background border-white/10 text-white h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
+                    <SelectContent className="bg-card border-white/10">
+                      {field.options.map((opt) => <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-white/5 text-sm">{opt.label}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                ) : field.type === "textarea" ? (
+                  <Textarea value={String(localConfig[field.key] ?? "")}
+                    onChange={(e) => setLocalConfig((c) => ({ ...c, [field.key]: e.target.value }))}
+                    placeholder={field.placeholder} className="bg-background border-white/10 text-white text-sm min-h-[80px] resize-none" />
+                ) : (
+                  <Input value={String(localConfig[field.key] ?? "")}
+                    onChange={(e) => setLocalConfig((c) => ({ ...c, [field.key]: e.target.value }))}
+                    placeholder={field.placeholder} className="bg-background border-white/10 text-white h-9 text-sm" />
+                )}
+              </>
             )}
           </div>
         ))}
@@ -268,10 +308,32 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
             <p className="font-mono text-white/80 bg-background/60 px-2 py-1 rounded">{prefix}{String(localConfig.trigger || "sticker")}</p>
           </div>
         )}
-        {node.type === "action" && localConfig.action === "make_sticker" && (
+        {node.type === "action" && (
           <div className="rounded-lg bg-violet-500/5 border border-violet-500/20 p-3 text-xs text-muted-foreground">
-            <p className="font-semibold text-white/60 mb-1">🖼️ Como usar</p>
-            <p>Responda (<span className="text-white/70 font-semibold">reply</span>) a uma imagem/vídeo com o comando. O bot converte em figurinha.</p>
+            {localConfig.action === "make_sticker" && (<><p className="font-semibold text-white/60 mb-1">🖼️ Figurinha</p><p>Responda a uma imagem/vídeo com o comando para converter em figurinha.</p></>)}
+            {localConfig.action === "kick_member" && (<><p className="font-semibold text-white/60 mb-1">🚪 Remover</p><p>Mencione o membro ou responda à mensagem dele. Bot precisa ser admin.</p></>)}
+            {localConfig.action === "ban_member" && (<><p className="font-semibold text-white/60 mb-1">🔨 Banir</p><p>Mencione o membro. Bot precisa ser admin do grupo.</p></>)}
+            {localConfig.action === "promote_member" && (<><p className="font-semibold text-white/60 mb-1">⬆️ Promover</p><p>Mencione o membro para promover a admin. Bot precisa ser admin.</p></>)}
+            {localConfig.action === "demote_member" && (<><p className="font-semibold text-white/60 mb-1">⬇️ Rebaixar</p><p>Mencione o admin para rebaixar. Bot precisa ser admin.</p></>)}
+            {localConfig.action === "warn_member" && (<><p className="font-semibold text-white/60 mb-1">⚠️ Aviso</p><p>Mencione o membro. Ao atingir o máximo, é removido automaticamente.</p></>)}
+            {localConfig.action === "hidetag" && (<><p className="font-semibold text-white/60 mb-1">📢 Hidetag</p><p>Marca todos os membros do grupo sem mostrar as menções.</p></>)}
+            {localConfig.action === "antilink" && (<><p className="font-semibold text-white/60 mb-1">🚫 Anti-Link</p><p>Detecta e remove links automaticamente. Admins são ignorados. Adicione este bloco sem conectar a um comando — ele funciona automaticamente.</p></>)}
+            {localConfig.action === "get_group_link" && (<><p className="font-semibold text-white/60 mb-1">🔗 Link</p><p>Gera e envia o link de convite do grupo. Bot precisa ser admin.</p></>)}
+            {localConfig.action === "react_message" && (<><p className="font-semibold text-white/60 mb-1">😀 Reação</p><p>Reage à mensagem com o emoji configurado.</p></>)}
+            {localConfig.action === "group_info" && (<><p className="font-semibold text-white/60 mb-1">📋 Info</p><p>Mostra informações do grupo: nome, membros, admins e descrição.</p></>)}
+            {localConfig.action === "delete_message" && (<><p className="font-semibold text-white/60 mb-1">🗑️ Apagar</p><p>Responda à mensagem que deseja apagar. Bot precisa ser admin.</p></>)}
+          </div>
+        )}
+        {node.type === "condition" && (
+          <div className="rounded-lg bg-yellow-500/5 border border-yellow-500/20 p-3 text-xs text-muted-foreground">
+            <p className="font-semibold text-white/60 mb-1">💡 Condições</p>
+            <p>Se a condição for <span className="text-green-400 font-semibold">verdadeira</span>, segue a primeira conexão. Caso contrário, segue a segunda (se houver).</p>
+          </div>
+        )}
+        {node.type === "response" && (
+          <div className="rounded-lg bg-green-500/5 border border-green-500/20 p-3 text-xs text-muted-foreground">
+            <p className="font-semibold text-white/60 mb-1">💡 Variáveis</p>
+            <p><code className="text-green-300">{"{user}"}</code> = menciona o remetente | <code className="text-green-300">{"{group}"}</code> = ID do grupo</p>
           </div>
         )}
       </div>
