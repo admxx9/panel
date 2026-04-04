@@ -25,7 +25,8 @@ export default function RegisterPage() {
       toast({ title: "Conta criada!", description: "Voce ganhou 30 moedas de boas-vindas!" });
       setLocation("/dashboard");
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Erro ao criar conta";
+      const apiErr = err as { data?: { message?: string }; message?: string };
+      const msg = apiErr?.data?.message || apiErr?.message || "Erro ao criar conta";
       toast({ title: "Erro", description: msg, variant: "destructive" });
     }
   };

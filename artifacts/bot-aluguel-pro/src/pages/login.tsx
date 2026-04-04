@@ -23,7 +23,8 @@ export default function LoginPage() {
       login(result.token, result.user);
       setLocation("/dashboard");
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Erro ao fazer login";
+      const apiErr = err as { data?: { message?: string }; message?: string };
+      const msg = apiErr?.data?.message || apiErr?.message || "Erro ao fazer login";
       toast({ title: "Erro", description: msg, variant: "destructive" });
     }
   };

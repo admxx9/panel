@@ -38,7 +38,8 @@ export default function PlansPage() {
       queryClient.invalidateQueries({ queryKey: getGetActivePlanQueryKey() });
       toast({ title: "Plano ativado!", description: `${planName} ativado com sucesso por 30 dias!` });
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || "Erro ao ativar plano";
+      const apiErr = err as { data?: { message?: string }; message?: string };
+      const msg = apiErr?.data?.message || apiErr?.message || "Erro ao ativar plano";
       toast({ title: "Erro", description: msg, variant: "destructive" });
     }
   };
