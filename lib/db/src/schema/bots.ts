@@ -12,6 +12,8 @@ export const botsTable = pgTable("bots", {
   qrCode: text("qr_code"),
   pairCode: text("pair_code"),
   totalGroups: integer("total_groups").notNull().default(0),
+  prefix: text("prefix").default("."),
+  ownerPhone: text("owner_phone"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   connectedAt: timestamp("connected_at"),
 });

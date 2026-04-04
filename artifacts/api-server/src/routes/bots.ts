@@ -245,6 +245,38 @@ router.put("/:botId/commands", requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
+router.patch("/:botId/settings", requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { botId } = req.params as { botId: string };
+    const { name, prefix, ownerPhone } = req.body as { name?: string; prefix?: string; ownerPhone?: string };
+
+    const [bot] = await db
+      .select()
+      .from(botsTable)
+      .where(and(eq(botsTable.id, botId), eq(botsTable.userId, req.userId!)));
+    if (!bot) {
+      res.status(404).json({ message: "Bot não encontrado" });
+      return;
+    }
+
+    const updates: Partial<typeof botsTable.$inferInsert> = {};
+    if (name !== undefined && name.trim()) updates.name = name.trim();
+    if (prefix !== undefined) updates.prefix = prefix || ".";
+    if (ownerPhone !== undefined) updates.ownerPhone = ownerPhone.replace(/\D/g, "") || null;
+
+    const [updated] = await db
+      .update(botsTable)
+      .set(updates)
+      .where(eq(botsTable.id, botId))
+      .returning();
+
+    res.json(formatBot(updated));
+  } catch (err) {
+    req.log.error({ err }, "Update bot settings error");
+    res.status(500).json({ message: "Erro interno" });
+  }
+});
+
 function formatBot(bot: typeof botsTable.$inferSelect) {
   return {
     id: bot.id,
@@ -256,6 +288,8 @@ function formatBot(bot: typeof botsTable.$inferSelect) {
     qrCode: bot.qrCode,
     pairCode: bot.pairCode,
     totalGroups: bot.totalGroups,
+    prefix: bot.prefix ?? ".",
+    ownerPhone: bot.ownerPhone ?? null,
     createdAt: bot.createdAt,
     connectedAt: bot.connectedAt,
   };

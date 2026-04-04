@@ -1,12 +1,13 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, MessageSquare, CreditCard, Wallet, LogOut, Settings } from "lucide-react";
+import { LayoutDashboard, MessageSquare, CreditCard, Wallet, LogOut, Settings, Wrench, SlidersHorizontal } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 const navItems = [
   { href: "/dashboard", label: "Visão Geral", icon: LayoutDashboard },
   { href: "/dashboard/bots", label: "Meus Bots", icon: MessageSquare },
-  { href: "/dashboard/builder", label: "Construtor", icon: Settings },
+  { href: "/dashboard/builder", label: "Construtor", icon: Wrench },
+  { href: "/dashboard/settings", label: "Configurações", icon: SlidersHorizontal },
   { href: "/dashboard/plans", label: "Planos", icon: CreditCard },
   { href: "/dashboard/payments", label: "Comprar Moedas", icon: Wallet },
 ];

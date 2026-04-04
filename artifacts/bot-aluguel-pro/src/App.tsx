@@ -15,6 +15,7 @@ import BuilderPage from "@/pages/builder";
 import PlansPage from "@/pages/plans";
 import PaymentsPage from "@/pages/payments";
 import AdminPage from "@/pages/admin";
+import SettingsPage from "@/pages/settings";
 
 setAuthTokenGetter(() => localStorage.getItem("bot_token"));
 
@@ -39,6 +40,7 @@ function Router() {
       <Route path="/dashboard/builder" component={BuilderPage} />
       <Route path="/dashboard/plans" component={PlansPage} />
       <Route path="/dashboard/payments" component={PaymentsPage} />
+      <Route path="/dashboard/settings" component={SettingsPage} />
       <Route path="/admin" component={AdminPage} />
       <Route component={NotFound} />
     </Switch>
