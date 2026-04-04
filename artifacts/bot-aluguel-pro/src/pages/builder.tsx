@@ -366,6 +366,7 @@ export default function BuilderPage() {
   const [showSettings, setShowSettings] = useState(false);
   const [connectingEdge, setConnectingEdge] = useState<ConnectingEdge | null>(null);
   const [hoverTargetId, setHoverTargetId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
 
   // ── Pan + Zoom ──
   const [transform, setTransform] = useState<CanvasTransform>({ x: 20, y: 20, scale: 1 });
@@ -379,12 +380,19 @@ export default function BuilderPage() {
   const lastPinchDist = useRef<number | null>(null);
   const lastPinchMid = useRef<{ x: number; y: number } | null>(null);
 
-  // Init smaller scale on mobile
+  // Init smaller scale on mobile + detect mobile
   useEffect(() => {
-    if (window.innerWidth < 768) {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener("resize", check);
+    return () => window.removeEventListener("resize", check);
+  }, []);
+
+  useEffect(() => {
+    if (isMobile) {
       setTransform({ x: 12, y: 12, scale: 0.72 });
     }
-  }, []);
+  }, [isMobile]);
 
   const currentPrefix = botData?.prefix ?? ".";
 
@@ -909,7 +917,7 @@ export default function BuilderPage() {
       </div>
 
       {/* MOBILE: edit bottom sheet */}
-      <Sheet open={!!editingNode} onOpenChange={(open) => { if (!open) setEditingNodeId(null); }}>
+      <Sheet open={isMobile && !!editingNode} onOpenChange={(open) => { if (!open) setEditingNodeId(null); }}>
         <SheetContent side="bottom" className="bg-card border-t border-white/10 rounded-t-2xl p-0 max-h-[80dvh] flex flex-col md:hidden">
           {editingNode && (
             <>
@@ -929,7 +937,7 @@ export default function BuilderPage() {
       </Sheet>
 
       {/* MOBILE: settings bottom sheet */}
-      <Sheet open={showSettings} onOpenChange={setShowSettings}>
+      <Sheet open={isMobile && showSettings} onOpenChange={setShowSettings}>
         <SheetContent side="bottom" className="bg-card border-t border-white/10 rounded-t-2xl p-0 max-h-[80dvh] flex flex-col md:hidden">
           <SheetHeader className="p-4 border-b border-white/5 flex-shrink-0 bg-violet-500/10">
             <SheetTitle className="text-white text-sm flex items-center gap-2">
