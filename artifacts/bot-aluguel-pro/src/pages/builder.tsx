@@ -3,6 +3,7 @@ import {
   Save, Plus, Trash2, Bot, Loader2, MessageSquare, Zap, GitBranch,
   Reply, Info, Pencil, X, ChevronRight, Settings2, Link2, ChevronDown,
   ZoomIn, ZoomOut, Maximize2, LayoutTemplate, Image, Shield, Users, Star, HandMetal,
+  Gamepad2, Crown, Lock, Heart, Sparkles, Send, Eye, Copy,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -62,36 +63,138 @@ const nodeConfig: Record<NodeType, { color: string; border: string; icon: React.
 };
 
 const CONFIG_FIELDS: Record<NodeType, { key: string; label: string; type: "text" | "textarea" | "select" | "checkbox"; placeholder?: string; options?: { value: string; label: string }[]; showWhen?: (config: Record<string, unknown>) => boolean }[]> = {
-  command: [{ key: "trigger", label: "Gatilho (sem prefixo)", type: "text", placeholder: "ex: sticker" }],
+  command: [
+    { key: "trigger", label: "Gatilho (sem prefixo)", type: "text", placeholder: "ex: sticker" },
+    { key: "admin_only", label: "Apenas admins podem usar", type: "checkbox" },
+    { key: "owner_only", label: "Apenas o dono pode usar", type: "checkbox" },
+    { key: "group_only", label: "Funciona apenas em grupo", type: "checkbox" },
+    { key: "private_only", label: "Funciona apenas no privado", type: "checkbox" },
+    { key: "cooldown", label: "Cooldown (segundos)", type: "text", placeholder: "0" },
+  ],
   action: [
     {
       key: "action", label: "Tipo de Ação", type: "select", options: [
         { value: "make_sticker", label: "🖼️ Criar Figurinha" },
+        { value: "send_image", label: "🖼️ Enviar Imagem" },
+        { value: "send_audio", label: "🎵 Enviar Áudio" },
+        { value: "send_video", label: "🎥 Enviar Vídeo" },
+        { value: "send_document", label: "📄 Enviar Documento" },
+        { value: "send_gif", label: "🎭 Enviar GIF" },
+        { value: "send_sticker", label: "🏷️ Enviar Figurinha Pronta" },
         { value: "kick_member", label: "🚪 Remover Membro" },
         { value: "ban_member", label: "🔨 Banir Membro" },
-        { value: "promote_member", label: "⬆️ Promover a Admin" },
-        { value: "demote_member", label: "⬇️ Rebaixar Admin" },
         { value: "warn_member", label: "⚠️ Dar Aviso (Warn)" },
         { value: "reset_warns", label: "🔄 Resetar Avisos" },
+        { value: "mute_member", label: "🔇 Mutar Membro" },
+        { value: "unmute_member", label: "🔊 Desmutar Membro" },
+        { value: "delete_message", label: "🗑️ Apagar Mensagem" },
+        { value: "promote_member", label: "⬆️ Promover a Admin" },
+        { value: "demote_member", label: "⬇️ Rebaixar Admin" },
         { value: "mute_group", label: "🔇 Silenciar Grupo" },
-        { value: "unmute_group", label: "🔊 Abrir Grupo" },
+        { value: "unmute_group", label: "🔊 Liberar Grupo" },
         { value: "close_group", label: "🔒 Fechar Grupo" },
         { value: "open_group", label: "🔓 Abrir Grupo" },
+        { value: "set_group_name", label: "📝 Mudar Nome do Grupo" },
+        { value: "set_group_desc", label: "📄 Mudar Descrição do Grupo" },
+        { value: "set_group_photo", label: "🖼️ Mudar Foto do Grupo" },
         { value: "get_group_link", label: "🔗 Link do Grupo" },
-        { value: "revoke_group_link", label: "🔄 Revogar Link" },
+        { value: "revoke_group_link", label: "🔄 Revogar Link do Grupo" },
         { value: "hidetag", label: "📢 Marcar Todos (Hidetag)" },
-        { value: "group_info", label: "📋 Info do Grupo" },
-        { value: "antilink", label: "🚫 Anti-Link" },
         { value: "react_message", label: "😀 Reagir à Mensagem" },
-        { value: "delete_message", label: "🗑️ Apagar Mensagem" },
-        { value: "send_image", label: "🖼️ Enviar Imagem" },
+        { value: "send_poll", label: "📊 Enviar Enquete" },
+        { value: "send_list", label: "📋 Enviar Lista Interativa" },
+        { value: "send_buttons", label: "🔘 Enviar Botões" },
+        { value: "send_carousel", label: "🎠 Enviar Carrossel" },
+        { value: "send_contact", label: "📌 Enviar Contato" },
+        { value: "send_location", label: "📍 Enviar Localização" },
+        { value: "forward_message", label: "↩️ Encaminhar Mensagem" },
+        { value: "antilink", label: "🚫 Anti-Link" },
+        { value: "antispam", label: "🛡️ Anti-Spam" },
+        { value: "antiflood", label: "💧 Anti-Flood" },
+        { value: "antifake", label: "🎭 Anti-Fake (DDI Estrangeiro)" },
+        { value: "antitoxic", label: "🤬 Anti-Palavrão" },
+        { value: "antidelete", label: "👁️ Anti-Delete (Log Apagadas)" },
+        { value: "show_menu", label: "📋 Menu Principal" },
+        { value: "show_menu_admin", label: "📋 Menu Admin" },
+        { value: "show_menu_owner", label: "📋 Menu Dono" },
+        { value: "show_menu_games", label: "📋 Menu Jogos" },
+        { value: "show_menu_photo", label: "📋 Menu com Foto" },
+        { value: "coin_flip", label: "🪙 Cara ou Coroa" },
+        { value: "dice_roll", label: "🎲 Rolar Dado" },
+        { value: "pick_random", label: "🎯 Sortear Membro" },
+        { value: "love_meter", label: "💕 Medidor de Amor" },
+        { value: "ship_members", label: "💑 Shippar Membros" },
+        { value: "rate", label: "⭐ Nota de 0 a 10" },
+        { value: "fortune", label: "🥠 Biscoito da Sorte" },
+        { value: "truth_or_dare", label: "🎭 Verdade ou Desafio" },
+        { value: "roulette", label: "🔫 Roleta Russa" },
+        { value: "top5", label: "🏆 Top 5 do Grupo" },
+        { value: "rank", label: "📊 Ranking de Mensagens" },
+        { value: "joke", label: "😂 Piada Aleatória" },
+        { value: "bot_on", label: "✅ Ligar Bot (Dono)" },
+        { value: "bot_off", label: "❌ Desligar Bot (Dono)" },
+        { value: "give_coins", label: "💰 Dar Moedas (Dono)" },
+        { value: "broadcast", label: "📢 Broadcast — Todos Grupos (Dono)" },
+        { value: "block_user", label: "🚷 Bloquear Usuário (Dono)" },
+        { value: "unblock_user", label: "✅ Desbloquear Usuário (Dono)" },
+        { value: "set_welcome", label: "👋 Definir Boas-Vindas" },
+        { value: "set_goodbye", label: "👋 Definir Despedida" },
+        { value: "set_auto_reply", label: "💬 Auto-Resposta" },
+        { value: "group_info", label: "📋 Info do Grupo" },
+        { value: "member_list", label: "👥 Lista de Membros" },
+        { value: "admin_list", label: "👑 Lista de Admins" },
+        { value: "online_list", label: "🟢 Membros Online" },
+        { value: "cep_lookup", label: "📮 Consultar CEP" },
+        { value: "translate", label: "🌐 Traduzir Texto" },
+        { value: "calc", label: "🧮 Calculadora" },
+        { value: "qrcode_gen", label: "📱 Gerar QR Code" },
       ],
     },
-    { key: "message", label: "Mensagem (opcional)", type: "text", placeholder: "ex: Ação executada!" },
+    { key: "message", label: "Mensagem (use variáveis: {nome}, {grupo}...)", type: "textarea", placeholder: "Ex: Olá {nome}! Ação executada no {grupo}." },
     { key: "max_warns", label: "Máx. avisos antes de kick", type: "text", placeholder: "3", showWhen: (c) => c.action === "warn_member" },
     { key: "emoji", label: "Emoji para reação", type: "text", placeholder: "👍", showWhen: (c) => c.action === "react_message" },
-    { key: "image_url", label: "URL da imagem", type: "text", placeholder: "https://...", showWhen: (c) => c.action === "send_image" },
+    { key: "image_url", label: "URL da imagem", type: "text", placeholder: "https://...", showWhen: (c) => ["send_image", "show_menu_photo", "set_group_photo"].includes(String(c.action)) },
+    { key: "audio_url", label: "URL do áudio", type: "text", placeholder: "https://...", showWhen: (c) => c.action === "send_audio" },
+    { key: "video_url", label: "URL do vídeo", type: "text", placeholder: "https://...", showWhen: (c) => c.action === "send_video" },
+    { key: "document_url", label: "URL do documento", type: "text", placeholder: "https://...", showWhen: (c) => c.action === "send_document" },
+    { key: "gif_url", label: "URL do GIF", type: "text", placeholder: "https://...", showWhen: (c) => c.action === "send_gif" },
+    { key: "sticker_url", label: "URL da figurinha", type: "text", placeholder: "https://...", showWhen: (c) => c.action === "send_sticker" },
     { key: "kick_on_link", label: "Remover quem enviar link", type: "checkbox", showWhen: (c) => c.action === "antilink" },
+    { key: "warn_on_link", label: "Dar warn ao enviar link", type: "checkbox", showWhen: (c) => c.action === "antilink" },
+    { key: "poll_question", label: "Pergunta da enquete", type: "text", placeholder: "Qual a melhor opção?", showWhen: (c) => c.action === "send_poll" },
+    { key: "poll_options", label: "Opções (separadas por vírgula)", type: "text", placeholder: "Opção 1, Opção 2, Opção 3", showWhen: (c) => c.action === "send_poll" },
+    { key: "list_title", label: "Título da lista", type: "text", placeholder: "Menu Principal", showWhen: (c) => c.action === "send_list" },
+    { key: "list_items", label: "Itens (um por linha: id | título | desc)", type: "textarea", placeholder: ".sticker | 🖼️ Figurinha | Criar figurinha\n.menu | 📋 Menu | Ver opções", showWhen: (c) => c.action === "send_list" },
+    { key: "list_button_text", label: "Texto do botão da lista", type: "text", placeholder: "VER OPÇÕES", showWhen: (c) => c.action === "send_list" },
+    { key: "button_texts", label: "Botões (um por linha: id | texto)", type: "textarea", placeholder: ".sim | ✅ Sim\n.nao | ❌ Não", showWhen: (c) => ["send_buttons", "send_carousel"].includes(String(c.action)) },
+    { key: "carousel_items", label: "Cards (título | desc | imagem_url por linha)", type: "textarea", placeholder: "Plano Básico | 100 moedas | https://...\nPlano Pro | 250 moedas | https://...", showWhen: (c) => c.action === "send_carousel" },
+    { key: "contact_name", label: "Nome do contato", type: "text", placeholder: "João Silva", showWhen: (c) => c.action === "send_contact" },
+    { key: "contact_number", label: "Número do contato", type: "text", placeholder: "5511999999999", showWhen: (c) => c.action === "send_contact" },
+    { key: "latitude", label: "Latitude", type: "text", placeholder: "-23.5505", showWhen: (c) => c.action === "send_location" },
+    { key: "longitude", label: "Longitude", type: "text", placeholder: "-46.6333", showWhen: (c) => c.action === "send_location" },
+    { key: "location_name", label: "Nome do local", type: "text", placeholder: "São Paulo, SP", showWhen: (c) => c.action === "send_location" },
+    { key: "group_name", label: "Novo nome do grupo", type: "text", placeholder: "Meu Grupo TOP", showWhen: (c) => c.action === "set_group_name" },
+    { key: "group_desc", label: "Nova descrição", type: "textarea", placeholder: "Descrição do grupo...", showWhen: (c) => c.action === "set_group_desc" },
+    { key: "welcome_text", label: "Mensagem de boas-vindas", type: "textarea", placeholder: "👋 Bem-vindo(a) {nome} ao {grupo}!\n\n📋 Use {prefix}menu para ver os comandos.", showWhen: (c) => c.action === "set_welcome" },
+    { key: "goodbye_text", label: "Mensagem de despedida", type: "textarea", placeholder: "👋 {nome} saiu do grupo. Até mais!", showWhen: (c) => c.action === "set_goodbye" },
+    { key: "auto_reply_text", label: "Texto da auto-resposta", type: "textarea", placeholder: "🤖 Bot está offline. Tente mais tarde.", showWhen: (c) => c.action === "set_auto_reply" },
+    { key: "broadcast_text", label: "Mensagem do broadcast", type: "textarea", placeholder: "📢 Aviso para todos os grupos!", showWhen: (c) => c.action === "broadcast" },
+    { key: "coins_amount", label: "Quantidade de moedas", type: "text", placeholder: "100", showWhen: (c) => c.action === "give_coins" },
+    { key: "target_number", label: "Número do alvo (DDI+DDD+Número)", type: "text", placeholder: "5511999999999", showWhen: (c) => ["give_coins", "block_user", "unblock_user"].includes(String(c.action)) },
+    { key: "flood_max", label: "Máx. msgs por intervalo", type: "text", placeholder: "5", showWhen: (c) => c.action === "antiflood" },
+    { key: "flood_interval", label: "Intervalo (segundos)", type: "text", placeholder: "10", showWhen: (c) => c.action === "antiflood" },
+    { key: "kick_on_flood", label: "Remover por flood", type: "checkbox", showWhen: (c) => c.action === "antiflood" },
+    { key: "allowed_ddis", label: "DDIs permitidos (ex: 55,1,44)", type: "text", placeholder: "55", showWhen: (c) => c.action === "antifake" },
+    { key: "kick_on_fake", label: "Remover números estrangeiros", type: "checkbox", showWhen: (c) => c.action === "antifake" },
+    { key: "bad_words", label: "Palavras proibidas (vírgula)", type: "textarea", placeholder: "palavra1, palavra2, palavra3", showWhen: (c) => c.action === "antitoxic" },
+    { key: "kick_on_toxic", label: "Remover por palavrão", type: "checkbox", showWhen: (c) => c.action === "antitoxic" },
+    { key: "warn_on_spam", label: "Dar warn por spam", type: "checkbox", showWhen: (c) => c.action === "antispam" },
+    { key: "translate_lang", label: "Idioma de destino", type: "text", placeholder: "pt", showWhen: (c) => c.action === "translate" },
+    { key: "menu_title", label: "Título do menu", type: "text", placeholder: "🤖 Menu do Bot", showWhen: (c) => String(c.action).startsWith("show_menu") },
+    { key: "menu_text", label: "Texto do menu (use variáveis)", type: "textarea", placeholder: "👤 {nome}\n🪙 Moedas: {moedas}\n📦 Plano: {plano}\n\n📋 Comandos:\n🖼️ {prefix}sticker\n📋 {prefix}menu", showWhen: (c) => String(c.action).startsWith("show_menu") },
+    { key: "menu_footer", label: "Rodapé do menu", type: "text", placeholder: "BotAluguel Pro", showWhen: (c) => String(c.action).startsWith("show_menu") },
+    { key: "roulette_kick", label: "Realmente kickar o perdedor", type: "checkbox", showWhen: (c) => c.action === "roulette" },
+    { key: "dice_sides", label: "Lados do dado", type: "text", placeholder: "6", showWhen: (c) => c.action === "dice_roll" },
   ],
   condition: [
     {
@@ -100,20 +203,42 @@ const CONFIG_FIELDS: Record<NodeType, { key: string; label: string; type: "text"
         { value: "is_private", label: "💬 É privado" },
         { value: "is_admin", label: "👑 Remetente é admin" },
         { value: "is_not_admin", label: "🚫 Remetente NÃO é admin" },
-        { value: "is_bot_admin", label: "🤖 Bot é admin" },
+        { value: "is_owner", label: "👑 Remetente é o dono do bot" },
+        { value: "is_bot_admin", label: "🤖 Bot é admin no grupo" },
         { value: "has_image", label: "📷 Tem imagem" },
         { value: "has_video", label: "🎥 Tem vídeo" },
+        { value: "has_audio", label: "🎵 Tem áudio" },
         { value: "has_sticker", label: "🏷️ Tem figurinha" },
+        { value: "has_document", label: "📄 Tem documento" },
         { value: "has_media", label: "📎 Tem qualquer mídia" },
+        { value: "has_contact", label: "👤 Tem contato" },
+        { value: "has_location", label: "📍 Tem localização" },
         { value: "contains_link", label: "🔗 Contém link" },
         { value: "contains_text", label: "🔍 Contém texto..." },
         { value: "has_mention", label: "📌 Menciona alguém" },
         { value: "is_reply", label: "↩️ É resposta (reply)" },
+        { value: "is_quoted", label: "💬 Tem mensagem citada" },
+        { value: "is_flood", label: "💧 É flood (msg repetida)" },
+        { value: "msg_length_gt", label: "📏 Tamanho da msg maior que..." },
+        { value: "member_count_gt", label: "👥 Grupo tem + de N membros" },
+        { value: "time_between", label: "🕐 Horário entre X e Y" },
+        { value: "has_prefix", label: "🔤 Mensagem começa com prefixo" },
+        { value: "sender_has_plan", label: "📦 Remetente tem plano ativo" },
+        { value: "bot_is_on", label: "✅ Bot está ligado" },
       ],
     },
-    { key: "value", label: "Valor", type: "text", placeholder: "ex: palavra-chave", showWhen: (c) => c.condition === "contains_text" },
+    { key: "value", label: "Valor / Palavra-chave", type: "text", placeholder: "ex: palavra", showWhen: (c) => c.condition === "contains_text" },
+    { key: "min_length", label: "Tamanho mínimo", type: "text", placeholder: "50", showWhen: (c) => c.condition === "msg_length_gt" },
+    { key: "min_members", label: "Mínimo de membros", type: "text", placeholder: "10", showWhen: (c) => c.condition === "member_count_gt" },
+    { key: "time_start", label: "Hora início (HH:MM)", type: "text", placeholder: "08:00", showWhen: (c) => c.condition === "time_between" },
+    { key: "time_end", label: "Hora fim (HH:MM)", type: "text", placeholder: "22:00", showWhen: (c) => c.condition === "time_between" },
   ],
-  response: [{ key: "text", label: "Texto da Resposta", type: "textarea", placeholder: "Use {user} para mencionar, {group} para o grupo" }],
+  response: [
+    { key: "text", label: "Texto da Resposta", type: "textarea", placeholder: "Use variáveis: {nome}, {user}, {grupo}, {membros}, {moedas}, {plano}..." },
+    { key: "response_image", label: "Imagem junto com a resposta (URL)", type: "text", placeholder: "https://..." },
+    { key: "response_buttons", label: "Botões (id | texto, um por linha)", type: "textarea", placeholder: ".menu | 📋 Ver Menu\n.ajuda | ❓ Ajuda" },
+    { key: "response_footer", label: "Rodapé (opcional)", type: "text", placeholder: "Bot feito com BotAluguel Pro" },
+  ],
 };
 
 const BLOCK_TYPES: NodeType[] = ["command", "action", "condition", "response"];
@@ -130,151 +255,227 @@ interface FlowTemplate {
 
 const TEMPLATES: FlowTemplate[] = [
   {
-    id: "sticker",
-    name: "Criar Figurinha",
-    description: "Comando para converter imagem em figurinha",
-    icon: Image,
+    id: "sticker", name: "Criar Figurinha", description: "Converte imagem em figurinha com verificação", icon: Image,
     color: "from-pink-500/20 to-violet-500/20 border-pink-500/30",
     nodes: [
-      { id: "t_cmd_1", type: "command", label: "sticker", config: { trigger: "sticker" }, position: { x: 40, y: 100 } },
-      { id: "t_cond_1", type: "condition", label: "Tem imagem?", config: { condition: "has_image" }, position: { x: 280, y: 100 } },
-      { id: "t_act_1", type: "action", label: "Criar Figurinha", config: { action: "make_sticker", message: "Aqui está sua figurinha!" }, position: { x: 520, y: 50 } },
-      { id: "t_res_1", type: "response", label: "Sem imagem", config: { text: "📷 Envie ou responda a uma imagem com o comando para criar uma figurinha!" }, position: { x: 520, y: 180 } },
+      { id: "t1_c1", type: "command", label: "sticker", config: { trigger: "sticker" }, position: { x: 40, y: 100 } },
+      { id: "t1_d1", type: "condition", label: "Tem imagem?", config: { condition: "has_image" }, position: { x: 280, y: 100 } },
+      { id: "t1_a1", type: "action", label: "Criar Figurinha", config: { action: "make_sticker", message: "🖼️ Figurinha criada, {nome}!" }, position: { x: 520, y: 50 } },
+      { id: "t1_r1", type: "response", label: "Sem imagem", config: { text: "📷 {nome}, envie ou responda a uma imagem com o comando!" }, position: { x: 520, y: 180 } },
     ],
-    edges: [
-      { id: "t_e1", source: "t_cmd_1", target: "t_cond_1" },
-      { id: "t_e2", source: "t_cond_1", target: "t_act_1" },
-      { id: "t_e3", source: "t_cond_1", target: "t_res_1" },
-    ],
+    edges: [{ id: "t1_e1", source: "t1_c1", target: "t1_d1" }, { id: "t1_e2", source: "t1_d1", target: "t1_a1" }, { id: "t1_e3", source: "t1_d1", target: "t1_r1" }],
   },
   {
-    id: "welcome",
-    name: "Boas-Vindas",
-    description: "Resposta automática de boas-vindas",
-    icon: Star,
-    color: "from-yellow-500/20 to-orange-500/20 border-yellow-500/30",
+    id: "menu_completo", name: "Menu Completo com Foto", description: "Menu principal + admin + jogos com variáveis e foto", icon: Sparkles,
+    color: "from-cyan-500/20 to-blue-500/20 border-cyan-500/30",
     nodes: [
-      { id: "t_cmd_2", type: "command", label: "menu", config: { trigger: "menu" }, position: { x: 40, y: 100 } },
-      { id: "t_res_2", type: "response", label: "Menu", config: { text: "👋 Olá {user}!\n\n📋 *Menu de comandos:*\n\n🖼️ *#sticker* — Criar figurinha\n📋 *#menu* — Ver este menu\n\n_Bot feito com BotAluguel Pro_" }, position: { x: 280, y: 100 } },
+      { id: "t2_c1", type: "command", label: "menu", config: { trigger: "menu", group_only: true }, position: { x: 40, y: 40 } },
+      { id: "t2_a1", type: "action", label: "Menu Principal", config: { action: "show_menu_photo", menu_title: "🤖 Menu do Bot", menu_text: "👤 *{nome}*\n🪙 Moedas: *{moedas}*\n📦 Plano: *{plano}*\n👥 Membros: *{membros}*\n\n═══════════════\n📋 *COMANDOS:*\n═══════════════\n\n🖼️ *{prefix}sticker* — Figurinha\n📢 *{prefix}todos* — Marcar todos\n📋 *{prefix}info* — Info do grupo\n🔗 *{prefix}link* — Link do grupo\n\n🛡️ *{prefix}menuadmin* — Menu admin\n🎮 *{prefix}menujogos* — Menu jogos\n👑 *{prefix}menudono* — Menu dono", menu_footer: "BotAluguel Pro • {data} {hora}", image_url: "" }, position: { x: 300, y: 40 } },
+      { id: "t2_c2", type: "command", label: "menuadmin", config: { trigger: "menuadmin", admin_only: true, group_only: true }, position: { x: 40, y: 180 } },
+      { id: "t2_a2", type: "action", label: "Menu Admin", config: { action: "show_menu_admin", menu_title: "🛡️ Menu Admin", menu_text: "👑 *Comandos de Admin:*\n\n🚪 *{prefix}kick* — Remover membro\n🔨 *{prefix}ban* — Banir membro\n⬆️ *{prefix}promover* — Promover admin\n⬇️ *{prefix}rebaixar* — Rebaixar admin\n⚠️ *{prefix}warn* — Dar aviso\n🔄 *{prefix}resetwarn* — Resetar avisos\n🗑️ *{prefix}apagar* — Apagar mensagem\n🔇 *{prefix}mutar* — Mutar membro\n🔊 *{prefix}desmutar* — Desmutar\n🔒 *{prefix}fechar* — Fechar grupo\n🔓 *{prefix}abrir* — Abrir grupo\n📝 *{prefix}nome* — Mudar nome\n📄 *{prefix}desc* — Mudar descrição", menu_footer: "Apenas admins" }, position: { x: 300, y: 180 } },
+      { id: "t2_c3", type: "command", label: "menujogos", config: { trigger: "menujogos", group_only: true }, position: { x: 40, y: 320 } },
+      { id: "t2_a3", type: "action", label: "Menu Jogos", config: { action: "show_menu_games", menu_title: "🎮 Menu Jogos", menu_text: "🎮 *Brincadeiras:*\n\n🪙 *{prefix}moeda* — Cara ou coroa\n🎲 *{prefix}dado* — Rolar dado\n🎯 *{prefix}sorteio* — Sortear membro\n💕 *{prefix}amor* — Medidor de amor\n💑 *{prefix}ship* — Shippar\n⭐ *{prefix}nota* — Nota 0 a 10\n🥠 *{prefix}sorte* — Biscoito da sorte\n🎭 *{prefix}vd* — Verdade ou desafio\n🔫 *{prefix}roleta* — Roleta russa\n🏆 *{prefix}top5* — Top 5\n📊 *{prefix}rank* — Ranking\n😂 *{prefix}piada* — Piada", menu_footer: "Diversão garantida!" }, position: { x: 300, y: 320 } },
+      { id: "t2_c4", type: "command", label: "menudono", config: { trigger: "menudono", owner_only: true }, position: { x: 40, y: 460 } },
+      { id: "t2_a4", type: "action", label: "Menu Dono", config: { action: "show_menu_owner", menu_title: "👑 Menu do Dono", menu_text: "👑 *Comandos exclusivos:*\n\n✅ *{prefix}ligar* — Ligar bot\n❌ *{prefix}desligar* — Desligar bot\n💰 *{prefix}darmoedas* — Dar moedas\n📢 *{prefix}broadcast* — Msg todos grupos\n🚷 *{prefix}bloquear* — Bloquear user\n✅ *{prefix}desbloquear* — Desbloquear\n👋 *{prefix}boasvindas* — Config boas-vindas\n👋 *{prefix}despedida* — Config despedida", menu_footer: "Somente o dono" }, position: { x: 300, y: 460 } },
     ],
-    edges: [
-      { id: "t_e4", source: "t_cmd_2", target: "t_res_2" },
-    ],
+    edges: [{ id: "t2_e1", source: "t2_c1", target: "t2_a1" }, { id: "t2_e2", source: "t2_c2", target: "t2_a2" }, { id: "t2_e3", source: "t2_c3", target: "t2_a3" }, { id: "t2_e4", source: "t2_c4", target: "t2_a4" }],
   },
   {
-    id: "moderation",
-    name: "Moderação Completa",
-    description: "Kick, ban, promover e rebaixar membros",
-    icon: Shield,
+    id: "moderation", name: "Moderação Completa", description: "Kick, ban, warn, mutar, promover, rebaixar + apagar", icon: Shield,
     color: "from-red-500/20 to-orange-500/20 border-red-500/30",
     nodes: [
-      { id: "t_cmd_3", type: "command", label: "kick", config: { trigger: "kick" }, position: { x: 40, y: 40 } },
-      { id: "t_act_3", type: "action", label: "Remover Membro", config: { action: "kick_member", message: "👋 Membro removido!" }, position: { x: 280, y: 40 } },
-      { id: "t_cmd_4", type: "command", label: "ban", config: { trigger: "ban" }, position: { x: 40, y: 160 } },
-      { id: "t_act_4", type: "action", label: "Banir Membro", config: { action: "ban_member", message: "🔨 Membro banido!" }, position: { x: 280, y: 160 } },
-      { id: "t_cmd_5", type: "command", label: "promover", config: { trigger: "promover" }, position: { x: 40, y: 280 } },
-      { id: "t_act_5", type: "action", label: "Promover", config: { action: "promote_member" }, position: { x: 280, y: 280 } },
-      { id: "t_cmd_6", type: "command", label: "rebaixar", config: { trigger: "rebaixar" }, position: { x: 40, y: 400 } },
-      { id: "t_act_6", type: "action", label: "Rebaixar", config: { action: "demote_member" }, position: { x: 280, y: 400 } },
+      { id: "t3_c1", type: "command", label: "kick", config: { trigger: "kick", admin_only: true, group_only: true }, position: { x: 40, y: 40 } },
+      { id: "t3_a1", type: "action", label: "Remover", config: { action: "kick_member", message: "👋 {nome} removeu um membro!" }, position: { x: 300, y: 40 } },
+      { id: "t3_c2", type: "command", label: "ban", config: { trigger: "ban", admin_only: true, group_only: true }, position: { x: 40, y: 160 } },
+      { id: "t3_a2", type: "action", label: "Banir", config: { action: "ban_member", message: "🔨 Membro banido por {nome}!" }, position: { x: 300, y: 160 } },
+      { id: "t3_c3", type: "command", label: "promover", config: { trigger: "promover", admin_only: true, group_only: true }, position: { x: 40, y: 280 } },
+      { id: "t3_a3", type: "action", label: "Promover", config: { action: "promote_member", message: "⬆️ Promovido a admin!" }, position: { x: 300, y: 280 } },
+      { id: "t3_c4", type: "command", label: "rebaixar", config: { trigger: "rebaixar", admin_only: true, group_only: true }, position: { x: 40, y: 400 } },
+      { id: "t3_a4", type: "action", label: "Rebaixar", config: { action: "demote_member", message: "⬇️ Rebaixado!" }, position: { x: 300, y: 400 } },
+      { id: "t3_c5", type: "command", label: "warn", config: { trigger: "warn", admin_only: true, group_only: true }, position: { x: 540, y: 40 } },
+      { id: "t3_a5", type: "action", label: "Avisar", config: { action: "warn_member", max_warns: "3", message: "⚠️ Aviso para o membro! ({args})" }, position: { x: 800, y: 40 } },
+      { id: "t3_c6", type: "command", label: "resetwarn", config: { trigger: "resetwarn", admin_only: true, group_only: true }, position: { x: 540, y: 160 } },
+      { id: "t3_a6", type: "action", label: "Resetar", config: { action: "reset_warns", message: "🔄 Avisos resetados!" }, position: { x: 800, y: 160 } },
+      { id: "t3_c7", type: "command", label: "mutar", config: { trigger: "mutar", admin_only: true, group_only: true }, position: { x: 540, y: 280 } },
+      { id: "t3_a7", type: "action", label: "Mutar", config: { action: "mute_member", message: "🔇 Membro mutado!" }, position: { x: 800, y: 280 } },
+      { id: "t3_c8", type: "command", label: "apagar", config: { trigger: "apagar", admin_only: true, group_only: true }, position: { x: 540, y: 400 } },
+      { id: "t3_a8", type: "action", label: "Apagar", config: { action: "delete_message" }, position: { x: 800, y: 400 } },
     ],
     edges: [
-      { id: "t_e5", source: "t_cmd_3", target: "t_act_3" },
-      { id: "t_e6", source: "t_cmd_4", target: "t_act_4" },
-      { id: "t_e7", source: "t_cmd_5", target: "t_act_5" },
-      { id: "t_e8", source: "t_cmd_6", target: "t_act_6" },
+      { id: "t3_e1", source: "t3_c1", target: "t3_a1" }, { id: "t3_e2", source: "t3_c2", target: "t3_a2" },
+      { id: "t3_e3", source: "t3_c3", target: "t3_a3" }, { id: "t3_e4", source: "t3_c4", target: "t3_a4" },
+      { id: "t3_e5", source: "t3_c5", target: "t3_a5" }, { id: "t3_e6", source: "t3_c6", target: "t3_a6" },
+      { id: "t3_e7", source: "t3_c7", target: "t3_a7" }, { id: "t3_e8", source: "t3_c8", target: "t3_a8" },
     ],
   },
   {
-    id: "antilink",
-    name: "Anti-Link",
-    description: "Remove links automaticamente e avisa o membro",
-    icon: Shield,
+    id: "protection", name: "Proteção Total", description: "Anti-link, anti-spam, anti-flood, anti-fake, anti-palavrão, anti-delete", icon: Lock,
     color: "from-blue-500/20 to-cyan-500/20 border-blue-500/30",
     nodes: [
-      { id: "t_act_7", type: "action", label: "Anti-Link", config: { action: "antilink", message: "🚫 Links não são permitidos neste grupo!", kick_on_link: false }, position: { x: 100, y: 100 } },
+      { id: "t4_a1", type: "action", label: "Anti-Link", config: { action: "antilink", message: "🚫 {nome}, links não são permitidos!", kick_on_link: false, warn_on_link: true }, position: { x: 40, y: 40 } },
+      { id: "t4_a2", type: "action", label: "Anti-Spam", config: { action: "antispam", message: "🛡️ {nome}, pare de fazer spam!", warn_on_spam: true }, position: { x: 300, y: 40 } },
+      { id: "t4_a3", type: "action", label: "Anti-Flood", config: { action: "antiflood", message: "💧 {nome}, muitas mensagens seguidas!", flood_max: "5", flood_interval: "10", kick_on_flood: false }, position: { x: 560, y: 40 } },
+      { id: "t4_a4", type: "action", label: "Anti-Fake", config: { action: "antifake", message: "🎭 Números estrangeiros não permitidos!", allowed_ddis: "55", kick_on_fake: true }, position: { x: 40, y: 180 } },
+      { id: "t4_a5", type: "action", label: "Anti-Palavrão", config: { action: "antitoxic", message: "🤬 {nome}, linguagem inadequada!", bad_words: "", kick_on_toxic: false }, position: { x: 300, y: 180 } },
+      { id: "t4_a6", type: "action", label: "Anti-Delete", config: { action: "antidelete", message: "👁️ {nome} apagou uma mensagem:\n\n{quoted}" }, position: { x: 560, y: 180 } },
     ],
     edges: [],
   },
   {
-    id: "group_tools",
-    name: "Ferramentas de Grupo",
-    description: "Info, link, marcar todos, silenciar",
-    icon: Users,
-    color: "from-green-500/20 to-emerald-500/20 border-green-500/30",
-    nodes: [
-      { id: "t_cmd_8", type: "command", label: "todos", config: { trigger: "todos" }, position: { x: 40, y: 40 } },
-      { id: "t_act_8", type: "action", label: "Marcar Todos", config: { action: "hidetag", message: "📢 Atenção todos!" }, position: { x: 280, y: 40 } },
-      { id: "t_cmd_9", type: "command", label: "info", config: { trigger: "info" }, position: { x: 40, y: 160 } },
-      { id: "t_act_9", type: "action", label: "Info do Grupo", config: { action: "group_info" }, position: { x: 280, y: 160 } },
-      { id: "t_cmd_10", type: "command", label: "link", config: { trigger: "link" }, position: { x: 40, y: 280 } },
-      { id: "t_act_10", type: "action", label: "Link do Grupo", config: { action: "get_group_link" }, position: { x: 280, y: 280 } },
-      { id: "t_cmd_11", type: "command", label: "fechar", config: { trigger: "fechar" }, position: { x: 40, y: 400 } },
-      { id: "t_act_11", type: "action", label: "Fechar Grupo", config: { action: "close_group", message: "🔒 Grupo fechado!" }, position: { x: 280, y: 400 } },
-    ],
-    edges: [
-      { id: "t_e9", source: "t_cmd_8", target: "t_act_8" },
-      { id: "t_e10", source: "t_cmd_9", target: "t_act_9" },
-      { id: "t_e11", source: "t_cmd_10", target: "t_act_10" },
-      { id: "t_e12", source: "t_cmd_11", target: "t_act_11" },
-    ],
-  },
-  {
-    id: "warn_system",
-    name: "Sistema de Avisos",
-    description: "Avisa membros com auto-kick após limite",
-    icon: HandMetal,
+    id: "owner_system", name: "Sistema de Dono", description: "Ligar/desligar, dar moedas, broadcast, bloquear, boas-vindas/despedida", icon: Crown,
     color: "from-amber-500/20 to-yellow-500/20 border-amber-500/30",
     nodes: [
-      { id: "t_cmd_12", type: "command", label: "warn", config: { trigger: "warn" }, position: { x: 40, y: 80 } },
-      { id: "t_act_12", type: "action", label: "Dar Aviso", config: { action: "warn_member", max_warns: "3" }, position: { x: 280, y: 80 } },
-      { id: "t_cmd_13", type: "command", label: "resetwarn", config: { trigger: "resetwarn" }, position: { x: 40, y: 220 } },
-      { id: "t_act_13", type: "action", label: "Resetar Avisos", config: { action: "reset_warns" }, position: { x: 280, y: 220 } },
+      { id: "t5_c1", type: "command", label: "ligar", config: { trigger: "ligar", owner_only: true }, position: { x: 40, y: 40 } },
+      { id: "t5_a1", type: "action", label: "Ligar Bot", config: { action: "bot_on", message: "✅ Bot ligado!" }, position: { x: 300, y: 40 } },
+      { id: "t5_c2", type: "command", label: "desligar", config: { trigger: "desligar", owner_only: true }, position: { x: 40, y: 160 } },
+      { id: "t5_a2", type: "action", label: "Desligar Bot", config: { action: "bot_off", message: "❌ Bot desligado!" }, position: { x: 300, y: 160 } },
+      { id: "t5_c3", type: "command", label: "darmoedas", config: { trigger: "darmoedas", owner_only: true }, position: { x: 40, y: 280 } },
+      { id: "t5_a3", type: "action", label: "Dar Moedas", config: { action: "give_coins", message: "💰 Moedas enviadas!" }, position: { x: 300, y: 280 } },
+      { id: "t5_c4", type: "command", label: "broadcast", config: { trigger: "broadcast", owner_only: true }, position: { x: 40, y: 400 } },
+      { id: "t5_a4", type: "action", label: "Broadcast", config: { action: "broadcast", broadcast_text: "📢 {args}" }, position: { x: 300, y: 400 } },
+      { id: "t5_c5", type: "command", label: "bloquear", config: { trigger: "bloquear", owner_only: true }, position: { x: 540, y: 40 } },
+      { id: "t5_a5", type: "action", label: "Bloquear", config: { action: "block_user", message: "🚷 Usuário bloqueado!" }, position: { x: 800, y: 40 } },
+      { id: "t5_c6", type: "command", label: "desbloquear", config: { trigger: "desbloquear", owner_only: true }, position: { x: 540, y: 160 } },
+      { id: "t5_a6", type: "action", label: "Desbloquear", config: { action: "unblock_user", message: "✅ Usuário desbloqueado!" }, position: { x: 800, y: 160 } },
+      { id: "t5_c7", type: "command", label: "boasvindas", config: { trigger: "boasvindas", owner_only: true, group_only: true }, position: { x: 540, y: 280 } },
+      { id: "t5_a7", type: "action", label: "Boas-Vindas", config: { action: "set_welcome", welcome_text: "👋 Bem-vindo(a) *{nome}* ao *{grupo}*!\n\n📋 Use *{prefix}menu* para ver os comandos.\n👥 Agora somos *{membros}* membros!" }, position: { x: 800, y: 280 } },
+      { id: "t5_c8", type: "command", label: "despedida", config: { trigger: "despedida", owner_only: true, group_only: true }, position: { x: 540, y: 400 } },
+      { id: "t5_a8", type: "action", label: "Despedida", config: { action: "set_goodbye", goodbye_text: "👋 *{nome}* saiu do grupo. Até mais!\n👥 Restam *{membros}* membros." }, position: { x: 800, y: 400 } },
     ],
     edges: [
-      { id: "t_e13", source: "t_cmd_12", target: "t_act_12" },
-      { id: "t_e14", source: "t_cmd_13", target: "t_act_13" },
+      { id: "t5_e1", source: "t5_c1", target: "t5_a1" }, { id: "t5_e2", source: "t5_c2", target: "t5_a2" },
+      { id: "t5_e3", source: "t5_c3", target: "t5_a3" }, { id: "t5_e4", source: "t5_c4", target: "t5_a4" },
+      { id: "t5_e5", source: "t5_c5", target: "t5_a5" }, { id: "t5_e6", source: "t5_c6", target: "t5_a6" },
+      { id: "t5_e7", source: "t5_c7", target: "t5_a7" }, { id: "t5_e8", source: "t5_c8", target: "t5_a8" },
     ],
   },
   {
-    id: "complete_bot",
-    name: "Bot Completo",
-    description: "Sticker + menu + moderação + ferramentas",
-    icon: Bot,
-    color: "from-violet-500/20 to-purple-500/20 border-violet-500/30",
+    id: "games", name: "Diversão Completa", description: "12 jogos: moeda, dado, sorteio, amor, ship, nota, sorte, V ou D, roleta, top5, rank, piada", icon: Gamepad2,
+    color: "from-pink-500/20 to-rose-500/20 border-pink-500/30",
     nodes: [
-      { id: "t_cmd_20", type: "command", label: "sticker", config: { trigger: "sticker" }, position: { x: 40, y: 40 } },
-      { id: "t_act_20", type: "action", label: "Criar Figurinha", config: { action: "make_sticker" }, position: { x: 280, y: 40 } },
-      { id: "t_cmd_21", type: "command", label: "menu", config: { trigger: "menu" }, position: { x: 40, y: 160 } },
-      { id: "t_res_21", type: "response", label: "Menu", config: { text: "👋 Olá {user}!\n\n📋 *Comandos:*\n🖼️ *#sticker* — Figurinha\n🚪 *#kick* — Remover\n🔨 *#ban* — Banir\n⬆️ *#promover* — Promover\n⬇️ *#rebaixar* — Rebaixar\n⚠️ *#warn* — Avisar\n📢 *#todos* — Marcar todos\n📋 *#info* — Info do grupo\n🔗 *#link* — Link do grupo" }, position: { x: 280, y: 160 } },
-      { id: "t_cmd_22", type: "command", label: "kick", config: { trigger: "kick" }, position: { x: 40, y: 300 } },
-      { id: "t_act_22", type: "action", label: "Remover", config: { action: "kick_member", message: "👋 Removido!" }, position: { x: 280, y: 300 } },
-      { id: "t_cmd_23", type: "command", label: "ban", config: { trigger: "ban" }, position: { x: 40, y: 420 } },
-      { id: "t_act_23", type: "action", label: "Banir", config: { action: "ban_member", message: "🔨 Banido!" }, position: { x: 280, y: 420 } },
-      { id: "t_cmd_24", type: "command", label: "promover", config: { trigger: "promover" }, position: { x: 540, y: 40 } },
-      { id: "t_act_24", type: "action", label: "Promover", config: { action: "promote_member" }, position: { x: 780, y: 40 } },
-      { id: "t_cmd_25", type: "command", label: "rebaixar", config: { trigger: "rebaixar" }, position: { x: 540, y: 160 } },
-      { id: "t_act_25", type: "action", label: "Rebaixar", config: { action: "demote_member" }, position: { x: 780, y: 160 } },
-      { id: "t_cmd_26", type: "command", label: "warn", config: { trigger: "warn" }, position: { x: 540, y: 280 } },
-      { id: "t_act_26", type: "action", label: "Avisar", config: { action: "warn_member", max_warns: "3" }, position: { x: 780, y: 280 } },
-      { id: "t_cmd_27", type: "command", label: "todos", config: { trigger: "todos" }, position: { x: 540, y: 400 } },
-      { id: "t_act_27", type: "action", label: "Marcar Todos", config: { action: "hidetag", message: "📢 Atenção!" }, position: { x: 780, y: 400 } },
-      { id: "t_cmd_28", type: "command", label: "info", config: { trigger: "info" }, position: { x: 40, y: 540 } },
-      { id: "t_act_28", type: "action", label: "Info Grupo", config: { action: "group_info" }, position: { x: 280, y: 540 } },
-      { id: "t_cmd_29", type: "command", label: "link", config: { trigger: "link" }, position: { x: 540, y: 520 } },
-      { id: "t_act_29", type: "action", label: "Link", config: { action: "get_group_link" }, position: { x: 780, y: 520 } },
-      { id: "t_act_30", type: "action", label: "Anti-Link", config: { action: "antilink", message: "🚫 Links proibidos!", kick_on_link: false }, position: { x: 300, y: 660 } },
+      { id: "t6_c1", type: "command", label: "moeda", config: { trigger: "moeda", group_only: true }, position: { x: 40, y: 40 } },
+      { id: "t6_a1", type: "action", label: "Cara/Coroa", config: { action: "coin_flip", message: "🪙 {nome} jogou a moeda..." }, position: { x: 300, y: 40 } },
+      { id: "t6_c2", type: "command", label: "dado", config: { trigger: "dado", group_only: true }, position: { x: 40, y: 160 } },
+      { id: "t6_a2", type: "action", label: "Dado", config: { action: "dice_roll", dice_sides: "6", message: "🎲 {nome} rolou o dado..." }, position: { x: 300, y: 160 } },
+      { id: "t6_c3", type: "command", label: "sorteio", config: { trigger: "sorteio", group_only: true }, position: { x: 40, y: 280 } },
+      { id: "t6_a3", type: "action", label: "Sortear", config: { action: "pick_random", message: "🎯 Sorteando um membro..." }, position: { x: 300, y: 280 } },
+      { id: "t6_c4", type: "command", label: "amor", config: { trigger: "amor", group_only: true }, position: { x: 40, y: 400 } },
+      { id: "t6_a4", type: "action", label: "Amor", config: { action: "love_meter", message: "💕 Calculando o amor de {nome}..." }, position: { x: 300, y: 400 } },
+      { id: "t6_c5", type: "command", label: "ship", config: { trigger: "ship", group_only: true }, position: { x: 540, y: 40 } },
+      { id: "t6_a5", type: "action", label: "Ship", config: { action: "ship_members", message: "💑 Shippando..." }, position: { x: 800, y: 40 } },
+      { id: "t6_c6", type: "command", label: "nota", config: { trigger: "nota", group_only: true }, position: { x: 540, y: 160 } },
+      { id: "t6_a6", type: "action", label: "Nota", config: { action: "rate", message: "⭐ Avaliando {nome}..." }, position: { x: 800, y: 160 } },
+      { id: "t6_c7", type: "command", label: "sorte", config: { trigger: "sorte", group_only: true }, position: { x: 540, y: 280 } },
+      { id: "t6_a7", type: "action", label: "Sorte", config: { action: "fortune", message: "🥠 Abrindo biscoito da sorte..." }, position: { x: 800, y: 280 } },
+      { id: "t6_c8", type: "command", label: "vd", config: { trigger: "vd", group_only: true }, position: { x: 540, y: 400 } },
+      { id: "t6_a8", type: "action", label: "V ou D", config: { action: "truth_or_dare", message: "🎭 Verdade ou Desafio..." }, position: { x: 800, y: 400 } },
+      { id: "t6_c9", type: "command", label: "roleta", config: { trigger: "roleta", group_only: true }, position: { x: 40, y: 520 } },
+      { id: "t6_a9", type: "action", label: "Roleta", config: { action: "roulette", roulette_kick: false, message: "🔫 Girando o tambor..." }, position: { x: 300, y: 520 } },
+      { id: "t6_c10", type: "command", label: "top5", config: { trigger: "top5", group_only: true }, position: { x: 40, y: 640 } },
+      { id: "t6_a10", type: "action", label: "Top 5", config: { action: "top5", message: "🏆 Top 5 do grupo {grupo}:" }, position: { x: 300, y: 640 } },
+      { id: "t6_c11", type: "command", label: "rank", config: { trigger: "rank", group_only: true }, position: { x: 540, y: 520 } },
+      { id: "t6_a11", type: "action", label: "Ranking", config: { action: "rank" }, position: { x: 800, y: 520 } },
+      { id: "t6_c12", type: "command", label: "piada", config: { trigger: "piada", group_only: true }, position: { x: 540, y: 640 } },
+      { id: "t6_a12", type: "action", label: "Piada", config: { action: "joke", message: "😂 Soltando uma piada..." }, position: { x: 800, y: 640 } },
     ],
     edges: [
-      { id: "t_e20", source: "t_cmd_20", target: "t_act_20" },
-      { id: "t_e21", source: "t_cmd_21", target: "t_res_21" },
-      { id: "t_e22", source: "t_cmd_22", target: "t_act_22" },
-      { id: "t_e23", source: "t_cmd_23", target: "t_act_23" },
-      { id: "t_e24", source: "t_cmd_24", target: "t_act_24" },
-      { id: "t_e25", source: "t_cmd_25", target: "t_act_25" },
-      { id: "t_e26", source: "t_cmd_26", target: "t_act_26" },
-      { id: "t_e27", source: "t_cmd_27", target: "t_act_27" },
-      { id: "t_e28", source: "t_cmd_28", target: "t_act_28" },
-      { id: "t_e29", source: "t_cmd_29", target: "t_act_29" },
+      { id: "t6_e1", source: "t6_c1", target: "t6_a1" }, { id: "t6_e2", source: "t6_c2", target: "t6_a2" },
+      { id: "t6_e3", source: "t6_c3", target: "t6_a3" }, { id: "t6_e4", source: "t6_c4", target: "t6_a4" },
+      { id: "t6_e5", source: "t6_c5", target: "t6_a5" }, { id: "t6_e6", source: "t6_c6", target: "t6_a6" },
+      { id: "t6_e7", source: "t6_c7", target: "t6_a7" }, { id: "t6_e8", source: "t6_c8", target: "t6_a8" },
+      { id: "t6_e9", source: "t6_c9", target: "t6_a9" }, { id: "t6_e10", source: "t6_c10", target: "t6_a10" },
+      { id: "t6_e11", source: "t6_c11", target: "t6_a11" }, { id: "t6_e12", source: "t6_c12", target: "t6_a12" },
+    ],
+  },
+  {
+    id: "group_tools", name: "Ferramentas de Grupo", description: "Info, link, todos, fechar/abrir, nome, descrição, lista membros/admins", icon: Users,
+    color: "from-green-500/20 to-emerald-500/20 border-green-500/30",
+    nodes: [
+      { id: "t7_c1", type: "command", label: "todos", config: { trigger: "todos", admin_only: true, group_only: true }, position: { x: 40, y: 40 } },
+      { id: "t7_a1", type: "action", label: "Hidetag", config: { action: "hidetag", message: "📢 {args}" }, position: { x: 300, y: 40 } },
+      { id: "t7_c2", type: "command", label: "info", config: { trigger: "info", group_only: true }, position: { x: 40, y: 160 } },
+      { id: "t7_a2", type: "action", label: "Info", config: { action: "group_info" }, position: { x: 300, y: 160 } },
+      { id: "t7_c3", type: "command", label: "link", config: { trigger: "link", group_only: true }, position: { x: 40, y: 280 } },
+      { id: "t7_a3", type: "action", label: "Link", config: { action: "get_group_link" }, position: { x: 300, y: 280 } },
+      { id: "t7_c4", type: "command", label: "fechar", config: { trigger: "fechar", admin_only: true, group_only: true }, position: { x: 40, y: 400 } },
+      { id: "t7_a4", type: "action", label: "Fechar", config: { action: "close_group", message: "🔒 Grupo fechado por {nome}!" }, position: { x: 300, y: 400 } },
+      { id: "t7_c5", type: "command", label: "abrir", config: { trigger: "abrir", admin_only: true, group_only: true }, position: { x: 540, y: 40 } },
+      { id: "t7_a5", type: "action", label: "Abrir", config: { action: "open_group", message: "🔓 Grupo aberto!" }, position: { x: 800, y: 40 } },
+      { id: "t7_c6", type: "command", label: "nome", config: { trigger: "nome", admin_only: true, group_only: true }, position: { x: 540, y: 160 } },
+      { id: "t7_a6", type: "action", label: "Nome", config: { action: "set_group_name" }, position: { x: 800, y: 160 } },
+      { id: "t7_c7", type: "command", label: "desc", config: { trigger: "desc", admin_only: true, group_only: true }, position: { x: 540, y: 280 } },
+      { id: "t7_a7", type: "action", label: "Descrição", config: { action: "set_group_desc" }, position: { x: 800, y: 280 } },
+      { id: "t7_c8", type: "command", label: "membros", config: { trigger: "membros", group_only: true }, position: { x: 540, y: 400 } },
+      { id: "t7_a8", type: "action", label: "Membros", config: { action: "member_list" }, position: { x: 800, y: 400 } },
+    ],
+    edges: [
+      { id: "t7_e1", source: "t7_c1", target: "t7_a1" }, { id: "t7_e2", source: "t7_c2", target: "t7_a2" },
+      { id: "t7_e3", source: "t7_c3", target: "t7_a3" }, { id: "t7_e4", source: "t7_c4", target: "t7_a4" },
+      { id: "t7_e5", source: "t7_c5", target: "t7_a5" }, { id: "t7_e6", source: "t7_c6", target: "t7_a6" },
+      { id: "t7_e7", source: "t7_c7", target: "t7_a7" }, { id: "t7_e8", source: "t7_c8", target: "t7_a8" },
+    ],
+  },
+  {
+    id: "interactive_msgs", name: "Mensagens Interativas", description: "Enquete, lista, botões, carrossel, contato, localização", icon: Send,
+    color: "from-indigo-500/20 to-violet-500/20 border-indigo-500/30",
+    nodes: [
+      { id: "t8_c1", type: "command", label: "enquete", config: { trigger: "enquete", group_only: true }, position: { x: 40, y: 40 } },
+      { id: "t8_a1", type: "action", label: "Enquete", config: { action: "send_poll", poll_question: "O que vocês preferem?", poll_options: "Opção A, Opção B, Opção C" }, position: { x: 300, y: 40 } },
+      { id: "t8_c2", type: "command", label: "lista", config: { trigger: "lista", group_only: true }, position: { x: 40, y: 180 } },
+      { id: "t8_a2", type: "action", label: "Lista", config: { action: "send_list", list_title: "📋 Opções", list_button_text: "VER OPÇÕES", list_items: ".sticker | 🖼️ Figurinha | Criar figurinha\n.menu | 📋 Menu | Ver comandos\n.info | ℹ️ Info | Info do grupo", message: "Escolha uma opção:" }, position: { x: 300, y: 180 } },
+      { id: "t8_c3", type: "command", label: "botoes", config: { trigger: "botoes", group_only: true }, position: { x: 40, y: 320 } },
+      { id: "t8_a3", type: "action", label: "Botões", config: { action: "send_buttons", button_texts: ".sim | ✅ Sim\n.nao | ❌ Não\n.talvez | 🤔 Talvez", message: "O que você acha?" }, position: { x: 300, y: 320 } },
+      { id: "t8_c4", type: "command", label: "carrossel", config: { trigger: "carrossel", group_only: true }, position: { x: 40, y: 460 } },
+      { id: "t8_a4", type: "action", label: "Carrossel", config: { action: "send_carousel", carousel_items: "⭐ Básico | 100 moedas • 1 grupo • 30 dias\n💎 Pro | 250 moedas • 5 grupos • 30 dias\n👑 Premium | 500 moedas • Ilimitado • 30 dias", message: "📦 Nossos planos:" }, position: { x: 300, y: 460 } },
+    ],
+    edges: [
+      { id: "t8_e1", source: "t8_c1", target: "t8_a1" }, { id: "t8_e2", source: "t8_c2", target: "t8_a2" },
+      { id: "t8_e3", source: "t8_c3", target: "t8_a3" }, { id: "t8_e4", source: "t8_c4", target: "t8_a4" },
+    ],
+  },
+  {
+    id: "bot_ultra", name: "Bot Ultra Completo", description: "TUDO: sticker + menu + moderação + proteção + jogos + dono + boas-vindas", icon: Bot,
+    color: "from-violet-500/20 to-purple-500/20 border-violet-500/30",
+    nodes: [
+      { id: "tu_c1", type: "command", label: "sticker", config: { trigger: "sticker" }, position: { x: 40, y: 40 } },
+      { id: "tu_a1", type: "action", label: "Figurinha", config: { action: "make_sticker", message: "🖼️ Figurinha criada, {nome}!" }, position: { x: 300, y: 40 } },
+      { id: "tu_c2", type: "command", label: "menu", config: { trigger: "menu" }, position: { x: 40, y: 160 } },
+      { id: "tu_r1", type: "response", label: "Menu", config: { text: "🤖 *BotAluguel Pro*\n═══════════════\n\n👤 *{nome}*\n🪙 Moedas: *{moedas}*\n📦 Plano: *{plano}*\n👥 Membros: *{membros}*\n\n📋 *COMANDOS:*\n🖼️ *{prefix}sticker* — Figurinha\n📢 *{prefix}todos* — Marcar todos\n📋 *{prefix}info* — Info\n🔗 *{prefix}link* — Link\n\n🛡️ *ADMIN:*\n🚪 *{prefix}kick* — Remover\n🔨 *{prefix}ban* — Banir\n⬆️ *{prefix}promover* — Promover\n⬇️ *{prefix}rebaixar* — Rebaixar\n⚠️ *{prefix}warn* — Avisar\n🗑️ *{prefix}apagar* — Apagar\n\n🎮 *JOGOS:*\n🪙 *{prefix}moeda* | 🎲 *{prefix}dado*\n🎯 *{prefix}sorteio* | 💕 *{prefix}amor*\n🥠 *{prefix}sorte* | 😂 *{prefix}piada*\n\n_BotAluguel Pro • {data}_", response_footer: "BotAluguel Pro" }, position: { x: 300, y: 160 } },
+      { id: "tu_c3", type: "command", label: "kick", config: { trigger: "kick", admin_only: true, group_only: true }, position: { x: 40, y: 320 } },
+      { id: "tu_a3", type: "action", label: "Kick", config: { action: "kick_member", message: "👋 Removido por {nome}!" }, position: { x: 300, y: 320 } },
+      { id: "tu_c4", type: "command", label: "ban", config: { trigger: "ban", admin_only: true, group_only: true }, position: { x: 40, y: 440 } },
+      { id: "tu_a4", type: "action", label: "Ban", config: { action: "ban_member", message: "🔨 Banido!" }, position: { x: 300, y: 440 } },
+      { id: "tu_c5", type: "command", label: "promover", config: { trigger: "promover", admin_only: true, group_only: true }, position: { x: 540, y: 40 } },
+      { id: "tu_a5", type: "action", label: "Promover", config: { action: "promote_member" }, position: { x: 800, y: 40 } },
+      { id: "tu_c6", type: "command", label: "rebaixar", config: { trigger: "rebaixar", admin_only: true, group_only: true }, position: { x: 540, y: 160 } },
+      { id: "tu_a6", type: "action", label: "Rebaixar", config: { action: "demote_member" }, position: { x: 800, y: 160 } },
+      { id: "tu_c7", type: "command", label: "warn", config: { trigger: "warn", admin_only: true, group_only: true }, position: { x: 540, y: 280 } },
+      { id: "tu_a7", type: "action", label: "Warn", config: { action: "warn_member", max_warns: "3" }, position: { x: 800, y: 280 } },
+      { id: "tu_c8", type: "command", label: "todos", config: { trigger: "todos", admin_only: true, group_only: true }, position: { x: 540, y: 400 } },
+      { id: "tu_a8", type: "action", label: "Hidetag", config: { action: "hidetag", message: "📢 {args}" }, position: { x: 800, y: 400 } },
+      { id: "tu_c9", type: "command", label: "info", config: { trigger: "info", group_only: true }, position: { x: 40, y: 560 } },
+      { id: "tu_a9", type: "action", label: "Info", config: { action: "group_info" }, position: { x: 300, y: 560 } },
+      { id: "tu_c10", type: "command", label: "link", config: { trigger: "link", group_only: true }, position: { x: 40, y: 680 } },
+      { id: "tu_a10", type: "action", label: "Link", config: { action: "get_group_link" }, position: { x: 300, y: 680 } },
+      { id: "tu_c11", type: "command", label: "apagar", config: { trigger: "apagar", admin_only: true, group_only: true }, position: { x: 540, y: 520 } },
+      { id: "tu_a11", type: "action", label: "Apagar", config: { action: "delete_message" }, position: { x: 800, y: 520 } },
+      { id: "tu_c12", type: "command", label: "moeda", config: { trigger: "moeda", group_only: true }, position: { x: 540, y: 640 } },
+      { id: "tu_a12", type: "action", label: "Moeda", config: { action: "coin_flip" }, position: { x: 800, y: 640 } },
+      { id: "tu_c13", type: "command", label: "dado", config: { trigger: "dado", group_only: true }, position: { x: 40, y: 800 } },
+      { id: "tu_a13", type: "action", label: "Dado", config: { action: "dice_roll", dice_sides: "6" }, position: { x: 300, y: 800 } },
+      { id: "tu_c14", type: "command", label: "sorteio", config: { trigger: "sorteio", group_only: true }, position: { x: 540, y: 760 } },
+      { id: "tu_a14", type: "action", label: "Sorteio", config: { action: "pick_random" }, position: { x: 800, y: 760 } },
+      { id: "tu_p1", type: "action", label: "Anti-Link", config: { action: "antilink", message: "🚫 {nome}, links proibidos!", kick_on_link: false }, position: { x: 300, y: 920 } },
+      { id: "tu_w1", type: "action", label: "Boas-Vindas", config: { action: "set_welcome", welcome_text: "👋 Bem-vindo(a) *{nome}* ao *{grupo}*!\n\n📋 Use *{prefix}menu* para ver os comandos.\n👥 Somos *{membros}* membros!" }, position: { x: 600, y: 920 } },
+    ],
+    edges: [
+      { id: "tu_e1", source: "tu_c1", target: "tu_a1" }, { id: "tu_e2", source: "tu_c2", target: "tu_r1" },
+      { id: "tu_e3", source: "tu_c3", target: "tu_a3" }, { id: "tu_e4", source: "tu_c4", target: "tu_a4" },
+      { id: "tu_e5", source: "tu_c5", target: "tu_a5" }, { id: "tu_e6", source: "tu_c6", target: "tu_a6" },
+      { id: "tu_e7", source: "tu_c7", target: "tu_a7" }, { id: "tu_e8", source: "tu_c8", target: "tu_a8" },
+      { id: "tu_e9", source: "tu_c9", target: "tu_a9" }, { id: "tu_e10", source: "tu_c10", target: "tu_a10" },
+      { id: "tu_e11", source: "tu_c11", target: "tu_a11" }, { id: "tu_e12", source: "tu_c12", target: "tu_a12" },
+      { id: "tu_e13", source: "tu_c13", target: "tu_a13" }, { id: "tu_e14", source: "tu_c14", target: "tu_a14" },
     ],
   },
 ];
@@ -470,37 +671,66 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
           </div>
         ))}
         {node.type === "command" && (
-          <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs">
-            <p className="font-semibold text-white/60 mb-2">💡 Comando no grupo:</p>
+          <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs space-y-2">
+            <p className="font-semibold text-white/60">💡 Comando no grupo:</p>
             <p className="font-mono text-white/80 bg-background/60 px-2 py-1 rounded">{prefix}{String(localConfig.trigger || "sticker")}</p>
+            {localConfig.admin_only && <p className="text-yellow-400/70">🛡️ Apenas admins podem usar</p>}
+            {localConfig.owner_only && <p className="text-amber-400/70">👑 Apenas o dono pode usar</p>}
+            {localConfig.group_only && <p className="text-blue-400/70">👥 Funciona apenas em grupo</p>}
+            {localConfig.private_only && <p className="text-green-400/70">💬 Funciona apenas no privado</p>}
+            {Number(localConfig.cooldown) > 0 && <p className="text-white/50">⏱️ Cooldown: {localConfig.cooldown}s</p>}
+          </div>
+        )}
+        {(node.type === "action" || node.type === "response") && (
+          <div className="rounded-lg bg-emerald-500/5 border border-emerald-500/20 p-3 text-xs text-muted-foreground">
+            <p className="font-semibold text-white/60 mb-2">📝 Variáveis disponíveis <span className="text-white/30">(toque para copiar)</span></p>
+            <div className="flex flex-wrap gap-1">
+              {[
+                { v: "{nome}", d: "Nome do user" }, { v: "{user}", d: "Mencionar @" }, { v: "{numero}", d: "Telefone" },
+                { v: "{grupo}", d: "Nome grupo" }, { v: "{membros}", d: "Qtd membros" }, { v: "{admins}", d: "Qtd admins" },
+                { v: "{desc}", d: "Descrição" }, { v: "{moedas}", d: "Saldo" }, { v: "{plano}", d: "Plano ativo" },
+                { v: "{prefix}", d: "Prefixo" }, { v: "{bot}", d: "Nome bot" }, { v: "{data}", d: "Data atual" },
+                { v: "{hora}", d: "Hora atual" }, { v: "{dono}", d: "Num. dono" }, { v: "{args}", d: "Argumentos" },
+                { v: "{quoted}", d: "Msg citada" },
+              ].map((item) => (
+                <button key={item.v} type="button" onClick={() => { navigator.clipboard.writeText(item.v); }}
+                  className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 hover:bg-primary/20 hover:border-primary/30 transition-colors cursor-pointer"
+                  title={item.d}>
+                  <code className="text-emerald-300 text-[10px]">{item.v}</code>
+                </button>
+              ))}
+            </div>
           </div>
         )}
         {node.type === "action" && (
           <div className="rounded-lg bg-violet-500/5 border border-violet-500/20 p-3 text-xs text-muted-foreground">
-            {localConfig.action === "make_sticker" && (<><p className="font-semibold text-white/60 mb-1">🖼️ Figurinha</p><p>Responda a uma imagem/vídeo com o comando para converter em figurinha.</p></>)}
-            {localConfig.action === "kick_member" && (<><p className="font-semibold text-white/60 mb-1">🚪 Remover</p><p>Mencione o membro ou responda à mensagem dele. Bot precisa ser admin.</p></>)}
-            {localConfig.action === "ban_member" && (<><p className="font-semibold text-white/60 mb-1">🔨 Banir</p><p>Mencione o membro. Bot precisa ser admin do grupo.</p></>)}
-            {localConfig.action === "promote_member" && (<><p className="font-semibold text-white/60 mb-1">⬆️ Promover</p><p>Mencione o membro para promover a admin. Bot precisa ser admin.</p></>)}
-            {localConfig.action === "demote_member" && (<><p className="font-semibold text-white/60 mb-1">⬇️ Rebaixar</p><p>Mencione o admin para rebaixar. Bot precisa ser admin.</p></>)}
-            {localConfig.action === "warn_member" && (<><p className="font-semibold text-white/60 mb-1">⚠️ Aviso</p><p>Mencione o membro. Ao atingir o máximo, é removido automaticamente.</p></>)}
-            {localConfig.action === "hidetag" && (<><p className="font-semibold text-white/60 mb-1">📢 Hidetag</p><p>Marca todos os membros do grupo sem mostrar as menções.</p></>)}
-            {localConfig.action === "antilink" && (<><p className="font-semibold text-white/60 mb-1">🚫 Anti-Link</p><p>Detecta e remove links automaticamente. Admins são ignorados. Adicione este bloco sem conectar a um comando — ele funciona automaticamente.</p></>)}
-            {localConfig.action === "get_group_link" && (<><p className="font-semibold text-white/60 mb-1">🔗 Link</p><p>Gera e envia o link de convite do grupo. Bot precisa ser admin.</p></>)}
+            {localConfig.action === "make_sticker" && (<><p className="font-semibold text-white/60 mb-1">🖼️ Figurinha</p><p>Responda a uma imagem/vídeo com o comando. Converte para WebP 512x512.</p></>)}
+            {localConfig.action === "kick_member" && (<><p className="font-semibold text-white/60 mb-1">🚪 Remover</p><p>Mencione o membro ou responda à msg dele. Bot precisa ser admin.</p></>)}
+            {localConfig.action === "ban_member" && (<><p className="font-semibold text-white/60 mb-1">🔨 Banir</p><p>Mencione o membro. Remove e impede reentrada. Bot admin obrigatório.</p></>)}
+            {localConfig.action === "warn_member" && (<><p className="font-semibold text-white/60 mb-1">⚠️ Aviso</p><p>Mencione o membro. Ao atingir o máx, é removido automaticamente.</p></>)}
+            {localConfig.action === "hidetag" && (<><p className="font-semibold text-white/60 mb-1">📢 Hidetag</p><p>Marca todos sem mostrar menções. Use {"{args}"} na mensagem para incluir texto do comando.</p></>)}
+            {String(localConfig.action).startsWith("anti") && (<><p className="font-semibold text-white/60 mb-1">🛡️ Proteção Automática</p><p>Funciona automaticamente sem comando. Adicione o bloco sem conectar a um Comando — ele detecta e age sozinho. Admins são ignorados.</p></>)}
+            {String(localConfig.action).startsWith("show_menu") && (<><p className="font-semibold text-white/60 mb-1">📋 Menu</p><p>Use variáveis no texto: {"{nome}"}, {"{moedas}"}, {"{prefix}"}sticker, etc. O menu é enviado como lista interativa ou texto formatado.</p></>)}
+            {["coin_flip", "dice_roll", "pick_random", "love_meter", "ship_members", "rate", "fortune", "truth_or_dare", "roulette", "top5", "rank", "joke"].includes(String(localConfig.action)) && (<><p className="font-semibold text-white/60 mb-1">🎮 Diversão</p><p>Resultado gerado aleatoriamente. Funciona melhor em grupos!</p></>)}
+            {["bot_on", "bot_off", "give_coins", "broadcast", "block_user", "unblock_user"].includes(String(localConfig.action)) && (<><p className="font-semibold text-white/60 mb-1">👑 Exclusivo do Dono</p><p>Apenas o número configurado como dono pode executar.</p></>)}
+            {["set_welcome", "set_goodbye"].includes(String(localConfig.action)) && (<><p className="font-semibold text-white/60 mb-1">👋 Mensagem Automática</p><p>Enviada quando alguém entra/sai do grupo. Use {"{nome}"} e {"{grupo}"} no texto.</p></>)}
+            {["send_poll", "send_list", "send_buttons", "send_carousel"].includes(String(localConfig.action)) && (<><p className="font-semibold text-white/60 mb-1">📨 Mensagem Interativa</p><p>Mensagens com botões/listas/enquetes. Formato moderno do WhatsApp.</p></>)}
+            {["send_image", "send_audio", "send_video", "send_document", "send_gif", "send_sticker"].includes(String(localConfig.action)) && (<><p className="font-semibold text-white/60 mb-1">📎 Enviar Mídia</p><p>Informe a URL da mídia. Use {"{nome}"} e outras variáveis na mensagem.</p></>)}
+            {["promote_member", "demote_member", "set_group_name", "set_group_desc", "set_group_photo", "close_group", "open_group", "mute_group", "unmute_group", "get_group_link", "revoke_group_link"].includes(String(localConfig.action)) && (<><p className="font-semibold text-white/60 mb-1">👥 Gerência de Grupo</p><p>Bot precisa ser admin do grupo para executar esta ação.</p></>)}
+            {["group_info", "member_list", "admin_list", "online_list"].includes(String(localConfig.action)) && (<><p className="font-semibold text-white/60 mb-1">📋 Informações</p><p>Exibe informações do grupo/membros. Funciona em qualquer grupo.</p></>)}
+            {["cep_lookup", "calc", "translate", "qrcode_gen"].includes(String(localConfig.action)) && (<><p className="font-semibold text-white/60 mb-1">🔧 Utilitário</p><p>Funciona em grupo e privado. Use {"{args}"} para capturar o texto do usuário.</p></>)}
+            {["mute_member", "unmute_member", "delete_message", "reset_warns"].includes(String(localConfig.action)) && (<><p className="font-semibold text-white/60 mb-1">🛡️ Moderação</p><p>Mencione o membro ou responda à msg. Bot precisa ser admin.</p></>)}
             {localConfig.action === "react_message" && (<><p className="font-semibold text-white/60 mb-1">😀 Reação</p><p>Reage à mensagem com o emoji configurado.</p></>)}
-            {localConfig.action === "group_info" && (<><p className="font-semibold text-white/60 mb-1">📋 Info</p><p>Mostra informações do grupo: nome, membros, admins e descrição.</p></>)}
-            {localConfig.action === "delete_message" && (<><p className="font-semibold text-white/60 mb-1">🗑️ Apagar</p><p>Responda à mensagem que deseja apagar. Bot precisa ser admin.</p></>)}
+            {localConfig.action === "set_auto_reply" && (<><p className="font-semibold text-white/60 mb-1">💬 Auto-Resposta</p><p>Resposta automática quando o bot está offline ou quando não reconhece o comando.</p></>)}
+            {["send_contact", "send_location", "forward_message"].includes(String(localConfig.action)) && (<><p className="font-semibold text-white/60 mb-1">📨 Envio Especial</p><p>Envia contato, localização ou encaminha msg. Preencha os campos adicionais.</p></>)}
           </div>
         )}
         {node.type === "condition" && (
           <div className="rounded-lg bg-yellow-500/5 border border-yellow-500/20 p-3 text-xs text-muted-foreground">
             <p className="font-semibold text-white/60 mb-1">💡 Condições</p>
-            <p>Se a condição for <span className="text-green-400 font-semibold">verdadeira</span>, segue a primeira conexão. Caso contrário, segue a segunda (se houver).</p>
-          </div>
-        )}
-        {node.type === "response" && (
-          <div className="rounded-lg bg-green-500/5 border border-green-500/20 p-3 text-xs text-muted-foreground">
-            <p className="font-semibold text-white/60 mb-1">💡 Variáveis</p>
-            <p><code className="text-green-300">{"{user}"}</code> = menciona o remetente | <code className="text-green-300">{"{group}"}</code> = ID do grupo</p>
+            <p>Se <span className="text-green-400 font-semibold">verdadeira</span> → primeira conexão. <span className="text-red-400 font-semibold">Falsa</span> → segunda (se houver).</p>
+            {localConfig.condition === "is_owner" && <p className="mt-1 text-amber-400/70">👑 Verifica se é o número do dono configurado nas settings.</p>}
+            {localConfig.condition === "time_between" && <p className="mt-1 text-blue-400/70">🕐 Baseado no horário do servidor (Brasília).</p>}
           </div>
         )}
       </div>
