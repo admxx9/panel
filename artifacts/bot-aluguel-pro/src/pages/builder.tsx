@@ -1473,35 +1473,15 @@ export default function BuilderPage() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-white text-lg font-bold flex items-center gap-2">
-                  <LayoutTemplate className="h-5 w-5 text-primary" /> Templates Prontos
+                  <LayoutTemplate className="h-5 w-5 text-primary" /> Canvas vazio
                 </h2>
                 <p className="text-muted-foreground text-xs mt-0.5">
-                  {nodes.length > 0 ? "Escolha para adicionar ao fluxo existente" : "Escolha um template para começar rapidamente"}
+                  Sem blocos padrão. Vamos montar do zero.
                 </p>
               </div>
               <button onClick={() => setShowTemplates(false)} className="text-white/40 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors">
                 <X className="h-5 w-5" />
               </button>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {TEMPLATES.map((tpl) => {
-                const Icon = tpl.icon;
-                return (
-                  <button key={tpl.id} onClick={() => handleApplyTemplate(tpl, nodes.length > 0)}
-                    className={`text-left p-4 rounded-xl border-2 bg-gradient-to-br ${tpl.color} hover:scale-[1.02] active:scale-95 transition-all`}>
-                    <div className="flex items-center gap-2.5 mb-2">
-                      <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
-                        <Icon className="h-4 w-4 text-white" />
-                      </div>
-                      <div>
-                        <p className="text-white text-sm font-semibold">{tpl.name}</p>
-                        <p className="text-white/40 text-[10px]">{tpl.nodes.length} blocos · {tpl.edges.length} conexões</p>
-                      </div>
-                    </div>
-                    <p className="text-white/60 text-xs leading-relaxed">{tpl.description}</p>
-                  </button>
-                );
-              })}
             </div>
           </div>
         </div>
@@ -1578,68 +1558,11 @@ export default function BuilderPage() {
 
       {/* MOBILE layout */}
       <div className="flex flex-col gap-2 md:hidden" style={{ height: "calc(100dvh - 248px)", minHeight: 340 }}>
-        {/* Horizontal palette strip */}
-        <div className="flex-shrink-0 bg-card border border-white/5 rounded-xl px-3 py-2">
-          <div className="flex items-center gap-2 overflow-x-auto scrollbar-none">
-            <span className="text-[10px] text-muted-foreground whitespace-nowrap flex-shrink-0">Adicionar:</span>
-            {BLOCK_TYPES.map((type) => {
-              const cfg = nodeConfig[type];
-              const Icon = cfg.icon;
-              return (
-                <button key={type}
-                  onClick={() => { if (!wasDragged.current) handleAddNode(type); }}
-                  onPointerDown={(e) => handlePaletteDragStart(type, e)}
-                  className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border text-left active:scale-95 flex-shrink-0 ${cfg.color} ${cfg.border}`}
-                  style={{ touchAction: "none" }}>
-                  <Icon className="h-3 w-3 text-white/70 flex-shrink-0" />
-                  <span className="text-white text-[11px] font-semibold">{cfg.label}</span>
-                  <Plus className="h-2.5 w-2.5 text-white/30" />
-                </button>
-              );
-            })}
-          </div>
-          <p className="text-muted-foreground/50 text-[10px] mt-1.5 flex items-center gap-1">
-            <Info className="h-2.5 w-2.5 flex-shrink-0 text-primary" />
-            Arraste blocos pro canvas · 2 dedos: zoom · <span className="text-primary">bolinha roxa</span>: conectar
-          </p>
-        </div>
         {canvasArea}
       </div>
 
       {/* DESKTOP layout */}
       <div className="hidden md:flex gap-3" style={{ height: "calc(100vh - 220px)", minHeight: 400 }}>
-        {/* Left palette */}
-        <div className="w-44 flex-shrink-0 bg-card border border-white/5 rounded-xl p-3 flex flex-col gap-3">
-          <p className="text-xs text-muted-foreground uppercase tracking-wider font-medium">Blocos</p>
-          <div className="space-y-1.5">
-            {BLOCK_TYPES.map((type) => {
-              const cfg = nodeConfig[type];
-              const Icon = cfg.icon;
-              return (
-                <button key={type}
-                  onClick={() => { if (!wasDragged.current) handleAddNode(type); }}
-                  onPointerDown={(e) => handlePaletteDragStart(type, e)}
-                  className={`w-full flex items-center gap-2 p-2 rounded-lg border-2 text-left transition-all hover:scale-[1.02] active:scale-95 ${cfg.color} ${cfg.border}`}
-                  style={{ touchAction: "none" }}>
-                  <Icon className="h-3.5 w-3.5 text-white/70 flex-shrink-0" />
-                  <span className="text-white text-xs font-semibold">{cfg.label}</span>
-                  <Plus className="h-3 w-3 text-white/30 ml-auto" />
-                </button>
-              );
-            })}
-          </div>
-          <div className="mt-auto pt-3 border-t border-white/5 space-y-2.5">
-            <div className="flex items-start gap-1.5 text-muted-foreground">
-              <Info className="h-3 w-3 flex-shrink-0 mt-0.5 text-primary" />
-              <p className="text-xs leading-relaxed">Arraste a <span className="text-primary font-semibold">bolinha direita</span> para conectar blocos</p>
-            </div>
-            <div className="flex items-start gap-1.5 text-muted-foreground">
-              <Pencil className="h-3 w-3 flex-shrink-0 mt-0.5" />
-              <p className="text-xs leading-relaxed">Lápis ou <span className="text-white/60">duplo clique</span> para editar</p>
-            </div>
-          </div>
-        </div>
-
         {canvasArea}
 
         {/* Right panel */}
