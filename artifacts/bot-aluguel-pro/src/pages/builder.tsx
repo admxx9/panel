@@ -56,7 +56,7 @@ const MAX_SCALE = 2;
 const SCALE_STEP = 0.15;
 
 const nodeConfig: Record<NodeType, { color: string; border: string; icon: React.ElementType; label: string; description: string }> = {
-  command: { color: "bg-primary/10", border: "border-primary/40", icon: MessageSquare, label: "Comando", description: "Gatilho" },
+  command: { color: "bg-primary/10", border: "border-primary/40", icon: MessageSquare, label: "Comando", description: "Detecta se a mensagem é um comando" },
   action: { color: "bg-violet-500/10", border: "border-violet-500/40", icon: Zap, label: "Ação", description: "Executa algo" },
   condition: { color: "bg-yellow-500/10", border: "border-yellow-500/40", icon: GitBranch, label: "Condição", description: "Se / Senão" },
   response: { color: "bg-green-500/10", border: "border-green-500/40", icon: Reply, label: "Resposta", description: "Envia texto" },
@@ -64,12 +64,21 @@ const nodeConfig: Record<NodeType, { color: string; border: string; icon: React.
 
 const CONFIG_FIELDS: Record<NodeType, { key: string; label: string; type: "text" | "textarea" | "select" | "checkbox"; placeholder?: string; options?: { value: string; label: string }[]; showWhen?: (config: Record<string, unknown>) => boolean }[]> = {
   command: [
-    { key: "trigger", label: "Gatilho (sem prefixo)", type: "text", placeholder: "ex: sticker" },
-    { key: "admin_only", label: "Apenas admins podem usar", type: "checkbox" },
-    { key: "owner_only", label: "Apenas o dono pode usar", type: "checkbox" },
-    { key: "group_only", label: "Funciona apenas em grupo", type: "checkbox" },
-    { key: "private_only", label: "Funciona apenas no privado", type: "checkbox" },
-    { key: "cooldown", label: "Cooldown (segundos)", type: "text", placeholder: "0" },
+    { key: "prefix", label: "Prefixo", type: "select", options: [
+      { value: ".", label: "." },
+      { value: "!", label: "!" },
+      { value: "/", label: "/" },
+      { value: "#", label: "#" },
+      { value: "@", label: "@" },
+      { value: "$", label: "$" },
+      { value: "nenhum", label: "Nenhum" },
+    ] },
+    { key: "name", label: "Nome do comando", type: "text", placeholder: "menu" },
+    { key: "caseSensitive", label: "Diferenciar maiúsculas", type: "checkbox" },
+    { key: "apenasGrupos", label: "Apenas grupos", type: "checkbox" },
+    { key: "apenasPrivado", label: "Apenas privado", type: "checkbox" },
+    { key: "requerPlano", label: "Requer plano", type: "checkbox" },
+    { key: "requerAdmin", label: "Requer admin", type: "checkbox" },
   ],
   action: [
     {
@@ -241,7 +250,7 @@ const CONFIG_FIELDS: Record<NodeType, { key: string; label: string; type: "text"
   ],
 };
 
-const BLOCK_TYPES: NodeType[] = ["command", "action", "condition", "response"];
+const BLOCK_TYPES: NodeType[] = ["command"];
 
 interface FlowTemplate {
   id: string;
@@ -253,7 +262,7 @@ interface FlowTemplate {
   edges: FlowEdge[];
 }
 
-const TEMPLATES: FlowTemplate[] = [
+const TEMPLATES: FlowTemplate[] = [];
   {
     id: "sticker", name: "Criar Figurinha", description: "Converte imagem em figurinha com verificação", icon: Image,
     color: "from-pink-500/20 to-violet-500/20 border-pink-500/30",

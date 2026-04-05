@@ -1,0 +1,69 @@
+O que faz
+Detecta se uma mensagem recebida é um comando específico.
+
+Entrada (o que recebe)
+conteudo — texto da mensagem
+
+ehGrupo — se veio de um grupo (true/false)
+
+ehAdmin — se o usuário é admin do grupo (true/false)
+
+temPlano — se o usuário tem plano ativo (true/false)
+
+Configurações que o usuário define
+Config	O que significa
+prefixo	caractere que inicia o comando (., !, /, #, @, $, ou "nenhum")
+nome	o texto do comando (ex: "menu", "start", "ajuda")
+caseSensitive	se "Menu" é diferente de "menu"
+apenasGrupos	só funciona se for em grupo
+apenasPrivado	só funciona se for no privado
+requerPlano	só funciona se usuário tiver plano ativo
+requerAdmin	só funciona se usuário for admin do grupo
+Regras de ativação (passo a passo)
+text
+1. SE prefixo for "nenhum":
+      comandoExtraido = primeira palavra do conteudo
+   SENÃO:
+      SE conteudo NÃO começar com o prefixo:
+          → BLOCO NÃO ATIVA
+      comandoExtraido = texto após o prefixo, até o primeiro espaço
+
+2. SE caseSensitive for false:
+      comandoExtraido = comandoExtraido.toLowerCase()
+      nomeConfigurado = nomeConfigurado.toLowerCase()
+
+3. SE comandoExtraido for DIFERENTE de nomeConfigurado:
+      → BLOCO NÃO ATIVA
+
+4. SE apenasGrupos for true E NÃO for grupo:
+      → BLOCO NÃO ATIVA
+
+5. SE apenasPrivado for true E for grupo:
+      → BLOCO NÃO ATIVA
+
+6. SE requerAdmin for true E não for admin:
+      → BLOCO NÃO ATIVA
+
+7. SE requerPlano for true E não tiver plano:
+      → BLOCO NÃO ATIVA
+
+8. SE passou por tudo:
+      → BLOCO ATIVA → executa o próximo bloco conectado
+Saída (o que entrega para o próximo bloco)
+Nenhum valor especial (apenas ativa o fluxo)
+
+Exemplo visual do que o usuário vê no bloco
+text
+┌─────────────────────────┐
+│  ⚡ COMANDO              │
+├─────────────────────────┤
+│  .menu                   │
+│                         │
+│  [apenas privado]       │
+└─────────────────────────┘
+         │ (saída)
+         ▼
+Exemplo de fluxo com este bloco
+text
+[COMANDO: .start] → [AÇÃO: enviar "Olá!"] → [FIM]
+[COMANDO: /ajuda] → [CONDIÇÃO: se grupo?] → [SIM: enviar "Ajuda no grupo"] → [NÃO: enviar "Ajuda no privado"]
