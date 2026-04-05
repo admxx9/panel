@@ -1160,11 +1160,11 @@ export default function BuilderPage() {
         {selectedBotId && !commandsLoading && nodes.length === 0 && !showTemplates && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center px-6 pointer-events-auto">
-              <LayoutTemplate className="h-10 w-10 text-muted-foreground/20 mx-auto mb-3" />
-              <p className="text-muted-foreground text-sm font-medium">Nenhum bloco ainda</p>
-              <p className="text-muted-foreground/50 text-xs mt-1 mb-4">Comece com um template pronto ou adicione blocos manualmente</p>
-              <Button onClick={() => setShowTemplates(true)} size="sm" className="bg-primary hover:bg-primary/90 text-white">
-                <LayoutTemplate className="h-4 w-4 mr-1.5" /> Usar Template Pronto
+              <MessageSquare className="h-12 w-12 text-primary/30 mx-auto mb-4" />
+              <p className="text-white text-base font-semibold mb-1">Comece criando um comando</p>
+              <p className="text-muted-foreground/60 text-xs mb-5">Clique no botao abaixo para adicionar seu primeiro bloco</p>
+              <Button onClick={() => handleAddNode("command")} size="lg" className="bg-primary hover:bg-primary/90 text-white px-6 py-3 text-sm font-semibold shadow-xl shadow-primary/20">
+                <Plus className="h-5 w-5 mr-2" /> Adicionar Bloco Comando
               </Button>
             </div>
           </div>
@@ -1268,12 +1268,13 @@ export default function BuilderPage() {
               )}
             </SelectContent>
           </Select>
-          <Button variant="outline" size="sm"
-            onClick={() => { setShowTemplates(true); setEditingNodeId(null); setShowSettings(false); }}
+          <Button size="sm"
+            onClick={() => handleAddNode("command")}
             disabled={!selectedBotId}
-            className="border-white/10 text-white/70 hover:text-white hover:bg-white/5">
-            <LayoutTemplate className="h-4 w-4 mr-1.5" />
-            <span className="hidden sm:inline">Templates</span>
+            className="bg-primary hover:bg-primary/90 text-white">
+            <Plus className="h-4 w-4 mr-1.5" />
+            <MessageSquare className="h-3.5 w-3.5 mr-1" />
+            <span className="hidden sm:inline">Comando</span>
           </Button>
           <Button variant="outline" size="sm"
             onClick={() => { setShowSettings((v) => !v); setEditingNodeId(null); }}
