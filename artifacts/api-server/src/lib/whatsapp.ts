@@ -8,6 +8,7 @@ import makeWASocket, {
 } from "baileys";
 import { Boom } from "@hapi/boom";
 import { toDataURL } from "qrcode";
+import { sendInteractiveButtons, sendInteractiveList } from "./buttons.js";
 import path from "path";
 import fs from "fs";
 import sharp from "sharp";
@@ -344,52 +345,38 @@ async function executeFlow(
           const botoesRaw = (node.config?.botoes as string) || "";
 
           if (btnData && btnData.type === "normal" && btnData.buttons && btnData.buttons.length > 0) {
-            await sock.sendMessage(jid, {
+            const btns = btnData.buttons.map((b: any) => ({ id: b.buttonId, text: b.buttonText.displayText }));
+            await sendInteractiveButtons(sock, jid, {
               text: processedText || "Escolha uma opcao:",
-              buttons: btnData.buttons,
-              headerType: 1,
-              mentions,
-            } as any, { quoted: msg });
+              buttons: btns,
+            });
           } else if (btnData && btnData.type === "lista" && btnData.listData) {
             const ld = btnData.listData;
-            const sections = [{ title: ld.tituloLista, rows: ld.rows }];
             const processedTextoLista = ld.textoLista ? await replaceVars(ld.textoLista, sock, msg, botId) : processedText;
             const processedRodape = ld.rodapeLista ? await replaceVars(ld.rodapeLista, sock, msg, botId) : "";
-            await sock.sendMessage(jid, {
+            await sendInteractiveList(sock, jid, {
               text: processedTextoLista || processedText || "Escolha uma opcao:",
               title: ld.tituloLista,
               footer: processedRodape,
               buttonText: ld.textoBotao,
-              sections,
-              mentions,
-            } as any, { quoted: msg });
+              sections: [{ title: ld.tituloLista, rows: ld.rows }],
+            });
           } else if (btnData && btnData.type === "ligar" && btnData.callData) {
             const cd = btnData.callData;
-            const buttons = [{ buttonId: `call_${cd.numeroLigar}`, buttonText: { displayText: cd.textoLigar }, type: 1 }];
-            await sock.sendMessage(jid, {
+            await sendInteractiveButtons(sock, jid, {
               text: processedText || "Ligue para nos:",
-              buttons,
-              headerType: 1,
-              mentions,
-            } as any, { quoted: msg });
+              buttons: [{ id: `call_${cd.numeroLigar}`, text: cd.textoLigar }],
+            });
           } else if (temBotoes && botoesRaw.trim()) {
             const botoesLines = botoesRaw.split("\n").filter((l: string) => l.trim()).slice(0, 3);
-            const buttons = botoesLines.map((line: string) => {
+            const btns = botoesLines.map((line: string) => {
               const parts = line.split("|").map((s: string) => s.trim());
-              const id = parts[0] || "";
-              const titulo = parts[1] || parts[0] || "";
-              const tipo = (parts[2] || "reply").toLowerCase();
-              if (tipo === "call") {
-                return { buttonId: id, buttonText: { displayText: titulo }, type: 1 };
-              }
-              return { buttonId: id, buttonText: { displayText: titulo }, type: 1 };
+              return { id: parts[0] || "", text: parts[1] || parts[0] || "" };
             });
-            await sock.sendMessage(jid, {
+            await sendInteractiveButtons(sock, jid, {
               text: processedText || "Escolha uma opcao:",
-              buttons,
-              headerType: 1,
-              mentions,
-            } as any, { quoted: msg });
+              buttons: btns,
+            });
           } else {
             if (processedText) {
               await sock.sendMessage(jid, { text: processedText, mentions }, { quoted: msg });
@@ -427,14 +414,13 @@ async function executeFlow(
           if (sections.length > 0) {
             const processedTextoLista = await replaceVars(textoLista, sock, msg, botId);
             const processedRodape = rodapeLista ? await replaceVars(rodapeLista, sock, msg, botId) : "";
-            await sock.sendMessage(jid, {
+            await sendInteractiveList(sock, jid, {
               text: processedTextoLista,
               title: tituloLista,
               footer: processedRodape,
               buttonText: textoBotao,
               sections,
-              mentions,
-            } as any, { quoted: msg });
+            });
           } else {
             if (processedText) {
               await sock.sendMessage(jid, { text: processedText, mentions }, { quoted: msg });
@@ -453,35 +439,33 @@ async function executeFlow(
             }, { quoted: msg });
 
             if (btnData && btnData.type === "normal" && btnData.buttons && btnData.buttons.length > 0) {
-              await sock.sendMessage(jid, {
+              const btns = btnData.buttons.map((b: any) => ({ id: b.buttonId, text: b.buttonText.displayText }));
+              await sendInteractiveButtons(sock, jid, {
                 text: processedLegenda || "Escolha:",
-                buttons: btnData.buttons,
-                headerType: 1,
-              } as any, { quoted: msg });
+                buttons: btns,
+              });
             } else if (btnData && btnData.type === "lista" && btnData.listData) {
               const ld = btnData.listData;
-              const sections = [{ title: ld.tituloLista, rows: ld.rows }];
-              await sock.sendMessage(jid, {
+              await sendInteractiveList(sock, jid, {
                 text: ld.textoLista || processedLegenda || "Escolha:",
                 title: ld.tituloLista,
                 footer: ld.rodapeLista,
                 buttonText: ld.textoBotao,
-                sections,
-              } as any, { quoted: msg });
+                sections: [{ title: ld.tituloLista, rows: ld.rows }],
+              });
             } else {
               const temBotoes = !!node.config?.temBotoes;
               const botoesRaw = (node.config?.botoes as string) || "";
               if (temBotoes && botoesRaw.trim()) {
                 const botoesLines = botoesRaw.split("\n").filter((l: string) => l.trim()).slice(0, 3);
-                const buttons = botoesLines.map((line: string) => {
+                const btns = botoesLines.map((line: string) => {
                   const parts = line.split("|").map((s: string) => s.trim());
-                  return { buttonId: parts[0] || "", buttonText: { displayText: parts[1] || parts[0] || "" }, type: 1 };
+                  return { id: parts[0] || "", text: parts[1] || parts[0] || "" };
                 });
-                await sock.sendMessage(jid, {
+                await sendInteractiveButtons(sock, jid, {
                   text: processedLegenda || "Escolha:",
-                  buttons,
-                  headerType: 1,
-                } as any, { quoted: msg });
+                  buttons: btns,
+                });
               }
             }
           }

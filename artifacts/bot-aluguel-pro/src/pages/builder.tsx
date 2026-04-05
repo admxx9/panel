@@ -299,7 +299,40 @@ interface FlowTemplate {
   edges: FlowEdge[];
 }
 
-const TEMPLATES: FlowTemplate[] = [];
+const TEMPLATES: FlowTemplate[] = [
+  {
+    id: "menu_botoes",
+    name: "Menu com Botoes",
+    description: "Comando .menu com resposta e botoes interativos",
+    icon: MousePointerClick,
+    color: "cyan",
+    nodes: [
+      { id: "t_cmd", type: "command", label: ".menu", position: { x: 60, y: 60 }, config: { prefix: ".", name: "menu", caseSensitive: false, apenasGrupos: false, apenasPrivado: false, requerPlano: false, requerAdmin: false } },
+      { id: "t_resp", type: "response", label: "Bem-vindo ao Menu!", position: { x: 60, y: 220 }, config: { tipoResposta: "texto", texto: "Ola {nome}! Bem-vindo ao *Menu Principal*\n\nEscolha uma opcao abaixo:", temBotoes: false, linkPreview: false } },
+      { id: "t_btn", type: "buttons", label: "Botoes", position: { x: 60, y: 380 }, config: { tipoBotao: "normal", botoes: ".saldo | Meu Saldo\n.planos | Ver Planos\n.ajuda | Ajuda" } },
+    ],
+    edges: [
+      { id: "t_e1", source: "t_cmd", target: "t_resp" },
+      { id: "t_e2", source: "t_resp", target: "t_btn" },
+    ],
+  },
+  {
+    id: "menu_lista",
+    name: "Menu Lista Interativa",
+    description: "Comando .catalogo com lista interativa estilo banco",
+    icon: List,
+    color: "cyan",
+    nodes: [
+      { id: "t2_cmd", type: "command", label: ".catalogo", position: { x: 60, y: 60 }, config: { prefix: ".", name: "catalogo", caseSensitive: false, apenasGrupos: false, apenasPrivado: false, requerPlano: false, requerAdmin: false } },
+      { id: "t2_resp", type: "response", label: "Catalogo de Servicos", position: { x: 60, y: 220 }, config: { tipoResposta: "texto", texto: "Ola {nome}! Confira nosso catalogo de servicos.\n\nSelecione uma categoria no botao abaixo:", temBotoes: false, linkPreview: false } },
+      { id: "t2_btn", type: "buttons", label: "Lista", position: { x: 60, y: 380 }, config: { tipoBotao: "lista", textoBotao: "ABRIR CATALOGO", tituloLista: "Catalogo", textoLista: "Escolha um servico", rodapeLista: "BotAluguel Pro", opcoes: ".plano_basico | Plano Basico | 100 moedas/mes\n.plano_pro | Plano Pro | 250 moedas/mes\n.plano_premium | Plano Premium | 500 moedas/mes\n.suporte | Falar com Suporte | Atendimento humano" } },
+    ],
+    edges: [
+      { id: "t2_e1", source: "t2_cmd", target: "t2_resp" },
+      { id: "t2_e2", source: "t2_resp", target: "t2_btn" },
+    ],
+  },
+];
 function Port({ side, onPointerDown, isTarget, isConnecting }: {
   side: "left" | "right";
   onPointerDown?: (e: React.PointerEvent) => void;
