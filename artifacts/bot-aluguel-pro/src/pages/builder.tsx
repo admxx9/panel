@@ -264,17 +264,6 @@ interface FlowTemplate {
 
 const TEMPLATES: FlowTemplate[] = [];
   {
-    id: "sticker", name: "Criar Figurinha", description: "Converte imagem em figurinha com verificação", icon: Image,
-    color: "from-pink-500/20 to-violet-500/20 border-pink-500/30",
-    nodes: [
-      { id: "t1_c1", type: "command", label: "sticker", config: { trigger: "sticker" }, position: { x: 40, y: 100 } },
-      { id: "t1_d1", type: "condition", label: "Tem imagem?", config: { condition: "has_image" }, position: { x: 280, y: 100 } },
-      { id: "t1_a1", type: "action", label: "Criar Figurinha", config: { action: "make_sticker", message: "🖼️ Figurinha criada, {nome}!" }, position: { x: 520, y: 50 } },
-      { id: "t1_r1", type: "response", label: "Sem imagem", config: { text: "📷 {nome}, envie ou responda a uma imagem com o comando!" }, position: { x: 520, y: 180 } },
-    ],
-    edges: [{ id: "t1_e1", source: "t1_c1", target: "t1_d1" }, { id: "t1_e2", source: "t1_d1", target: "t1_a1" }, { id: "t1_e3", source: "t1_d1", target: "t1_r1" }],
-  },
-  {
     id: "menu_completo", name: "Menu Completo com Foto", description: "Menu principal + admin + jogos com variáveis e foto", icon: Sparkles,
     color: "from-cyan-500/20 to-blue-500/20 border-cyan-500/30",
     nodes: [
