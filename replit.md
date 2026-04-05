@@ -52,6 +52,7 @@
   - **Performance**: RAF throttle no handleMoveNode, will-change no container de transform e nodes
   - **Gestos mobile**: 1 dedo = pan, pinça = zoom, long-press 200ms + arrastar = mover bloco, feedback visual (outline roxo + scale) e vibração
   - **Bloco Resposta**: 6 tipos (texto, lista interativa, imagem, audio, localizacao, contato), variaveis ({nome}, {moedas}, etc.), botoes (max 3, reply/call), preview ao vivo no formulario, tags no card (tipo, botoes, preview)
+  - **Bloco Botoes**: bloco separado para botoes interativos (3 tipos: normal max 3, lista interativa/menu, ligar). Conecta-se na saida de um bloco Resposta para decorar a mensagem. Preview ao vivo no formulario. Backend mescla botoes na mensagem da resposta. Cliques de botoes/listas parseados via buttonsResponseMessage/listResponseMessage.
   - Formato secoes lista: linhas sem pipe = titulo secao, linhas com pipe = id | titulo_row | descricao
 - WhatsApp: auto-reconnect de sessoes ao iniciar servidor (restoreSessions), sessoes persistentes em `.baileys-sessions/`
 - Planos: Basico (100), Pro (250), Premium (500) moedas/30 dias

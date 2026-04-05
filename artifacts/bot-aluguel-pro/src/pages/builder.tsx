@@ -3,7 +3,7 @@ import {
   Save, Plus, Trash2, Bot, Loader2, MessageSquare, Zap, GitBranch,
   Reply, Info, Pencil, X, ChevronRight, Settings2, Link2, ChevronDown,
   ZoomIn, ZoomOut, Maximize2, LayoutTemplate, Image, Shield, Users, Star, HandMetal,
-  Gamepad2, Crown, Lock, Heart, Sparkles, Send, Eye, Copy,
+  Gamepad2, Crown, Lock, Heart, Sparkles, Send, Eye, Copy, MousePointerClick, Phone, List,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 
-type NodeType = "command" | "action" | "condition" | "response";
+type NodeType = "command" | "action" | "condition" | "response" | "buttons";
 type Position = { x: number; y: number };
 
 interface FlowNode {
@@ -60,6 +60,7 @@ const nodeConfig: Record<NodeType, { color: string; border: string; icon: React.
   action: { color: "bg-violet-500/10", border: "border-violet-500/40", icon: Zap, label: "Ação", description: "Executa algo" },
   condition: { color: "bg-yellow-500/10", border: "border-yellow-500/40", icon: GitBranch, label: "Condição", description: "Se / Senão" },
   response: { color: "bg-green-500/10", border: "border-green-500/40", icon: Reply, label: "Resposta", description: "Envia texto" },
+  buttons: { color: "bg-cyan-500/10", border: "border-cyan-500/40", icon: MousePointerClick, label: "Botoes", description: "Botoes interativos" },
 };
 
 const CONFIG_FIELDS: Record<NodeType, { key: string; label: string; type: "text" | "textarea" | "select" | "checkbox"; placeholder?: string; options?: { value: string; label: string }[]; showWhen?: (config: Record<string, unknown>) => boolean }[]> = {
@@ -269,9 +270,24 @@ const CONFIG_FIELDS: Record<NodeType, { key: string; label: string; type: "text"
     { key: "botoes", label: "Botoes (id | titulo | tipo[reply/call], por linha, max 3)", type: "textarea", placeholder: ".planos | Ver Planos | reply\n.suporte | Suporte | reply\n5511999999999 | Ligar | call", showWhen: (c) => !!c.temBotoes && (c.tipoResposta === "texto" || c.tipoResposta === "imagem") },
     { key: "linkPreview", label: "Mostrar previa de links", type: "checkbox", showWhen: (c) => c.tipoResposta === "texto" },
   ],
+  buttons: [
+    { key: "tipoBotao", label: "Tipo de Botao", type: "select", options: [
+      { value: "normal", label: "Botoes normais (max 3)" },
+      { value: "lista", label: "Lista interativa (menu)" },
+      { value: "ligar", label: "Botao de ligar" },
+    ] },
+    { key: "botoes", label: "Botoes (id | texto, um por linha, max 3)", type: "textarea", placeholder: ".sim | Sim\n.nao | Nao\n.talvez | Talvez", showWhen: (c) => !c.tipoBotao || c.tipoBotao === "normal" },
+    { key: "textoBotao", label: "Texto do botao principal", type: "text", placeholder: "ABRIR MENU", showWhen: (c) => c.tipoBotao === "lista" },
+    { key: "tituloLista", label: "Titulo da lista", type: "text", placeholder: "Menu Principal", showWhen: (c) => c.tipoBotao === "lista" },
+    { key: "textoLista", label: "Texto da lista", type: "textarea", placeholder: "Escolha uma opcao", showWhen: (c) => c.tipoBotao === "lista" },
+    { key: "rodapeLista", label: "Rodape", type: "text", placeholder: "BotAluguel", showWhen: (c) => c.tipoBotao === "lista" },
+    { key: "opcoes", label: "Opcoes (id | titulo | descricao, por linha)", type: "textarea", placeholder: ".saldo | Saldo | Ver moedas\n.planos | Planos | Ver planos\n.ajuda | Ajuda | Falar com suporte", showWhen: (c) => c.tipoBotao === "lista" },
+    { key: "textoLigar", label: "Texto do botao", type: "text", placeholder: "Falar com suporte", showWhen: (c) => c.tipoBotao === "ligar" },
+    { key: "numeroLigar", label: "Numero para ligar", type: "text", placeholder: "5511999999999", showWhen: (c) => c.tipoBotao === "ligar" },
+  ],
 };
 
-const BLOCK_TYPES: NodeType[] = ["command", "response"];
+const BLOCK_TYPES: NodeType[] = ["command", "response", "buttons"];
 
 interface FlowTemplate {
   id: string;
@@ -425,6 +441,19 @@ function NodeCard({
     } else {
       displayLabel = TIPO_LABELS[tipo] || "Resposta";
     }
+  } else if (node.type === "buttons" && node.config) {
+    const tipoBt = String(node.config.tipoBotao || "normal");
+    if (tipoBt === "normal" && node.config.botoes) {
+      const firstLine = String(node.config.botoes).split("\n").find((l: string) => l.trim());
+      if (firstLine) {
+        const parts = firstLine.split("|").map((s: string) => s.trim());
+        displayLabel = parts[1] || parts[0] || "Botoes";
+      }
+    } else if (tipoBt === "lista") {
+      displayLabel = String(node.config.tituloLista || node.config.textoBotao || "Lista");
+    } else if (tipoBt === "ligar") {
+      displayLabel = String(node.config.textoLigar || "Ligar");
+    }
   } else if (node.config?.action) {
     displayLabel = CONFIG_FIELDS.action[0].options?.find(o => o.value === node.config.action)?.label ?? node.label;
   } else if (node.config?.text) {
@@ -443,6 +472,19 @@ function NodeCard({
     nodeTags.push(TIPO_LABELS[tipo] || tipo);
     if (node.config.temBotoes) nodeTags.push("botoes");
     if (node.config.linkPreview) nodeTags.push("preview");
+  }
+  if (node.type === "buttons" && node.config) {
+    const tipoBt = String(node.config.tipoBotao || "normal");
+    const btLabels: Record<string, string> = { normal: "Normal", lista: "Lista", ligar: "Ligar" };
+    nodeTags.push(btLabels[tipoBt] || tipoBt);
+    if (tipoBt === "normal" && node.config.botoes) {
+      const count = String(node.config.botoes).split("\n").filter((l: string) => l.trim()).length;
+      if (count > 0) nodeTags.push(`${count} btn`);
+    }
+    if (tipoBt === "lista" && node.config.opcoes) {
+      const count = String(node.config.opcoes).split("\n").filter((l: string) => l.trim()).length;
+      if (count > 0) nodeTags.push(`${count} opc`);
+    }
   }
 
   return (
@@ -513,6 +555,11 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
       else if (tipo === "lista" && localConfig.tituloLista) autoLabel = String(localConfig.tituloLista);
       else if (tipo === "imagem" && localConfig.legenda) autoLabel = String(localConfig.legenda).slice(0, 30);
       else autoLabel = tipoLabel[tipo] || "Resposta";
+    } else if (node.type === "buttons") {
+      const tipoBt = String(localConfig.tipoBotao || "normal");
+      if (tipoBt === "ligar") autoLabel = String(localConfig.textoLigar || "Ligar");
+      else if (tipoBt === "lista") autoLabel = String(localConfig.tituloLista || localConfig.textoBotao || "Lista");
+      else autoLabel = "Botoes";
     } else {
       const displayKey = fields[0]?.key;
       autoLabel = displayKey && localConfig[displayKey] ? String(localConfig[displayKey]) : localLabel;
@@ -631,6 +678,44 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
             <div className="pt-2 border-t border-white/10 text-white/40 space-y-0.5">
               <p className="font-semibold text-white/50 text-[10px]">Entradas recebidas:</p>
               <p className="text-[10px]">jid, nome, moedas, plano, expiraEm, grupos</p>
+            </div>
+          </div>
+        )}
+        {node.type === "buttons" && (
+          <div className="rounded-lg bg-cyan-500/5 border border-cyan-500/20 p-3 text-xs space-y-2">
+            <p className="font-semibold text-white/60">Preview dos botoes:</p>
+            {(!localConfig.tipoBotao || localConfig.tipoBotao === "normal") && localConfig.botoes && (
+              <div className="flex flex-col gap-1">
+                {String(localConfig.botoes).split("\n").filter(Boolean).slice(0, 3).map((line: string, i: number) => {
+                  const parts = line.split("|").map((s: string) => s.trim());
+                  return <div key={i} className="px-3 py-1.5 rounded bg-cyan-600/20 text-cyan-300 text-[10px] text-center font-semibold">{parts[1] || parts[0]}</div>;
+                })}
+              </div>
+            )}
+            {localConfig.tipoBotao === "lista" && (
+              <div className="bg-background/60 rounded-lg p-2 space-y-1">
+                <p className="text-white/70 text-[10px] font-semibold">{String(localConfig.tituloLista || "Menu")}</p>
+                <p className="text-white/50 text-[10px]">{String(localConfig.textoLista || "Escolha uma opcao")}</p>
+                <div className="mt-1 px-2 py-1 rounded bg-cyan-600/20 text-cyan-300 text-[10px] text-center font-semibold">{String(localConfig.textoBotao || "VER OPCOES")}</div>
+                {localConfig.opcoes && (
+                  <div className="mt-1 space-y-0.5">
+                    {String(localConfig.opcoes).split("\n").filter(Boolean).map((line: string, i: number) => {
+                      const parts = line.split("|").map((s: string) => s.trim());
+                      return <div key={i} className="text-white/40 text-[9px] pl-2 border-l border-cyan-500/20">{parts[1] || parts[0]}{parts[2] ? ` - ${parts[2]}` : ""}</div>;
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+            {localConfig.tipoBotao === "ligar" && (
+              <div className="px-3 py-2 rounded bg-green-600/20 text-green-300 text-[10px] text-center font-semibold flex items-center justify-center gap-2">
+                <span>📞</span> {String(localConfig.textoLigar || "Ligar")}
+              </div>
+            )}
+            <div className="pt-2 border-t border-white/10 text-white/40 space-y-0.5">
+              <p className="font-semibold text-white/50 text-[10px]">Conexao:</p>
+              <p className="text-[10px]">Conecte a SAIDA de um bloco RESPOSTA na ENTRADA deste bloco</p>
+              <p className="text-[10px]">Os botoes serao enviados junto com a mensagem da Resposta</p>
             </div>
           </div>
         )}
@@ -873,6 +958,7 @@ export default function BuilderPage() {
       action: { label: "Criar Figurinha", config: { action: "make_sticker" } },
       condition: { label: "Tem imagem?", config: { condition: "has_image" } },
       response: { label: "Resposta", config: { tipoResposta: "texto", texto: "", temBotoes: false, linkPreview: false } },
+      buttons: { label: "Botoes", config: { tipoBotao: "normal", botoes: "" } },
     };
     const d = defaults[type];
     // Place new node in visible area (world coords)
@@ -926,6 +1012,7 @@ export default function BuilderPage() {
       action: { label: "Criar Figurinha", config: { action: "make_sticker" } },
       condition: { label: "Tem imagem?", config: { condition: "has_image" } },
       response: { label: "Resposta", config: { tipoResposta: "texto", texto: "", temBotoes: false, linkPreview: false } },
+      buttons: { label: "Botoes", config: { tipoBotao: "normal", botoes: "" } },
     };
 
     const onMove = (e: PointerEvent) => {

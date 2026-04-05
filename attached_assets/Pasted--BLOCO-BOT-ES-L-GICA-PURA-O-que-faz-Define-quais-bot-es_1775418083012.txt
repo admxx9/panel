@@ -1,0 +1,272 @@
+🔷 BLOCO BOTÕES — LÓGICA PURA
+O que faz
+Define quais botões aparecem em uma mensagem e para onde vão quando clicados.
+
+Por que precisa existir separado?
+Porque um bloco RESPOSTA pode ter:
+
+0 botões (só texto)
+
+1 botão (ex: "VER OPÇÕES" que abre lista)
+
+vários botões (ex: "Sim" e "Não")
+
+botões que viram comandos ou botões que ligam
+
+Conexão com outros blocos
+text
+[RESPOSTA] ──────────────────────────► [BOTÕES]
+   │                                        │
+   │ (define a mensagem)                    │ (define os botões)
+   │                                        │
+   │                                        ▼
+   │                                 ┌─────────────┐
+   │                                 │  Qual tipo? │
+   │                                 └─────────────┘
+   │                                        │
+   │                    ┌───────────────────┼───────────────────┐
+   │                    │                   │                   │
+   │                    ▼                   ▼                   ▼
+   │              [BOTÃO NORMAL]      [BOTÃO LISTA]      [BOTÃO LIGAR]
+   │                    │                   │                   │
+   │                    │ (clique)          │ (clique)          │ (clique)
+   │                    ▼                   ▼                   ▼
+   │              [COMANDO]           [LISTA DE          [LIGAÇÃO
+   │                                   OPÇÕES]           TELEFÔNICA]
+   │                    │                   │                   │
+   │                    │                   ▼                   │
+   │                    │            [vários COMANDOS]          │
+   │                    │              (um por opção)           │
+   │                    │                                       │
+   └────────────────────┴───────────────────────────────────────┘
+Configurações que o usuário define
+Config	Tipo	Opções
+tipoBotao	select	normal, lista, ligar
+quantidade	number	1 a 3 (limite do WhatsApp)
+1️⃣ BOTÃO NORMAL (tipoBotao = "normal")
+O que faz
+Mostra botões fixos abaixo da mensagem. Cada botão, quando clicado, envia um COMANDO específico.
+
+Configurações
+Propriedade	Descrição	Exemplo
+texto	texto visível no botão	"✅ Sim"
+comandoDestino	id do bloco COMANDO para executar	"bloco_comando_sim"
+comandoTexto	texto enviado ao clicar (opcional)	".sim"
+Conexão visual
+text
+[BOTÃO NORMAL] ──conecta──► [COMANDO: .sim]
+Exemplo de uso
+text
+[RESPOSTA: "Deseja continuar?"]
+        │
+        ▼
+[BOTÕES: tipo=normal, 2 botões]
+        │
+        ├──► [BOTÃO: "✅ Sim"] ──conecta──► [COMANDO: .sim] ──► [RESPOSTA: "Continuando..."]
+        │
+        └──► [BOTÃO: "❌ Não"] ──conecta──► [COMANDO: .nao] ──► [RESPOSTA: "Cancelado"]
+2️⃣ BOTÃO LISTA (tipoBotao = "lista")
+O que faz
+Mostra UM botão que, ao clicar, abre uma lista de opções (menu suspenso). Cada opção da lista, quando escolhida, envia um COMANDO diferente.
+
+Configurações
+Propriedade	Descrição	Exemplo
+textoBotao	texto do botão principal	"📋 ABRIR MENU"
+tituloLista	título da lista	"Menu Principal"
+textoLista	descrição da lista	"Escolha uma opção"
+rodapeLista	texto no rodapé	"BotAluguel"
+Estrutura de cada OPÇÃO da lista
+Propriedade	Descrição	Exemplo
+titulo	texto visível da opção	"💰 Meu Saldo"
+descricao	texto pequeno abaixo (opcional)	"Ver moedas disponíveis"
+comandoDestino	id do bloco COMANDO	"bloco_comando_saldo"
+comandoTexto	texto enviado ao clicar	".saldo"
+Conexão visual
+text
+[BOTÃO LISTA]
+      │
+      └──► [OPÇÃO 1: "Saldo"] ──conecta──► [COMANDO: .saldo]
+      └──► [OPÇÃO 2: "Planos"] ──conecta──► [COMANDO: .planos]
+      └──► [OPÇÃO 3: "Ajuda"] ──conecta──► [COMANDO: .ajuda]
+Exemplo de uso
+text
+[COMANDO: .menu]
+      │
+      ▼
+[RESPOSTA: "Bem-vindo!"]
+      │
+      ▼
+[BOTÕES: tipo=lista]
+      │
+      ├──► OPÇÃO "📊 Painel" ──► [COMANDO: .painel] ──► [RESPOSTA: mostra saldo]
+      ├──► OPÇÃO "💳 Recarregar" ──► [COMANDO: .recarregar] ──► [RESPOSTA: gera PIX]
+      └──► OPÇÃO "🔗 Adicionar grupo" ──► [COMANDO: .link] ──► [RESPOSTA: pede link]
+3️⃣ BOTÃO LIGAR (tipoBotao = "ligar")
+O que faz
+Mostra um botão que, ao clicar, inicia uma chamada telefônica no WhatsApp.
+
+Configurações
+Propriedade	Descrição	Exemplo
+texto	texto visível no botão	"📞 Falar com suporte"
+numero	número para ligar	"5511999999999"
+Conexão visual
+text
+[BOTÃO LIGAR] ──(não conecta a COMANDO, faz ação direta)──► [LIGAÇÃO]
+Exemplo de uso
+text
+[RESPOSTA: "Precisa de ajuda?"]
+      │
+      ▼
+[BOTÕES: tipo=ligar, texto="📞 Suporte", numero="5511999999999"]
+Regras de conexão entre blocos
+Regra 1: RESPOSTA → BOTÕES
+Uma RESPOSTA pode se conectar a UM bloco BOTÕES
+
+Se não tiver BOTÕES conectado → mensagem sem botões
+
+Regra 2: BOTÃO NORMAL → COMANDO
+Cada botão normal se conecta a UM bloco COMANDO
+
+Quando clicado, executa aquele comando
+
+Regra 3: BOTÃO LISTA → VÁRIOS COMANDOS
+O bloco BOTÕES (tipo lista) contém várias OPÇÕES
+
+Cada OPÇÃO se conecta a UM bloco COMANDO diferente
+
+A lista em si NÃO se conecta a comando (só as opções)
+
+Regra 4: BOTÃO LIGAR → nenhum comando
+Ação direta, não precisa de bloco COMANDO
+
+Exemplo visual completo no construtor
+text
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   COMANDO       │     │    RESPOSTA     │     │    BOTÕES       │
+│   .menu         │────►│ "Olá! Escolha"  │────►│ tipo: lista     │
+└─────────────────┘     └─────────────────┘     └────────┬────────┘
+                                                         │
+                                    ┌────────────────────┼────────────────────┐
+                                    │                    │                    │
+                                    ▼                    ▼                    ▼
+                          ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+                          │ OPÇÃO 1         │  │ OPÇÃO 2         │  │ OPÇÃO 3         │
+                          │ "💰 Saldo"       │  │ "📦 Planos"      │  │ "❓ Ajuda"       │
+                          └────────┬────────┘  └────────┬────────┘  └────────┬────────┘
+                                   │                    │                    │
+                                   ▼                    ▼                    ▼
+                          ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+                          │   COMANDO        │  │   COMANDO        │  │   COMANDO        │
+                          │   .saldo         │  │   .planos        │  │   .ajuda         │
+                          └────────┬────────┘  └────────┬────────┘  └────────┬────────┘
+                                   │                    │                    │
+                                   ▼                    ▼                    ▼
+                          ┌─────────────────┐  ┌─────────────────┐  ┌─────────────────┐
+                          │   RESPOSTA       │  │   RESPOSTA       │  │   RESPOSTA       │
+                          │ "Seu saldo: X"   │  │ "Planos: ..."    │  │ "Ajuda: ..."     │
+                          └─────────────────┘  └─────────────────┘  └─────────────────┘
+Fluxo de execução (quando o bot estiver rodando)
+text
+1. BLOCO RESPOSTA é executado
+   │
+   ├──► Verifica se tem BLOCO BOTÕES conectado
+   │
+   ├──► SE NÃO tem → envia só a mensagem e FIM
+   │
+   └──► SE TEM → monta a mensagem com botões
+           │
+           ├──► SE tipo = "normal"
+           │       │
+           │       ├──► Adiciona botões fixos na mensagem
+           │       │
+           │       └──► Quando usuário clicar:
+           │               ├──► Extrai o comandoDestino do botão
+           │               └──► Executa o bloco COMANDO conectado
+           │
+           ├──► SE tipo = "lista"
+           │       │
+           │       ├──► Adiciona 1 botão "ABRIR MENU"
+           │       │
+           │       └──► Quando usuário clicar:
+           │               ├──► Mostra a lista de opções
+           │               │
+           │               └──► Quando usuário escolher uma opção:
+           │                       ├──► Extrai o comandoDestino daquela opção
+           │                       └──► Executa o bloco COMANDO conectado
+           │
+           └──► SE tipo = "ligar"
+                   │
+                   ├──► Adiciona botão de ligação
+                   │
+                   └──► Quando usuário clicar:
+                           └──► Abre discagem do WhatsApp
+Exemplo de JSON de configuração
+BOTÕES tipo "normal"
+json
+{
+  "id": "bloco_botoes_1",
+  "tipo": "botoes",
+  "config": {
+    "tipoBotao": "normal",
+    "botoes": [
+      {
+        "texto": "✅ Sim",
+        "comandoDestino": "bloco_comando_sim",
+        "comandoTexto": ".sim"
+      },
+      {
+        "texto": "❌ Não", 
+        "comandoDestino": "bloco_comando_nao",
+        "comandoTexto": ".nao"
+      }
+    ]
+  }
+}
+BOTÕES tipo "lista"
+json
+{
+  "id": "bloco_botoes_2",
+  "tipo": "botoes",
+  "config": {
+    "tipoBotao": "lista",
+    "textoBotao": "📋 ABRIR MENU",
+    "tituloLista": "Menu Principal",
+    "textoLista": "Escolha uma opção",
+    "rodapeLista": "BotAluguel",
+    "opcoes": [
+      {
+        "titulo": "💰 Meu Saldo",
+        "descricao": "Ver moedas disponíveis",
+        "comandoDestino": "bloco_comando_saldo",
+        "comandoTexto": ".saldo"
+      },
+      {
+        "titulo": "📦 Planos",
+        "descricao": "Ver planos disponíveis",
+        "comandoDestino": "bloco_comando_planos",
+        "comandoTexto": ".planos"
+      }
+    ]
+  }
+}
+BOTÕES tipo "ligar"
+json
+{
+  "id": "bloco_botoes_3",
+  "tipo": "botoes",
+  "config": {
+    "tipoBotao": "ligar",
+    "texto": "📞 Falar com suporte",
+    "numero": "5511999999999"
+  }
+}
+Resumo das conexões
+De	Para	O que acontece
+RESPOSTA	BOTÕES	A mensagem ganha botões
+BOTÃO NORMAL	COMANDO	Clique → executa o comando
+OPÇÃO da LISTA	COMANDO	Escolha → executa o comando
+BOTÃO LIGAR	(nenhum)	Clique → ligação direta
+Agora os blocos fazem sentido juntos:
+
+text
+COMANDO → RESPOSTA → BOTÕES → (volta para) COMANDO

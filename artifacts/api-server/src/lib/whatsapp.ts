@@ -50,7 +50,7 @@ function sendSse(botId: string, event: string, data: unknown) {
 
 type FlowNode = {
   id: string;
-  type: "command" | "action" | "condition" | "response";
+  type: "command" | "action" | "condition" | "response" | "buttons";
   label: string;
   config: Record<string, unknown>;
   position: { x: number; y: number };
@@ -69,6 +69,9 @@ function getMessageText(msg: WAMessage): string {
     msg.message?.extendedTextMessage?.text ||
     msg.message?.imageMessage?.caption ||
     msg.message?.videoMessage?.caption ||
+    (msg.message as any)?.buttonsResponseMessage?.selectedButtonId ||
+    (msg.message as any)?.listResponseMessage?.singleSelectReply?.selectedRowId ||
+    (msg.message as any)?.templateButtonReplyMessage?.selectedId ||
     ""
   );
 }
@@ -277,11 +280,54 @@ async function executeFlow(
     if (senderNum !== ownerPhone && senderNum !== botOwnNum) return;
   }
 
+  function findNextButtonsNode(fromId: string): FlowNode | null {
+    const edge = edges.find((e) => e.source === fromId);
+    if (!edge) return null;
+    const nextNode = nodes.find((n) => n.id === edge.target);
+    if (nextNode && nextNode.type === "buttons") return nextNode;
+    return null;
+  }
+
+  function parseButtonsFromBlock(btnNode: FlowNode): { type: "normal" | "lista" | "ligar"; buttons?: any[]; listData?: any; callData?: any } {
+    const tipoBotao = (btnNode.config?.tipoBotao as string) || "normal";
+    if (tipoBotao === "normal") {
+      const raw = (btnNode.config?.botoes as string) || "";
+      const lines = raw.split("\n").filter((l: string) => l.trim()).slice(0, 3);
+      const buttons = lines.map((line: string) => {
+        const parts = line.split("|").map((s: string) => s.trim());
+        return { buttonId: parts[0] || "", buttonText: { displayText: parts[1] || parts[0] || "" }, type: 1 };
+      });
+      return { type: "normal", buttons };
+    }
+    if (tipoBotao === "lista") {
+      const textoBotao = (btnNode.config?.textoBotao as string) || "VER OPCOES";
+      const tituloLista = (btnNode.config?.tituloLista as string) || "Menu";
+      const textoLista = (btnNode.config?.textoLista as string) || "";
+      const rodapeLista = (btnNode.config?.rodapeLista as string) || "";
+      const opcoesRaw = (btnNode.config?.opcoes as string) || "";
+      const rows = opcoesRaw.split("\n").filter((l: string) => l.trim()).map((line: string) => {
+        const parts = line.split("|").map((s: string) => s.trim());
+        return { id: parts[0] || `opt_${Date.now()}`, title: (parts[1] || parts[0] || "Opcao").slice(0, 24), description: parts[2] || undefined };
+      });
+      return { type: "lista", listData: { textoBotao, tituloLista, textoLista, rodapeLista, rows } };
+    }
+    if (tipoBotao === "ligar") {
+      return { type: "ligar", callData: { textoLigar: (btnNode.config?.textoLigar as string) || "Ligar", numeroLigar: (btnNode.config?.numeroLigar as string) || "" } };
+    }
+    return { type: "normal" };
+  }
+
   let currentId: string | null = startNode.id;
 
   while (currentId) {
     const node = nodes.find((n) => n.id === currentId);
     if (!node) break;
+
+    if (node.type === "buttons") {
+      const nextEdge = edges.find((e) => e.source === currentId);
+      currentId = nextEdge?.target ?? null;
+      continue;
+    }
 
     if (node.type === "response") {
       const tipoResposta = (node.config?.tipoResposta as string) || "texto";
@@ -289,12 +335,44 @@ async function executeFlow(
       const processedText = rawText ? await replaceVars(rawText, sock, msg, botId) : "";
       const mentions = processedText.includes("@") ? [sender] : [];
 
+      const nextBtnNode = findNextButtonsNode(currentId);
+      const btnData = nextBtnNode ? parseButtonsFromBlock(nextBtnNode) : null;
+
       try {
         if (tipoResposta === "texto" || !tipoResposta) {
           const temBotoes = !!node.config?.temBotoes;
           const botoesRaw = (node.config?.botoes as string) || "";
 
-          if (temBotoes && botoesRaw.trim()) {
+          if (btnData && btnData.type === "normal" && btnData.buttons && btnData.buttons.length > 0) {
+            await sock.sendMessage(jid, {
+              text: processedText || "Escolha uma opcao:",
+              buttons: btnData.buttons,
+              headerType: 1,
+              mentions,
+            } as any, { quoted: msg });
+          } else if (btnData && btnData.type === "lista" && btnData.listData) {
+            const ld = btnData.listData;
+            const sections = [{ title: ld.tituloLista, rows: ld.rows }];
+            const processedTextoLista = ld.textoLista ? await replaceVars(ld.textoLista, sock, msg, botId) : processedText;
+            const processedRodape = ld.rodapeLista ? await replaceVars(ld.rodapeLista, sock, msg, botId) : "";
+            await sock.sendMessage(jid, {
+              text: processedTextoLista || processedText || "Escolha uma opcao:",
+              title: ld.tituloLista,
+              footer: processedRodape,
+              buttonText: ld.textoBotao,
+              sections,
+              mentions,
+            } as any, { quoted: msg });
+          } else if (btnData && btnData.type === "ligar" && btnData.callData) {
+            const cd = btnData.callData;
+            const buttons = [{ buttonId: `call_${cd.numeroLigar}`, buttonText: { displayText: cd.textoLigar }, type: 1 }];
+            await sock.sendMessage(jid, {
+              text: processedText || "Ligue para nos:",
+              buttons,
+              headerType: 1,
+              mentions,
+            } as any, { quoted: msg });
+          } else if (temBotoes && botoesRaw.trim()) {
             const botoesLines = botoesRaw.split("\n").filter((l: string) => l.trim()).slice(0, 3);
             const buttons = botoesLines.map((line: string) => {
               const parts = line.split("|").map((s: string) => s.trim());
@@ -374,19 +452,37 @@ async function executeFlow(
               mentions: processedLegenda.includes("@") ? [sender] : [],
             }, { quoted: msg });
 
-            const temBotoes = !!node.config?.temBotoes;
-            const botoesRaw = (node.config?.botoes as string) || "";
-            if (temBotoes && botoesRaw.trim()) {
-              const botoesLines = botoesRaw.split("\n").filter((l: string) => l.trim()).slice(0, 3);
-              const buttons = botoesLines.map((line: string) => {
-                const parts = line.split("|").map((s: string) => s.trim());
-                return { buttonId: parts[0] || "", buttonText: { displayText: parts[1] || parts[0] || "" }, type: 1 };
-              });
+            if (btnData && btnData.type === "normal" && btnData.buttons && btnData.buttons.length > 0) {
               await sock.sendMessage(jid, {
                 text: processedLegenda || "Escolha:",
-                buttons,
+                buttons: btnData.buttons,
                 headerType: 1,
               } as any, { quoted: msg });
+            } else if (btnData && btnData.type === "lista" && btnData.listData) {
+              const ld = btnData.listData;
+              const sections = [{ title: ld.tituloLista, rows: ld.rows }];
+              await sock.sendMessage(jid, {
+                text: ld.textoLista || processedLegenda || "Escolha:",
+                title: ld.tituloLista,
+                footer: ld.rodapeLista,
+                buttonText: ld.textoBotao,
+                sections,
+              } as any, { quoted: msg });
+            } else {
+              const temBotoes = !!node.config?.temBotoes;
+              const botoesRaw = (node.config?.botoes as string) || "";
+              if (temBotoes && botoesRaw.trim()) {
+                const botoesLines = botoesRaw.split("\n").filter((l: string) => l.trim()).slice(0, 3);
+                const buttons = botoesLines.map((line: string) => {
+                  const parts = line.split("|").map((s: string) => s.trim());
+                  return { buttonId: parts[0] || "", buttonText: { displayText: parts[1] || parts[0] || "" }, type: 1 };
+                });
+                await sock.sendMessage(jid, {
+                  text: processedLegenda || "Escolha:",
+                  buttons,
+                  headerType: 1,
+                } as any, { quoted: msg });
+              }
             }
           }
 
@@ -435,6 +531,12 @@ async function executeFlow(
         if (processedText) {
           await sock.sendMessage(jid, { text: processedText, mentions }, { quoted: msg });
         }
+      }
+
+      if (nextBtnNode) {
+        const btnEdge = edges.find((e) => e.source === nextBtnNode.id);
+        currentId = btnEdge?.target ?? null;
+        continue;
       }
     } else if (node.type === "action") {
       const action = node.config?.action as string;
