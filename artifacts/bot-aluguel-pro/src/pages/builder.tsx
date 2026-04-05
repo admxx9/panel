@@ -1390,20 +1390,7 @@ export default function BuilderPage() {
               )}
             </SelectContent>
           </Select>
-          {BLOCK_TYPES.map((bt) => {
-            const btCfg = nodeConfig[bt];
-            const BtIcon = btCfg.icon;
-            return (
-              <Button key={bt} size="sm"
-                onClick={() => handleAddNode(bt)}
-                disabled={!selectedBotId}
-                className={bt === "command" ? "bg-primary hover:bg-primary/90 text-white" : "bg-green-600 hover:bg-green-700 text-white"}>
-                <Plus className="h-4 w-4 mr-1" />
-                <BtIcon className="h-3.5 w-3.5 mr-1" />
-                <span className="hidden sm:inline">{btCfg.label}</span>
-              </Button>
-            );
-          })}
+          
           <Button variant="outline" size="sm"
             onClick={() => { setShowSettings((v) => !v); setEditingNodeId(null); }}
             disabled={!selectedBotId}

@@ -201,6 +201,7 @@ async function replaceVars(
   const isGroup = jid.endsWith("@g.us");
   const sender = msg.key.participant || msg.key.remoteJid || "";
   const senderNum = normalizeJid(sender);
+  const senderName = msg.pushName || senderNum;
   const text = getMessageText(msg);
   const args = text.split(/\s+/).slice(1).join(" ");
   const now = new Date();
@@ -232,7 +233,7 @@ async function replaceVars(
     msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.extendedTextMessage?.text || "";
 
   let result = template
-    .replace(/\{nome\}/g, senderNum)
+    .replace(/\{nome\}/g, senderName)
     .replace(/\{user\}/g, `@${senderNum}`)
     .replace(/\{numero\}/g, senderNum)
     .replace(/\{grupo\}/g, groupName)
@@ -283,14 +284,157 @@ async function executeFlow(
     if (!node) break;
 
     if (node.type === "response") {
-      const responseText = (node.config?.text as string) || node.label;
-      if (responseText) {
-        const processed = await replaceVars(responseText, sock, msg, botId);
-        await sock.sendMessage(
-          jid,
-          { text: processed, mentions: processed.includes("@") ? [sender] : [] },
-          { quoted: msg },
-        );
+      const tipoResposta = (node.config?.tipoResposta as string) || "texto";
+      const rawText = (node.config?.texto as string) || (node.config?.text as string) || "";
+      const processedText = rawText ? await replaceVars(rawText, sock, msg, botId) : "";
+      const mentions = processedText.includes("@") ? [sender] : [];
+
+      try {
+        if (tipoResposta === "texto" || !tipoResposta) {
+          const temBotoes = !!node.config?.temBotoes;
+          const botoesRaw = (node.config?.botoes as string) || "";
+
+          if (temBotoes && botoesRaw.trim()) {
+            const botoesLines = botoesRaw.split("\n").filter((l: string) => l.trim()).slice(0, 3);
+            const buttons = botoesLines.map((line: string) => {
+              const parts = line.split("|").map((s: string) => s.trim());
+              const id = parts[0] || "";
+              const titulo = parts[1] || parts[0] || "";
+              const tipo = (parts[2] || "reply").toLowerCase();
+              if (tipo === "call") {
+                return { buttonId: id, buttonText: { displayText: titulo }, type: 1 };
+              }
+              return { buttonId: id, buttonText: { displayText: titulo }, type: 1 };
+            });
+            await sock.sendMessage(jid, {
+              text: processedText || "Escolha uma opcao:",
+              buttons,
+              headerType: 1,
+              mentions,
+            } as any, { quoted: msg });
+          } else {
+            if (processedText) {
+              await sock.sendMessage(jid, { text: processedText, mentions }, { quoted: msg });
+            }
+          }
+
+        } else if (tipoResposta === "lista") {
+          const tituloLista = (node.config?.tituloLista as string) || "Menu";
+          const textoLista = (node.config?.textoLista as string) || processedText || "Escolha uma opcao";
+          const rodapeLista = (node.config?.rodapeLista as string) || "";
+          const textoBotao = (node.config?.textoBotao as string) || "VER OPCOES";
+          const secoesRaw = (node.config?.secoes as string) || "";
+
+          const sections: { title: string; rows: { id: string; title: string; description?: string }[] }[] = [];
+          let currentSection: { title: string; rows: { id: string; title: string; description?: string }[] } | null = null;
+
+          for (const line of secoesRaw.split("\n")) {
+            const trimmed = line.trim();
+            if (!trimmed) continue;
+            if (!trimmed.includes("|")) {
+              if (currentSection) sections.push(currentSection);
+              currentSection = { title: trimmed, rows: [] };
+            } else {
+              const parts = trimmed.split("|").map((s: string) => s.trim());
+              if (!currentSection) currentSection = { title: "Menu", rows: [] };
+              currentSection.rows.push({
+                id: parts[0] || `opt_${Date.now()}`,
+                title: (parts[1] || parts[0] || "Opcao").slice(0, 24),
+                description: parts[2] || undefined,
+              });
+            }
+          }
+          if (currentSection && currentSection.rows.length > 0) sections.push(currentSection);
+
+          if (sections.length > 0) {
+            const processedTextoLista = await replaceVars(textoLista, sock, msg, botId);
+            const processedRodape = rodapeLista ? await replaceVars(rodapeLista, sock, msg, botId) : "";
+            await sock.sendMessage(jid, {
+              text: processedTextoLista,
+              title: tituloLista,
+              footer: processedRodape,
+              buttonText: textoBotao,
+              sections,
+              mentions,
+            } as any, { quoted: msg });
+          } else {
+            if (processedText) {
+              await sock.sendMessage(jid, { text: processedText, mentions }, { quoted: msg });
+            }
+          }
+
+        } else if (tipoResposta === "imagem") {
+          const imagemUrl = (node.config?.imagemUrl as string) || "";
+          const legenda = (node.config?.legenda as string) || "";
+          const processedLegenda = legenda ? await replaceVars(legenda, sock, msg, botId) : "";
+          if (imagemUrl) {
+            await sock.sendMessage(jid, {
+              image: { url: imagemUrl },
+              caption: processedLegenda || undefined,
+              mentions: processedLegenda.includes("@") ? [sender] : [],
+            }, { quoted: msg });
+
+            const temBotoes = !!node.config?.temBotoes;
+            const botoesRaw = (node.config?.botoes as string) || "";
+            if (temBotoes && botoesRaw.trim()) {
+              const botoesLines = botoesRaw.split("\n").filter((l: string) => l.trim()).slice(0, 3);
+              const buttons = botoesLines.map((line: string) => {
+                const parts = line.split("|").map((s: string) => s.trim());
+                return { buttonId: parts[0] || "", buttonText: { displayText: parts[1] || parts[0] || "" }, type: 1 };
+              });
+              await sock.sendMessage(jid, {
+                text: processedLegenda || "Escolha:",
+                buttons,
+                headerType: 1,
+              } as any, { quoted: msg });
+            }
+          }
+
+        } else if (tipoResposta === "audio") {
+          const audioUrl = (node.config?.audioUrl as string) || "";
+          if (audioUrl) {
+            await sock.sendMessage(jid, {
+              audio: { url: audioUrl },
+              mimetype: "audio/mpeg",
+              ptt: true,
+            }, { quoted: msg });
+          }
+
+        } else if (tipoResposta === "localizacao") {
+          const lat = parseFloat(String(node.config?.latitude || "0"));
+          const lng = parseFloat(String(node.config?.longitude || "0"));
+          const nomeLocal = (node.config?.nomeLocal as string) || "";
+          await sock.sendMessage(jid, {
+            location: {
+              degreesLatitude: lat,
+              degreesLongitude: lng,
+              name: nomeLocal || undefined,
+            },
+          }, { quoted: msg });
+
+        } else if (tipoResposta === "contato") {
+          const numeroContato = (node.config?.numeroContato as string) || "";
+          const nomeContato = (node.config?.nomeContato as string) || numeroContato;
+          if (numeroContato) {
+            const vcard = `BEGIN:VCARD\nVERSION:3.0\nFN:${nomeContato}\nTEL;type=CELL;type=VOICE;waid=${numeroContato}:+${numeroContato}\nEND:VCARD`;
+            await sock.sendMessage(jid, {
+              contacts: {
+                displayName: nomeContato,
+                contacts: [{ vcard }],
+              },
+            }, { quoted: msg });
+          }
+
+        } else {
+          if (processedText) {
+            await sock.sendMessage(jid, { text: processedText, mentions }, { quoted: msg });
+          }
+        }
+      } catch (err) {
+        console.error("[response block error]", err);
+        if (processedText) {
+          await sock.sendMessage(jid, { text: processedText, mentions }, { quoted: msg });
+        }
       }
     } else if (node.type === "action") {
       const action = node.config?.action as string;
