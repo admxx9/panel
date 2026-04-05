@@ -14,7 +14,7 @@ import fs from "fs";
 import sharp from "sharp";
 import { logger } from "./logger.js";
 import { db, botsTable, botCommandsTable, usersTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { Response } from "express";
 
 const SESSION_DIR = path.join(process.cwd(), ".baileys-sessions");
@@ -1189,6 +1189,109 @@ async function executeFlow(
                   participant: quotedCtx.participant || sender,
                 },
               });
+            }
+            break;
+          }
+
+          case "typing": {
+            const dur = Math.min(Number(node.config?.typing_duration) || 2000, 10000);
+            await sock.sendPresenceUpdate("composing", jid);
+            await new Promise((r) => setTimeout(r, dur));
+            await sock.sendPresenceUpdate("paused", jid);
+            break;
+          }
+
+          case "delay": {
+            const ms = Number(node.config?.delay_ms) || 1500;
+            await new Promise((r) => setTimeout(r, Math.min(ms, 30000)));
+            break;
+          }
+
+          case "read_receipt": {
+            try {
+              await sock.readMessages([msg.key]);
+            } catch {}
+            break;
+          }
+
+          case "add_coins": {
+            const amt = Number(node.config?.coins_amount) || 0;
+            if (amt > 0) {
+              const sNum = normalizeJid(sender);
+              await db.update(usersTable).set({ coins: sql`${usersTable.coins} + ${amt}` }).where(eq(usersTable.phone, sNum));
+            }
+            break;
+          }
+
+          case "remove_coins": {
+            const amt = Number(node.config?.coins_amount) || 0;
+            if (amt > 0) {
+              const sNum = normalizeJid(sender);
+              await db.update(usersTable).set({ coins: sql`GREATEST(${usersTable.coins} - ${amt}, 0)` }).where(eq(usersTable.phone, sNum));
+            }
+            break;
+          }
+
+          case "set_coins": {
+            const amt = Number(node.config?.coins_amount) || 0;
+            const sNum = normalizeJid(sender);
+            await db.update(usersTable).set({ coins: Math.max(amt, 0) }).where(eq(usersTable.phone, sNum));
+            break;
+          }
+
+          case "join_group_link": {
+            const link = (node.config?.group_invite_link as string) || "";
+            const code = link.split("chat.whatsapp.com/")[1];
+            if (code) {
+              try {
+                await sock.groupAcceptInvite(code.trim());
+              } catch {
+                logger.warn({ botId, link }, "Failed to join group via link");
+              }
+            }
+            break;
+          }
+
+          case "leave_group": {
+            if (isGroup) {
+              try {
+                await sock.groupLeave(jid);
+              } catch {
+                logger.warn({ botId, jid }, "Failed to leave group");
+              }
+            }
+            break;
+          }
+
+          case "send_log": {
+            const logMsg = (node.config?.log_message as string) || actionMessage || "";
+            if (logMsg) {
+              const processed = await replaceVars(logMsg, sock, msg, botId);
+              logger.info({ botId, sender, jid }, `[BOT LOG] ${processed}`);
+            }
+            break;
+          }
+
+          case "http_request": {
+            const url = (node.config?.http_url as string) || "";
+            const method = (node.config?.http_method as string) || "GET";
+            const isExternalUrl = url.startsWith("https://") || url.startsWith("http://");
+            const isBlockedHost = /^https?:\/\/(localhost|127\.|10\.|192\.168\.|172\.(1[6-9]|2\d|3[01])\.|0\.0\.0\.0|\[::1\])/i.test(url);
+            if (url && isExternalUrl && !isBlockedHost) {
+              try {
+                let headers: Record<string, string> = { "Content-Type": "application/json" };
+                if (node.config?.http_headers) {
+                  try { headers = { ...headers, ...JSON.parse(String(node.config.http_headers)) }; } catch {}
+                }
+                let body: string | undefined;
+                if (node.config?.http_body && method !== "GET") {
+                  const raw = await replaceVars(String(node.config.http_body), sock, msg, botId);
+                  body = raw;
+                }
+                await fetch(url, { method, headers, body, signal: AbortSignal.timeout(10000) });
+              } catch (err) {
+                logger.warn({ err, botId, url }, "HTTP request action failed");
+              }
             }
             break;
           }

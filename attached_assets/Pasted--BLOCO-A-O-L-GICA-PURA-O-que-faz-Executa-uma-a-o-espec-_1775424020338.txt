@@ -1,0 +1,439 @@
+🔷 BLOCO AÇÃO — LÓGICA PURA
+O que faz
+Executa uma ação específica no sistema, sem enviar mensagem ao usuário. Diferente da RESPOSTA (que comunica), a AÇÃO modifica dados, controla o bot ou prepara o ambiente.
+
+Entrada (o que recebe)
+sender — ID do usuário que disparou
+
+from — ID do grupo ou privado
+
+conteudo — texto da mensagem
+
+nome — nome do usuário
+
+moedas — saldo atual do usuário
+
+planoAtivo — dados do plano (se existir)
+
+grupoAtual — dados do grupo (se for grupo)
+
+txid — ID de transação PIX (se aplicável)
+
+link — link do grupo (se aplicável)
+
+Saída (o que entrega)
+O bloco AÇÃO NÃO envia mensagem para o usuário
+
+Pode modificar variáveis internas
+
+Sempre tem UMA saída para o próximo bloco
+
+Tipos de AÇÃO
+1️⃣ AÇÕES DE USUÁRIO
+Ação	O que faz	Configurações	Exemplo de uso
+criarUsuario	Cadastra usuário se não existir	nenhuma	Antes de qualquer comando
+bloquearUsuario	Impede usuário de usar o bot	motivo (texto)	Após tentativas inválidas
+desbloquearUsuario	Remove bloqueio	nenhuma	Comando do dono
+definirVariavel	Armazena valor para o usuário	nomeVariavel, valor	Salvar etapa do fluxo
+Exemplo visual:
+
+text
+┌─────────────────────────────────┐
+│  ⚙️ AÇÃO                         │
+├─────────────────────────────────┤
+│  criar usuário                  │
+│                                 │
+│  sender: {sender}               │
+│  nome: {nome}                   │
+└─────────────────────────────────┘
+2️⃣ AÇÕES DE MOEDAS
+Ação	O que faz	Configurações	Exemplo de uso
+adicionarMoedas	Soma moedas ao saldo	quantidade (número)	Após pagamento PIX
+removerMoedas	Subtrai moedas do saldo	quantidade (número)	Ao comprar plano
+definirMoedas	Define saldo exato	quantidade (número)	Comando do dono
+Exemplo visual:
+
+text
+┌─────────────────────────────────┐
+│  ⚙️ AÇÃO                         │
+├─────────────────────────────────┤
+│  adicionar moedas               │
+│                                 │
+│  quantidade: 100                │
+│  usuário: {sender}              │
+└─────────────────────────────────┘
+3️⃣ AÇÕES DE PLANO
+Ação	O que faz	Configurações	Exemplo de uso
+ativarPlano	Ativa plano para o usuário	plano (basico/pro/premium), dias (número)	Após compra
+desativarPlano	Remove plano ativo	nenhuma	Quando expira
+renovarPlano	Estende data de expiração	diasExtras (número)	Recarga de moedas
+Exemplo visual:
+
+text
+┌─────────────────────────────────┐
+│  ⚙️ AÇÃO                         │
+├─────────────────────────────────┤
+│  ativar plano                   │
+│                                 │
+│  plano: premium                 │
+│  dias: 30                       │
+│  usuário: {sender}              │
+└─────────────────────────────────┘
+4️⃣ AÇÕES DE GRUPO
+Ação	O que faz	Configurações	Exemplo de uso
+adicionarGrupo	Cadastra grupo no banco	groupId, nomeGrupo	Após bot entrar
+ativarGrupo	Muda status grupo para "ativo"	groupId	Após confirmar admin
+desativarGrupo	Muda status grupo para "inativo"	groupId	Plano expirado
+removerGrupo	Remove grupo do banco	groupId	Dono remover
+entrarGrupo	Bot entra no grupo via link	link (URL)	Comando .link
+sairGrupo	Bot sai do grupo	groupId	Comando do dono
+verificarAdmin	Checa se bot é admin	groupId	Antes de ativar
+Exemplo visual:
+
+text
+┌─────────────────────────────────┐
+│  ⚙️ AÇÃO                         │
+├─────────────────────────────────┤
+│  entrar no grupo                │
+│                                 │
+│  link: {conteudo}               │
+└─────────────────────────────────┘
+5️⃣ AÇÕES DE PAGAMENTO
+Ação	O que faz	Configurações	Exemplo de uso
+gerarPix	Cria cobrança PIX	valor (número), descricao (texto)	Comando .recarregar
+monitorarPix	Aguarda confirmação	txid, timeout (segundos)	Após gerar PIX
+verificarPix	Consulta status	txid	Manual ou automático
+Exemplo visual:
+
+text
+┌─────────────────────────────────┐
+│  ⚙️ AÇÃO                         │
+├─────────────────────────────────┤
+│  gerar PIX                      │
+│                                 │
+│  valor: 10.00                   │
+│  descrição: "100 moedas"        │
+│  usuário: {sender}              │
+└─────────────────────────────────┘
+6️⃣ AÇÕES DE MENSAGEM (internas, não visíveis)
+Ação	O que faz	Configurações	Exemplo de uso
+reagir	Adiciona emoji na mensagem	emoji (texto)	Feedback visual
+digitar	Simula "digitando..."	duracao (ms)	Parecer humano
+aguardar	Pausa execução	milissegundos (número)	Entre ações
+marcarVisto	Marca mensagem como lida	nenhuma	Profissionalismo
+Exemplo visual:
+
+text
+┌─────────────────────────────────┐
+│  ⚙️ AÇÃO                         │
+├─────────────────────────────────┤
+│  reagir                         │
+│                                 │
+│  emoji: 🤖                      │
+│  mensagem: {info.key}           │
+└─────────────────────────────────┘
+7️⃣ AÇÕES DE CONTROLE DO BOT
+Ação	O que faz	Configurações	Exemplo de uso
+ligarBot	Ativa processamento de comandos	nenhuma	Dono reativar
+desligarBot	Para processamento	nenhuma	Manutenção
+reiniciarBot	Reinicia conexão	nenhuma	Emergência
+enviarLog	Registra no console	mensagem (texto)	Debug
+Exemplo visual:
+
+text
+┌─────────────────────────────────┐
+│  ⚙️ AÇÃO                         │
+├─────────────────────────────────┤
+│  enviar log                     │
+│                                 │
+│  mensagem: "Usuário {nome}..."  │
+└─────────────────────────────────┘
+8️⃣ AÇÕES DE FLUXO
+Ação	O que faz	Configurações	Exemplo de uso
+aguardarResposta	Espera próxima mensagem do usuário	variavelDestino (texto), timeout (segundos)	Fluxo de conversa
+limparFluxo	Reseta variáveis de etapa	nenhuma	Sair do fluxo atual
+redirecionar	Vai para outro bloco específico	blocoDestino (id)	Goto condicional
+Exemplo visual:
+
+text
+┌─────────────────────────────────┐
+│  ⚙️ AÇÃO                         │
+├─────────────────────────────────┤
+│  aguardar resposta              │
+│                                 │
+│  salvar em: "etapa_link"        │
+│  timeout: 60 segundos           │
+└─────────────────────────────────┘
+9️⃣ AÇÕES DE WEBHOOK/API
+Ação	O que faz	Configurações	Exemplo de uso
+httpRequest	Chama API externa	url, metodo (GET/POST), headers, body	Integração externa
+salvarNoBanco	Guarda dados customizados	tabela, dados (JSON)	Histórico
+enviarEmail	Dispara e-mail	email, assunto, corpo	Notificação
+Exemplo visual:
+
+text
+┌─────────────────────────────────┐
+│  ⚙️ AÇÃO                         │
+├─────────────────────────────────┤
+│  HTTP Request                   │
+│                                 │
+│  URL: https://api.exemplo.com   │
+│  método: POST                   │
+│  body: { "user": "{sender}" }   │
+└─────────────────────────────────┘
+Aparência visual do bloco
+Modo simples
+text
+┌─────────────────────────────┐
+│  ⚙️ AÇÃO                     │
+├─────────────────────────────┤
+│  adicionar moedas           │
+│  +100                       │
+└─────────────────────────────┘
+         ▲ (entrada)
+         │
+         ▼ (saída)
+Modo expandido
+text
+┌─────────────────────────────────────┐
+│  ⚙️ AÇÃO                             │
+├─────────────────────────────────────┤
+│  tipo: adicionar moedas             │
+│                                     │
+│  quantidade: 100                    │
+│  usuário: {sender}                  │
+│  motivo: "compra de plano"          │
+│                                     │
+│  ┌─────────────────────────────┐    │
+│  │  após executar, vá para:    │    │
+│  │  [RESPOSTA: "Moedas +100"]  │    │
+│  └─────────────────────────────┘    │
+└─────────────────────────────────────┘
+Exemplo visual no construtor
+Fluxo com AÇÃO no meio
+text
+┌─────────────────┐
+│   COMANDO       │
+│   .comprar      │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   CONDIÇÃO      │
+│   moedas >= 10? │
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    │         │
+    ▼ (SIM)   ▼ (NÃO)
+┌─────────┐ ┌─────────────┐
+│  AÇÃO   │ │  RESPOSTA   │
+│ remover │ │ "Saldo insuf"│
+│ 10 moedas│└─────────────┘
+└────┬────┘
+     │
+     ▼
+┌─────────┐
+│  AÇÃO   │
+│ ativar  │
+│ plano   │
+└────┬────┘
+     │
+     ▼
+┌─────────┐
+│ RESPOSTA│
+│ "Plano  │
+│ ativado"│
+└─────────┘
+JSON de configuração
+Exemplo 1: AÇÃO de remover moedas
+json
+{
+  "id": "bloco_acao_1",
+  "tipo": "acao",
+  "config": {
+    "tipo": "removerMoedas",
+    "quantidade": 10
+  },
+  "conexoes": {
+    "entrada": "bloco_condicao_1_sim",
+    "saida": "bloco_acao_ativar_plano"
+  }
+}
+Exemplo 2: AÇÃO de entrar no grupo
+json
+{
+  "id": "bloco_acao_2",
+  "tipo": "acao",
+  "config": {
+    "tipo": "entrarGrupo",
+    "link": "{conteudo}"
+  },
+  "conexoes": {
+    "entrada": "bloco_comando_link",
+    "saida": "bloco_resposta_entrou"
+  }
+}
+Exemplo 3: AÇÃO de reagir
+json
+{
+  "id": "bloco_acao_3",
+  "tipo": "acao",
+  "config": {
+    "tipo": "reagir",
+    "emoji": "✅"
+  },
+  "conexoes": {
+    "entrada": "bloco_comando_menu",
+    "saida": "bloco_acao_digitar"
+  }
+}
+Exemplo 4: AÇÃO de digitar
+json
+{
+  "id": "bloco_acao_4",
+  "tipo": "acao",
+  "config": {
+    "tipo": "digitar",
+    "duracao": 1500
+  },
+  "conexoes": {
+    "entrada": "bloco_acao_reagir",
+    "saida": "bloco_resposta_menu"
+  }
+}
+Exemplo 5: AÇÃO de variável
+json
+{
+  "id": "bloco_acao_5",
+  "tipo": "acao",
+  "config": {
+    "tipo": "definirVariavel",
+    "nomeVariavel": "etapa_atual",
+    "valor": "aguardando_link"
+  },
+  "conexoes": {
+    "entrada": "bloco_comando_link",
+    "saida": "bloco_resposta_aguardando"
+  }
+}
+Exemplo 6: AÇÃO de HTTP Request
+json
+{
+  "id": "bloco_acao_6",
+  "tipo": "acao",
+  "config": {
+    "tipo": "httpRequest",
+    "url": "https://api.exemplo.com/webhook",
+    "metodo": "POST",
+    "headers": {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer token123"
+    },
+    "body": {
+      "usuario": "{sender}",
+      "comando": "{conteudo}",
+      "moedas": "{moedas}"
+    }
+  },
+  "conexoes": {
+    "entrada": "bloco_comando_webhook",
+    "saida": "bloco_resposta_ok"
+  }
+}
+Regras de execução
+text
+1. RECEBE entrada de um bloco anterior (COMANDO, CONDIÇÃO, ou outra AÇÃO)
+
+2. LÊ a configuração da ação
+
+3. EXECUTA a ação:
+   │
+   ├──► SE tipo = "removerMoedas"
+   │       moedasAtual = getMoedas(sender)
+   │       novoSaldo = moedasAtual - quantidade
+   │       salvarNovoSaldo(sender, novoSaldo)
+   │
+   ├──► SE tipo = "adicionarMoedas"
+   │       moedasAtual = getMoedas(sender)
+   │       novoSaldo = moedasAtual + quantidade
+   │       salvarNovoSaldo(sender, novoSaldo)
+   │
+   ├──► SE tipo = "ativarPlano"
+   │       removerMoedas(sender, precoPlano)
+   │       salvarPlanoAtivo(sender, plano, dias)
+   │       definirDataExpiracao(sender, dias)
+   │
+   ├──► SE tipo = "entrarGrupo"
+   │       codigo = extrairCodigoDoLink(link)
+   │       groupId = groupAcceptInvite(codigo)
+   │       salvarGrupo(groupId, sender, nomeGrupo)
+   │
+   ├──► SE tipo = "reagir"
+   │       sendReaction(from, emoji, messageKey)
+   │
+   ├──► SE tipo = "digitar"
+   │       sendPresenceUpdate('composing', from)
+   │       sleep(duracao)
+   │       sendPresenceUpdate('paused', from)
+   │
+   ├──► SE tipo = "definirVariavel"
+   │       variaveisUsuario[sender][nomeVariavel] = valor
+   │
+   └──► SE tipo = "httpRequest"
+   │       fetch(url, { method, headers, body })
+   │       guardarResposta(variavelResposta)
+   │
+
+4. APÓS executar, SEGUE pela conexão "saida"
+
+5. EXECUTA o próximo bloco conectado
+Diferenças entre AÇÃO e RESPOSTA
+Característica	AÇÃO	RESPOSTA
+Envia mensagem?	❌ Não	✅ Sim
+Modifica dados?	✅ Sim	❌ Não (só lê)
+Usuário vê algo?	❌ Não (exceto reação/digitação)	✅ Sim
+Pode ter botões?	❌ Não	✅ Sim
+Saídas	1 (para próximo bloco)	1 (para BOTÕES ou próximo)
+Exemplo	removerMoedas	"Compra realizada!"
+Fluxo completo com todos os blocos
+text
+[COMANDO: .comprar]
+      │
+      ▼
+[CONDIÇÃO: tem plano ativo?]
+      │
+      ├──► SIM ──► [RESPOSTA: "Você já tem um plano ativo"]
+      │
+      └──► NÃO ──► [CONDIÇÃO: moedas >= 10?]
+                        │
+                        ├──► SIM ──► [AÇÃO: remover 10 moedas]
+                        │               │
+                        │               ▼
+                        │         [AÇÃO: ativar plano premium]
+                        │               │
+                        │               ▼
+                        │         [RESPOSTA: "Plano ativado com sucesso!"]
+                        │               │
+                        │               ▼
+                        │         [BOTÕES: tipo=lista]
+                        │               │
+                        │               ├──► OPÇÃO "➕ Adicionar grupo" ──► [COMANDO: .link]
+                        │               │
+                        │               └──► OPÇÃO "📊 Meu painel" ──► [COMANDO: .painel]
+                        │
+                        └──► NÃO ──► [RESPOSTA: "Moedas insuficientes"]
+                                          │
+                                          ▼
+                                    [BOTÕES: tipo=normal]
+                                          │
+                                          ├──► BOTÃO "💳 Recarregar" ──► [COMANDO: .recarregar]
+                                          │
+                                          └──► BOTÃO "❌ Cancelar" ──► [FIM]
+Resumo de todos os blocos até agora
+Bloco	Entradas	Saídas	Função principal
+COMANDO	1	1	Detecta comando do usuário
+CONDIÇÃO	1	2 (SIM/NÃO)	Verifica condição e ramifica
+AÇÃO	1	1	Executa ação (sem enviar mensagem)
+RESPOSTA	1	1 (opcional)	Envia mensagem ao usuário
+BOTÕES	1 (da RESPOSTA)	várias (para COMANDOS)	Adiciona botões/interação
