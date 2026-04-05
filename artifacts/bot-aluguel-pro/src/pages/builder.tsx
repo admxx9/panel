@@ -1171,6 +1171,27 @@ export default function BuilderPage() {
         )}
       </div>
 
+      {/* Add block button (top left) */}
+      {selectedBotId && !showTemplates && (
+        <div className="absolute top-3 left-3 z-20 flex items-center gap-2">
+          {BLOCK_TYPES.map((type) => {
+            const cfg = nodeConfig[type];
+            const Icon = cfg.icon;
+            return (
+              <button
+                key={type}
+                onClick={() => handleAddNode(type)}
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg border-2 ${cfg.border} ${cfg.color} bg-card/90 backdrop-blur-sm hover:bg-white/10 transition-all shadow-lg hover:shadow-xl hover:scale-105`}
+              >
+                <Plus className="h-3.5 w-3.5 text-primary" />
+                <Icon className="h-3.5 w-3.5 text-white/70" />
+                <span className="text-white text-xs font-semibold">{cfg.label}</span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       {/* Zoom controls (bottom right) */}
       <div className="absolute bottom-3 right-3 flex items-center gap-1 z-20">
         <button onClick={() => zoom(SCALE_STEP)}
