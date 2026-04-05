@@ -302,15 +302,12 @@ async function executeFlow(
     }
     if (tipoBotao === "lista") {
       const textoBotao = (btnNode.config?.textoBotao as string) || "VER OPCOES";
-      const tituloLista = (btnNode.config?.tituloLista as string) || "Menu";
-      const textoLista = (btnNode.config?.textoLista as string) || "";
-      const rodapeLista = (btnNode.config?.rodapeLista as string) || "";
       const opcoesRaw = (btnNode.config?.opcoes as string) || "";
       const rows = opcoesRaw.split("\n").filter((l: string) => l.trim()).map((line: string) => {
         const parts = line.split("|").map((s: string) => s.trim());
         return { id: parts[0] || `opt_${Date.now()}`, title: (parts[1] || parts[0] || "Opcao").slice(0, 24), description: parts[2] || undefined };
       });
-      return { type: "lista", listData: { textoBotao, tituloLista, textoLista, rodapeLista, rows } };
+      return { type: "lista", listData: { textoBotao, rows } };
     }
     if (tipoBotao === "ligar") {
       return { type: "ligar", callData: { textoLigar: (btnNode.config?.textoLigar as string) || "Ligar", numeroLigar: (btnNode.config?.numeroLigar as string) || "" } };
@@ -352,14 +349,12 @@ async function executeFlow(
             });
           } else if (btnData && btnData.type === "lista" && btnData.listData) {
             const ld = btnData.listData;
-            const processedTextoLista = ld.textoLista ? await replaceVars(ld.textoLista, sock, msg, botId) : processedText;
-            const processedRodape = ld.rodapeLista ? await replaceVars(ld.rodapeLista, sock, msg, botId) : "";
             await sendInteractiveList(sock, jid, {
-              text: processedTextoLista || processedText || "Escolha uma opcao:",
-              title: ld.tituloLista,
-              footer: processedRodape,
+              text: processedText || "Escolha uma opcao:",
+              title: "",
+              footer: "",
               buttonText: ld.textoBotao,
-              sections: [{ title: ld.tituloLista, rows: ld.rows }],
+              sections: [{ title: "Menu", rows: ld.rows }],
             });
           } else if (btnData && btnData.type === "ligar" && btnData.callData) {
             const cd = btnData.callData;
@@ -447,11 +442,11 @@ async function executeFlow(
             } else if (btnData && btnData.type === "lista" && btnData.listData) {
               const ld = btnData.listData;
               await sendInteractiveList(sock, jid, {
-                text: ld.textoLista || processedLegenda || "Escolha:",
-                title: ld.tituloLista,
-                footer: ld.rodapeLista,
+                text: processedLegenda || "Escolha:",
+                title: "",
+                footer: "",
                 buttonText: ld.textoBotao,
-                sections: [{ title: ld.tituloLista, rows: ld.rows }],
+                sections: [{ title: "Menu", rows: ld.rows }],
               });
             } else {
               const temBotoes = !!node.config?.temBotoes;

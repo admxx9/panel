@@ -277,10 +277,7 @@ const CONFIG_FIELDS: Record<NodeType, { key: string; label: string; type: "text"
       { value: "ligar", label: "Botao de ligar" },
     ] },
     { key: "botoes", label: "Botoes (id | texto, um por linha, max 3)", type: "textarea", placeholder: ".sim | Sim\n.nao | Nao\n.talvez | Talvez", showWhen: (c) => !c.tipoBotao || c.tipoBotao === "normal" },
-    { key: "textoBotao", label: "Texto do botao principal", type: "text", placeholder: "ABRIR MENU", showWhen: (c) => c.tipoBotao === "lista" },
-    { key: "tituloLista", label: "Titulo da lista", type: "text", placeholder: "Menu Principal", showWhen: (c) => c.tipoBotao === "lista" },
-    { key: "textoLista", label: "Texto da lista", type: "textarea", placeholder: "Escolha uma opcao", showWhen: (c) => c.tipoBotao === "lista" },
-    { key: "rodapeLista", label: "Rodape", type: "text", placeholder: "BotAluguel", showWhen: (c) => c.tipoBotao === "lista" },
+    { key: "textoBotao", label: "Texto do botao de abrir lista", type: "text", placeholder: "ABRIR MENU", showWhen: (c) => c.tipoBotao === "lista" },
     { key: "opcoes", label: "Opcoes (id | titulo | descricao, por linha)", type: "textarea", placeholder: ".saldo | Saldo | Ver moedas\n.planos | Planos | Ver planos\n.ajuda | Ajuda | Falar com suporte", showWhen: (c) => c.tipoBotao === "lista" },
     { key: "textoLigar", label: "Texto do botao", type: "text", placeholder: "Falar com suporte", showWhen: (c) => c.tipoBotao === "ligar" },
     { key: "numeroLigar", label: "Numero para ligar", type: "text", placeholder: "5511999999999", showWhen: (c) => c.tipoBotao === "ligar" },
@@ -325,7 +322,7 @@ const TEMPLATES: FlowTemplate[] = [
     nodes: [
       { id: "t2_cmd", type: "command", label: ".catalogo", position: { x: 60, y: 60 }, config: { prefix: ".", name: "catalogo", caseSensitive: false, apenasGrupos: false, apenasPrivado: false, requerPlano: false, requerAdmin: false } },
       { id: "t2_resp", type: "response", label: "Catalogo de Servicos", position: { x: 60, y: 220 }, config: { tipoResposta: "texto", texto: "Ola {nome}! Confira nosso catalogo de servicos.\n\nSelecione uma categoria no botao abaixo:", temBotoes: false, linkPreview: false } },
-      { id: "t2_btn", type: "buttons", label: "Lista", position: { x: 60, y: 380 }, config: { tipoBotao: "lista", textoBotao: "ABRIR CATALOGO", tituloLista: "Catalogo", textoLista: "Escolha um servico", rodapeLista: "BotAluguel Pro", opcoes: ".plano_basico | Plano Basico | 100 moedas/mes\n.plano_pro | Plano Pro | 250 moedas/mes\n.plano_premium | Plano Premium | 500 moedas/mes\n.suporte | Falar com Suporte | Atendimento humano" } },
+      { id: "t2_btn", type: "buttons", label: "Lista", position: { x: 60, y: 380 }, config: { tipoBotao: "lista", textoBotao: "ABRIR CATALOGO", opcoes: ".plano_basico | Plano Basico | 100 moedas/mes\n.plano_pro | Plano Pro | 250 moedas/mes\n.plano_premium | Plano Premium | 500 moedas/mes\n.suporte | Falar com Suporte | Atendimento humano" } },
     ],
     edges: [
       { id: "t2_e1", source: "t2_cmd", target: "t2_resp" },
@@ -483,7 +480,7 @@ function NodeCard({
         displayLabel = parts[1] || parts[0] || "Botoes";
       }
     } else if (tipoBt === "lista") {
-      displayLabel = String(node.config.tituloLista || node.config.textoBotao || "Lista");
+      displayLabel = String(node.config.textoBotao || "Lista");
     } else if (tipoBt === "ligar") {
       displayLabel = String(node.config.textoLigar || "Ligar");
     }
@@ -591,7 +588,7 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
     } else if (node.type === "buttons") {
       const tipoBt = String(localConfig.tipoBotao || "normal");
       if (tipoBt === "ligar") autoLabel = String(localConfig.textoLigar || "Ligar");
-      else if (tipoBt === "lista") autoLabel = String(localConfig.tituloLista || localConfig.textoBotao || "Lista");
+      else if (tipoBt === "lista") autoLabel = String(localConfig.textoBotao || "Lista");
       else autoLabel = "Botoes";
     } else {
       const displayKey = fields[0]?.key;
@@ -727,8 +724,7 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
             )}
             {localConfig.tipoBotao === "lista" && (
               <div className="bg-background/60 rounded-lg p-2 space-y-1">
-                <p className="text-white/70 text-[10px] font-semibold">{String(localConfig.tituloLista || "Menu")}</p>
-                <p className="text-white/50 text-[10px]">{String(localConfig.textoLista || "Escolha uma opcao")}</p>
+                <p className="text-white/50 text-[10px] italic">(texto vem do bloco Resposta)</p>
                 <div className="mt-1 px-2 py-1 rounded bg-cyan-600/20 text-cyan-300 text-[10px] text-center font-semibold">{String(localConfig.textoBotao || "VER OPCOES")}</div>
                 {localConfig.opcoes && (
                   <div className="mt-1 space-y-0.5">
