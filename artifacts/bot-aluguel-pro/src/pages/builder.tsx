@@ -330,11 +330,13 @@ const TEMPLATES: FlowTemplate[] = [
     ],
   },
 ];
-function Port({ side, onPointerDown, isTarget, isConnecting }: {
+function Port({ side, onPointerDown, onClick, isTarget, isConnecting, hasConnection }: {
   side: "left" | "right";
   onPointerDown?: (e: React.PointerEvent) => void;
+  onClick?: (e: React.MouseEvent) => void;
   isTarget?: boolean;
   isConnecting?: boolean;
+  hasConnection?: boolean;
 }) {
   const isRight = side === "right";
   return (
@@ -342,17 +344,22 @@ function Port({ side, onPointerDown, isTarget, isConnecting }: {
       className={`absolute top-1/2 -translate-y-1/2 z-10 flex items-center justify-center ${isRight ? "-right-3" : "-left-3"}`}
       style={{ touchAction: "none" }}
     >
-      {isRight && !isTarget && <span className="absolute w-5 h-5 rounded-full bg-primary/20 animate-ping" />}
+      {isRight && !isTarget && !hasConnection && <span className="absolute w-5 h-5 rounded-full bg-primary/20 animate-ping" />}
       <div
         className={`relative w-5 h-5 rounded-full border-2 transition-all duration-150 flex items-center justify-center
           ${isTarget ? "bg-green-400 border-green-300 scale-125 shadow-lg shadow-green-400/40"
+            : hasConnection && !isRight ? "bg-red-400/80 border-red-400 hover:bg-red-500 hover:scale-125 hover:shadow-lg hover:shadow-red-400/40 cursor-pointer"
+            : hasConnection && isRight ? "bg-orange-400/80 border-orange-400 hover:bg-orange-500 hover:scale-125 hover:shadow-lg hover:shadow-orange-400/40 cursor-pointer"
             : isRight ? "bg-primary border-primary/80 hover:scale-125 hover:shadow-lg hover:shadow-primary/40 cursor-crosshair"
               : "bg-background border-white/20 cursor-default"}
           ${isConnecting && isRight ? "scale-125 shadow-primary/60 shadow-lg" : ""}`}
-        onPointerDown={onPointerDown}
+        onPointerDown={(e) => {
+          if (hasConnection && onClick) { e.stopPropagation(); e.preventDefault(); onClick(e as unknown as React.MouseEvent); return; }
+          if (onPointerDown) onPointerDown(e);
+        }}
         style={{ touchAction: "none" }}
       >
-        {isRight && <Link2 className="w-2.5 h-2.5 text-white/80" />}
+        {hasConnection ? <X className="w-2.5 h-2.5 text-white" /> : isRight ? <Link2 className="w-2.5 h-2.5 text-white/80" /> : null}
       </div>
     </div>
   );
@@ -361,12 +368,16 @@ function Port({ side, onPointerDown, isTarget, isConnecting }: {
 // ─── Node card ────────────────────────────────────────────────────────────────
 function NodeCard({
   node, selected, isTarget, isConnecting,
-  onSelect, onDelete, onEdit, onMove, onStartConnect, transformRef, touchCount,
+  onSelect, onDelete, onEdit, onMove, onStartConnect, onDisconnectInput, onDisconnectOutput,
+  hasInputConnection, hasOutputConnection,
+  transformRef, touchCount,
 }: {
   node: FlowNode; selected: boolean; isTarget: boolean; isConnecting: boolean;
   onSelect: () => void; onDelete: () => void; onEdit: () => void;
   onMove: (id: string, x: number, y: number) => void;
   onStartConnect: (sourceId: string, e: React.PointerEvent) => void;
+  onDisconnectInput: () => void; onDisconnectOutput: () => void;
+  hasInputConnection: boolean; hasOutputConnection: boolean;
   transformRef: React.RefObject<CanvasTransform>;
   touchCount: React.RefObject<number>;
 }) {
@@ -530,8 +541,10 @@ function NodeCard({
       onPointerUp={handlePointerUp}
       onClick={handleClick}
     >
-      <Port side="left" isTarget={isTarget} />
-      <Port side="right" isConnecting={isConnecting}
+      <Port side="left" isTarget={isTarget} hasConnection={hasInputConnection}
+        onClick={(e) => { e.stopPropagation(); onDisconnectInput(); }} />
+      <Port side="right" isConnecting={isConnecting} hasConnection={hasOutputConnection}
+        onClick={(e) => { e.stopPropagation(); onDisconnectOutput(); }}
         onPointerDown={(e) => { e.stopPropagation(); onStartConnect(node.id, e); }} />
 
       <div className="flex items-center justify-between mb-1.5">
@@ -872,7 +885,6 @@ export default function BuilderPage() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [connectingEdge, setConnectingEdge] = useState<ConnectingEdge | null>(null);
   const [hoverTargetId, setHoverTargetId] = useState<string | null>(null);
-  const [hoverEdgeId, setHoverEdgeId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [dragType, setDragType] = useState<NodeType | null>(null);
   const ghostRef = useRef<HTMLDivElement>(null);
@@ -1010,7 +1022,7 @@ export default function BuilderPage() {
     if (editingNodeId === nodeId) setEditingNodeId(null);
   };
 
-  const handleDeleteEdge = (edgeId: string) => setEdges((prev) => prev.filter((e) => e.id !== edgeId));
+
 
   const handleUpdateNode = (id: string, label: string, config: Record<string, unknown>) => {
     setNodes((prev) => prev.map((n) => n.id === id ? { ...n, label, config } : n));
@@ -1319,28 +1331,10 @@ export default function BuilderPage() {
           if (!src || !tgt) return null;
           const p1 = getNodePortPos(src, "right");
           const p2 = getNodePortPos(tgt, "left");
-          const isHovered = hoverEdgeId === edge.id;
-          const midX = (p1.x + p2.x) / 2;
-          const midY = (p1.y + p2.y) / 2;
           return (
-            <g key={edge.id} style={{ pointerEvents: "stroke" }}>
-              <path d={buildCurve(p1.x, p1.y, p2.x, p2.y)} fill="none" stroke="transparent" strokeWidth={18 / transform.scale}
-                style={{ pointerEvents: "stroke", cursor: "pointer" }}
-                onPointerEnter={() => setHoverEdgeId(edge.id)}
-                onPointerLeave={() => setHoverEdgeId(null)}
-                onClick={(e) => { e.stopPropagation(); handleDeleteEdge(edge.id); setHoverEdgeId(null); }} />
-              <path d={buildCurve(p1.x, p1.y, p2.x, p2.y)} fill="none"
-                stroke={isHovered ? "rgba(239,68,68,0.9)" : "rgba(139,92,246,0.6)"}
-                strokeWidth={isHovered ? "3" : "2.5"}
-                markerEnd={isHovered ? undefined : "url(#arrow)"} style={{ pointerEvents: "none", transition: "stroke 0.15s, stroke-width 0.15s" }} />
-              {isHovered && (
-                <g style={{ pointerEvents: "all", cursor: "pointer" }}
-                  onClick={(e) => { e.stopPropagation(); handleDeleteEdge(edge.id); setHoverEdgeId(null); }}>
-                  <circle cx={midX} cy={midY} r={10} fill="rgba(239,68,68,0.95)" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
-                  <line x1={midX - 4} y1={midY - 4} x2={midX + 4} y2={midY + 4} stroke="white" strokeWidth="2" strokeLinecap="round" />
-                  <line x1={midX + 4} y1={midY - 4} x2={midX - 4} y2={midY + 4} stroke="white" strokeWidth="2" strokeLinecap="round" />
-                </g>
-              )}
+            <g key={edge.id}>
+              <path d={buildCurve(p1.x, p1.y, p2.x, p2.y)} fill="none" stroke="rgba(139,92,246,0.6)" strokeWidth="2.5"
+                markerEnd="url(#arrow)" style={{ pointerEvents: "none" }} />
             </g>
           );
         })}
@@ -1365,9 +1359,19 @@ export default function BuilderPage() {
           selected={selectedNode === node.id}
           isTarget={hoverTargetId === node.id}
           isConnecting={!!connectingEdge}
+          hasInputConnection={edges.some((e) => e.target === node.id)}
+          hasOutputConnection={edges.some((e) => e.source === node.id)}
           onSelect={() => setSelectedNode(node.id)}
           onDelete={() => handleDeleteNode(node.id)}
           onEdit={() => { setEditingNodeId(editingNodeId === node.id ? null : node.id); setShowSettings(false); }}
+          onDisconnectInput={() => {
+            const edgeToRemove = edges.find((e) => e.target === node.id);
+            if (edgeToRemove) setEdges((prev) => prev.filter((e) => e.id !== edgeToRemove.id));
+          }}
+          onDisconnectOutput={() => {
+            const edgeToRemove = edges.find((e) => e.source === node.id);
+            if (edgeToRemove) setEdges((prev) => prev.filter((e) => e.id !== edgeToRemove.id));
+          }}
           onMove={handleMoveNode}
           onStartConnect={handleStartConnect}
           transformRef={transformRef}
