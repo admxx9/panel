@@ -349,13 +349,23 @@ function NodeCard({
     }
   };
 
-  const displayLabel = node.config?.trigger
-    ? String(node.config.trigger)
-    : node.config?.action
-      ? (CONFIG_FIELDS.action[0].options?.find(o => o.value === node.config.action)?.label ?? node.label)
-      : node.config?.text
-        ? String(node.config.text).slice(0, 22)
-        : node.label;
+  const displayLabel = node.type === "command" && node.config?.name
+    ? `${node.config.prefix && node.config.prefix !== "nenhum" ? node.config.prefix : ""}${node.config.name}`
+    : node.config?.trigger
+      ? String(node.config.trigger)
+      : node.config?.action
+        ? (CONFIG_FIELDS.action[0].options?.find(o => o.value === node.config.action)?.label ?? node.label)
+        : node.config?.text
+          ? String(node.config.text).slice(0, 22)
+          : node.label;
+
+  const commandTags: string[] = [];
+  if (node.type === "command" && node.config) {
+    if (node.config.apenasGrupos) commandTags.push("grupo");
+    if (node.config.apenasPrivado) commandTags.push("privado");
+    if (node.config.requerAdmin) commandTags.push("admin");
+    if (node.config.requerPlano) commandTags.push("plano");
+  }
 
   return (
     <div
@@ -391,7 +401,15 @@ function NodeCard({
         </div>
       </div>
       <p className="text-white text-xs font-semibold truncate leading-tight">{displayLabel}</p>
-      <p className="text-white/40 text-[10px] mt-0.5 truncate">{cfg.description}</p>
+      {commandTags.length > 0 ? (
+        <div className="flex flex-wrap gap-1 mt-1">
+          {commandTags.map((tag) => (
+            <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/50">{tag}</span>
+          ))}
+        </div>
+      ) : (
+        <p className="text-white/40 text-[10px] mt-0.5 truncate">{cfg.description}</p>
+      )}
     </div>
   );
 }
@@ -406,8 +424,14 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
   const [localLabel] = useState(node.label);
 
   const handleSave = () => {
-    const displayKey = fields[0]?.key;
-    const autoLabel = displayKey && localConfig[displayKey] ? String(localConfig[displayKey]) : localLabel;
+    let autoLabel = localLabel;
+    if (node.type === "command" && localConfig.name) {
+      const pfx = localConfig.prefix && localConfig.prefix !== "nenhum" ? String(localConfig.prefix) : "";
+      autoLabel = pfx + String(localConfig.name);
+    } else {
+      const displayKey = fields[0]?.key;
+      autoLabel = displayKey && localConfig[displayKey] ? String(localConfig[displayKey]) : localLabel;
+    }
     onUpdate(node.id, autoLabel || localLabel, localConfig);
     onClose();
   };
@@ -449,13 +473,21 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
         ))}
         {node.type === "command" && (
           <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs space-y-2">
-            <p className="font-semibold text-white/60">💡 Comando no grupo:</p>
-            <p className="font-mono text-white/80 bg-background/60 px-2 py-1 rounded">{prefix}{String(localConfig.trigger || "sticker")}</p>
-            {localConfig.admin_only && <p className="text-yellow-400/70">🛡️ Apenas admins podem usar</p>}
-            {localConfig.owner_only && <p className="text-amber-400/70">👑 Apenas o dono pode usar</p>}
-            {localConfig.group_only && <p className="text-blue-400/70">👥 Funciona apenas em grupo</p>}
-            {localConfig.private_only && <p className="text-green-400/70">💬 Funciona apenas no privado</p>}
-            {Number(localConfig.cooldown) > 0 && <p className="text-white/50">⏱️ Cooldown: {localConfig.cooldown}s</p>}
+            <p className="font-semibold text-white/60">💡 Preview do comando:</p>
+            <p className="font-mono text-white/80 bg-background/60 px-2 py-1 rounded">
+              {localConfig.prefix && localConfig.prefix !== "nenhum" ? String(localConfig.prefix) : ""}{String(localConfig.name || "menu")}
+            </p>
+            {localConfig.apenasGrupos && <p className="text-blue-400/70">👥 Funciona apenas em grupos</p>}
+            {localConfig.apenasPrivado && <p className="text-green-400/70">💬 Funciona apenas no privado</p>}
+            {localConfig.requerAdmin && <p className="text-yellow-400/70">🛡️ Apenas admins podem usar</p>}
+            {localConfig.requerPlano && <p className="text-amber-400/70">📦 Requer plano ativo</p>}
+            {localConfig.caseSensitive && <p className="text-white/50">🔤 Diferencia maiúsculas/minúsculas</p>}
+            <div className="mt-2 pt-2 border-t border-white/10 text-white/40 space-y-1">
+              <p className="font-semibold text-white/50">Entradas recebidas:</p>
+              <p>conteudo, ehGrupo, ehAdmin, temPlano</p>
+              <p className="font-semibold text-white/50 mt-1">Saida:</p>
+              <p>Ativa o proximo bloco conectado</p>
+            </div>
           </div>
         )}
         {(node.type === "action" || node.type === "response") && (
@@ -714,7 +746,7 @@ export default function BuilderPage() {
 
   const handleAddNode = (type: NodeType) => {
     const defaults: Record<NodeType, { label: string; config: Record<string, unknown> }> = {
-      command: { label: "novocomando", config: { trigger: "novocomando" } },
+      command: { label: "Comando", config: { prefix: ".", name: "", caseSensitive: false, apenasGrupos: false, apenasPrivado: false, requerPlano: false, requerAdmin: false } },
       action: { label: "Criar Figurinha", config: { action: "make_sticker" } },
       condition: { label: "Tem imagem?", config: { condition: "has_image" } },
       response: { label: "Mensagem", config: { text: "Mensagem de resposta" } },
@@ -767,7 +799,7 @@ export default function BuilderPage() {
 
   useEffect(() => {
     const NODE_DEFAULTS: Record<NodeType, { label: string; config: Record<string, unknown> }> = {
-      command: { label: "novocomando", config: { trigger: "novocomando" } },
+      command: { label: "Comando", config: { prefix: ".", name: "", caseSensitive: false, apenasGrupos: false, apenasPrivado: false, requerPlano: false, requerAdmin: false } },
       action: { label: "Criar Figurinha", config: { action: "make_sticker" } },
       condition: { label: "Tem imagem?", config: { condition: "has_image" } },
       response: { label: "Mensagem", config: { text: "Mensagem de resposta" } },
