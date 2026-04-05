@@ -872,6 +872,7 @@ export default function BuilderPage() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [connectingEdge, setConnectingEdge] = useState<ConnectingEdge | null>(null);
   const [hoverTargetId, setHoverTargetId] = useState<string | null>(null);
+  const [hoverEdgeId, setHoverEdgeId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [dragType, setDragType] = useState<NodeType | null>(null);
   const ghostRef = useRef<HTMLDivElement>(null);
@@ -1318,13 +1319,28 @@ export default function BuilderPage() {
           if (!src || !tgt) return null;
           const p1 = getNodePortPos(src, "right");
           const p2 = getNodePortPos(tgt, "left");
+          const isHovered = hoverEdgeId === edge.id;
+          const midX = (p1.x + p2.x) / 2;
+          const midY = (p1.y + p2.y) / 2;
           return (
             <g key={edge.id} style={{ pointerEvents: "stroke" }}>
-              <path d={buildCurve(p1.x, p1.y, p2.x, p2.y)} fill="none" stroke="transparent" strokeWidth={14 / transform.scale}
+              <path d={buildCurve(p1.x, p1.y, p2.x, p2.y)} fill="none" stroke="transparent" strokeWidth={18 / transform.scale}
                 style={{ pointerEvents: "stroke", cursor: "pointer" }}
-                onClick={(e) => { e.stopPropagation(); handleDeleteEdge(edge.id); }} />
-              <path d={buildCurve(p1.x, p1.y, p2.x, p2.y)} fill="none" stroke="rgba(139,92,246,0.6)" strokeWidth="2.5"
-                markerEnd="url(#arrow)" style={{ pointerEvents: "none" }} />
+                onPointerEnter={() => setHoverEdgeId(edge.id)}
+                onPointerLeave={() => setHoverEdgeId(null)}
+                onClick={(e) => { e.stopPropagation(); handleDeleteEdge(edge.id); setHoverEdgeId(null); }} />
+              <path d={buildCurve(p1.x, p1.y, p2.x, p2.y)} fill="none"
+                stroke={isHovered ? "rgba(239,68,68,0.9)" : "rgba(139,92,246,0.6)"}
+                strokeWidth={isHovered ? "3" : "2.5"}
+                markerEnd={isHovered ? undefined : "url(#arrow)"} style={{ pointerEvents: "none", transition: "stroke 0.15s, stroke-width 0.15s" }} />
+              {isHovered && (
+                <g style={{ pointerEvents: "all", cursor: "pointer" }}
+                  onClick={(e) => { e.stopPropagation(); handleDeleteEdge(edge.id); setHoverEdgeId(null); }}>
+                  <circle cx={midX} cy={midY} r={10} fill="rgba(239,68,68,0.95)" stroke="rgba(255,255,255,0.3)" strokeWidth="1" />
+                  <line x1={midX - 4} y1={midY - 4} x2={midX + 4} y2={midY + 4} stroke="white" strokeWidth="2" strokeLinecap="round" />
+                  <line x1={midX + 4} y1={midY - 4} x2={midX - 4} y2={midY + 4} stroke="white" strokeWidth="2" strokeLinecap="round" />
+                </g>
+              )}
             </g>
           );
         })}
