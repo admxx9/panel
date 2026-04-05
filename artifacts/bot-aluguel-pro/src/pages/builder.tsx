@@ -1115,8 +1115,7 @@ export default function BuilderPage() {
           onEdit={() => { setEditingNodeId(editingNodeId === node.id ? null : node.id); setShowSettings(false); }}
           onMove={handleMoveNode}
           onStartConnect={handleStartConnect}
-          canvasRef={canvasRef}
-          transform={transform}
+          transformRef={transformRef}
           touchCount={touchCount}
         />
       ))}
