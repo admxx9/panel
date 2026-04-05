@@ -243,14 +243,35 @@ const CONFIG_FIELDS: Record<NodeType, { key: string; label: string; type: "text"
     { key: "time_end", label: "Hora fim (HH:MM)", type: "text", placeholder: "22:00", showWhen: (c) => c.condition === "time_between" },
   ],
   response: [
-    { key: "text", label: "Texto da Resposta", type: "textarea", placeholder: "Use variáveis: {nome}, {user}, {grupo}, {membros}, {moedas}, {plano}..." },
-    { key: "response_image", label: "Imagem junto com a resposta (URL)", type: "text", placeholder: "https://..." },
-    { key: "response_buttons", label: "Botões (id | texto, um por linha)", type: "textarea", placeholder: ".menu | 📋 Ver Menu\n.ajuda | ❓ Ajuda" },
-    { key: "response_footer", label: "Rodapé (opcional)", type: "text", placeholder: "Bot feito com BotAluguel Pro" },
+    { key: "tipoResposta", label: "Tipo de Resposta", type: "select", options: [
+      { value: "texto", label: "Texto simples" },
+      { value: "lista", label: "Lista interativa" },
+      { value: "imagem", label: "Imagem" },
+      { value: "audio", label: "Audio" },
+      { value: "localizacao", label: "Localizacao" },
+      { value: "contato", label: "Contato" },
+    ] },
+    { key: "texto", label: "Texto ({nome}, {numero}, {moedas}, {plano}, {expiraEm}, {grupos})", type: "textarea", placeholder: "Ola {nome}! Seu saldo e {moedas} moedas.", showWhen: (c) => !c.tipoResposta || c.tipoResposta === "texto" || c.tipoResposta === "lista" },
+    { key: "tituloLista", label: "Titulo da lista", type: "text", placeholder: "Menu Principal", showWhen: (c) => c.tipoResposta === "lista" },
+    { key: "textoLista", label: "Texto da lista", type: "textarea", placeholder: "Escolha uma opcao abaixo", showWhen: (c) => c.tipoResposta === "lista" },
+    { key: "rodapeLista", label: "Rodape da lista", type: "text", placeholder: "BotAluguel", showWhen: (c) => c.tipoResposta === "lista" },
+    { key: "textoBotao", label: "Texto do botao", type: "text", placeholder: "VER OPCOES", showWhen: (c) => c.tipoResposta === "lista" },
+    { key: "secoes", label: "Secoes (titulo | id | titulo_row | descricao, por linha)", type: "textarea", placeholder: "Conta\n.saldo | Saldo | Ver moedas\n.plano | Plano | Ver plano ativo\nGrupos\n.grupos | Meus Grupos | Ver grupos", showWhen: (c) => c.tipoResposta === "lista" },
+    { key: "imagemUrl", label: "URL da imagem", type: "text", placeholder: "https://exemplo.com/foto.jpg", showWhen: (c) => c.tipoResposta === "imagem" },
+    { key: "legenda", label: "Legenda da imagem", type: "textarea", placeholder: "Texto abaixo da imagem", showWhen: (c) => c.tipoResposta === "imagem" },
+    { key: "audioUrl", label: "URL do audio", type: "text", placeholder: "https://exemplo.com/som.mp3", showWhen: (c) => c.tipoResposta === "audio" },
+    { key: "latitude", label: "Latitude", type: "text", placeholder: "-23.550520", showWhen: (c) => c.tipoResposta === "localizacao" },
+    { key: "longitude", label: "Longitude", type: "text", placeholder: "-46.633309", showWhen: (c) => c.tipoResposta === "localizacao" },
+    { key: "nomeLocal", label: "Nome do local", type: "text", placeholder: "Av. Paulista", showWhen: (c) => c.tipoResposta === "localizacao" },
+    { key: "numeroContato", label: "Numero do contato", type: "text", placeholder: "5511999999999", showWhen: (c) => c.tipoResposta === "contato" },
+    { key: "nomeContato", label: "Nome do contato", type: "text", placeholder: "Suporte BotAluguel", showWhen: (c) => c.tipoResposta === "contato" },
+    { key: "temBotoes", label: "Adicionar botoes abaixo", type: "checkbox", showWhen: (c) => c.tipoResposta === "texto" || c.tipoResposta === "imagem" },
+    { key: "botoes", label: "Botoes (id | titulo | tipo[reply/call], por linha, max 3)", type: "textarea", placeholder: ".planos | Ver Planos | reply\n.suporte | Suporte | reply\n5511999999999 | Ligar | call", showWhen: (c) => !!c.temBotoes && (c.tipoResposta === "texto" || c.tipoResposta === "imagem") },
+    { key: "linkPreview", label: "Mostrar previa de links", type: "checkbox", showWhen: (c) => c.tipoResposta === "texto" },
   ],
 };
 
-const BLOCK_TYPES: NodeType[] = ["command"];
+const BLOCK_TYPES: NodeType[] = ["command", "response"];
 
 interface FlowTemplate {
   id: string;
@@ -388,22 +409,40 @@ function NodeCard({
     }
   };
 
-  const displayLabel = node.type === "command" && node.config?.name
-    ? `${node.config.prefix && node.config.prefix !== "nenhum" ? node.config.prefix : ""}${node.config.name}`
-    : node.config?.trigger
-      ? String(node.config.trigger)
-      : node.config?.action
-        ? (CONFIG_FIELDS.action[0].options?.find(o => o.value === node.config.action)?.label ?? node.label)
-        : node.config?.text
-          ? String(node.config.text).slice(0, 22)
-          : node.label;
+  const TIPO_LABELS: Record<string, string> = { texto: "Texto", lista: "Lista", imagem: "Imagem", audio: "Audio", localizacao: "Local", contato: "Contato" };
 
-  const commandTags: string[] = [];
+  let displayLabel = node.label;
+  if (node.type === "command" && node.config?.name) {
+    displayLabel = `${node.config.prefix && node.config.prefix !== "nenhum" ? node.config.prefix : ""}${node.config.name}`;
+  } else if (node.type === "response" && node.config) {
+    const tipo = String(node.config.tipoResposta || "texto");
+    if (node.config.texto) {
+      displayLabel = String(node.config.texto).slice(0, 28);
+    } else if (tipo === "imagem" && node.config.legenda) {
+      displayLabel = String(node.config.legenda).slice(0, 28);
+    } else if (tipo === "lista" && node.config.tituloLista) {
+      displayLabel = String(node.config.tituloLista);
+    } else {
+      displayLabel = TIPO_LABELS[tipo] || "Resposta";
+    }
+  } else if (node.config?.action) {
+    displayLabel = CONFIG_FIELDS.action[0].options?.find(o => o.value === node.config.action)?.label ?? node.label;
+  } else if (node.config?.text) {
+    displayLabel = String(node.config.text).slice(0, 22);
+  }
+
+  const nodeTags: string[] = [];
   if (node.type === "command" && node.config) {
-    if (node.config.apenasGrupos) commandTags.push("grupo");
-    if (node.config.apenasPrivado) commandTags.push("privado");
-    if (node.config.requerAdmin) commandTags.push("admin");
-    if (node.config.requerPlano) commandTags.push("plano");
+    if (node.config.apenasGrupos) nodeTags.push("grupo");
+    if (node.config.apenasPrivado) nodeTags.push("privado");
+    if (node.config.requerAdmin) nodeTags.push("admin");
+    if (node.config.requerPlano) nodeTags.push("plano");
+  }
+  if (node.type === "response" && node.config) {
+    const tipo = String(node.config.tipoResposta || "texto");
+    nodeTags.push(TIPO_LABELS[tipo] || tipo);
+    if (node.config.temBotoes) nodeTags.push("botoes");
+    if (node.config.linkPreview) nodeTags.push("preview");
   }
 
   return (
@@ -440,9 +479,9 @@ function NodeCard({
         </div>
       </div>
       <p className="text-white text-xs font-semibold truncate leading-tight">{displayLabel}</p>
-      {commandTags.length > 0 ? (
+      {nodeTags.length > 0 ? (
         <div className="flex flex-wrap gap-1 mt-1">
-          {commandTags.map((tag) => (
+          {nodeTags.map((tag) => (
             <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-white/10 text-white/50">{tag}</span>
           ))}
         </div>
@@ -467,6 +506,13 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
     if (node.type === "command" && localConfig.name) {
       const pfx = localConfig.prefix && localConfig.prefix !== "nenhum" ? String(localConfig.prefix) : "";
       autoLabel = pfx + String(localConfig.name);
+    } else if (node.type === "response") {
+      const tipo = String(localConfig.tipoResposta || "texto");
+      const tipoLabel: Record<string, string> = { texto: "Texto", lista: "Lista", imagem: "Imagem", audio: "Audio", localizacao: "Local", contato: "Contato" };
+      if (localConfig.texto) autoLabel = String(localConfig.texto).slice(0, 30);
+      else if (tipo === "lista" && localConfig.tituloLista) autoLabel = String(localConfig.tituloLista);
+      else if (tipo === "imagem" && localConfig.legenda) autoLabel = String(localConfig.legenda).slice(0, 30);
+      else autoLabel = tipoLabel[tipo] || "Resposta";
     } else {
       const displayKey = fields[0]?.key;
       autoLabel = displayKey && localConfig[displayKey] ? String(localConfig[displayKey]) : localLabel;
@@ -547,6 +593,44 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
                   <code className="text-emerald-300 text-[10px]">{item.v}</code>
                 </button>
               ))}
+            </div>
+          </div>
+        )}
+        {node.type === "response" && (
+          <div className="rounded-lg bg-green-500/5 border border-green-500/20 p-3 text-xs space-y-2">
+            <p className="font-semibold text-white/60">Preview da resposta:</p>
+            {(!localConfig.tipoResposta || localConfig.tipoResposta === "texto") && (
+              <div className="bg-background/60 rounded-lg p-2 space-y-1">
+                <p className="text-white/80 text-[11px]">{String(localConfig.texto || "Mensagem de texto...").slice(0, 60)}</p>
+                {localConfig.temBotoes && localConfig.botoes && (
+                  <div className="flex gap-1 mt-1.5 pt-1.5 border-t border-white/10">
+                    {String(localConfig.botoes).split("\n").filter(Boolean).slice(0, 3).map((line: string, i: number) => {
+                      const parts = line.split("|").map((s: string) => s.trim());
+                      return <span key={i} className="px-2 py-0.5 rounded bg-primary/20 text-primary text-[9px]">{parts[1] || parts[0]}</span>;
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+            {localConfig.tipoResposta === "lista" && (
+              <div className="bg-background/60 rounded-lg p-2 space-y-1">
+                <p className="text-white/70 text-[10px] font-semibold">{String(localConfig.tituloLista || "Lista")}</p>
+                <p className="text-white/50 text-[10px]">{String(localConfig.textoLista || "Escolha uma opcao")}</p>
+                <div className="mt-1 px-2 py-1 rounded bg-green-600/20 text-green-300 text-[10px] text-center font-semibold">{String(localConfig.textoBotao || "VER OPCOES")}</div>
+              </div>
+            )}
+            {localConfig.tipoResposta === "imagem" && (
+              <div className="bg-background/60 rounded-lg p-2 space-y-1">
+                <div className="h-8 rounded bg-white/5 flex items-center justify-center text-white/20 text-[10px]">Imagem</div>
+                {localConfig.legenda && <p className="text-white/60 text-[10px]">{String(localConfig.legenda).slice(0, 40)}</p>}
+              </div>
+            )}
+            {localConfig.tipoResposta === "audio" && <p className="text-white/50 text-[10px]">Audio: {String(localConfig.audioUrl || "...").slice(0, 40)}</p>}
+            {localConfig.tipoResposta === "localizacao" && <p className="text-white/50 text-[10px]">Lat: {String(localConfig.latitude || "?")} Lng: {String(localConfig.longitude || "?")}{localConfig.nomeLocal ? ` - ${localConfig.nomeLocal}` : ""}</p>}
+            {localConfig.tipoResposta === "contato" && <p className="text-white/50 text-[10px]">Contato: {String(localConfig.nomeContato || "?")} ({String(localConfig.numeroContato || "?")})</p>}
+            <div className="pt-2 border-t border-white/10 text-white/40 space-y-0.5">
+              <p className="font-semibold text-white/50 text-[10px]">Entradas recebidas:</p>
+              <p className="text-[10px]">jid, nome, moedas, plano, expiraEm, grupos</p>
             </div>
           </div>
         )}
@@ -788,7 +872,7 @@ export default function BuilderPage() {
       command: { label: "Comando", config: { prefix: ".", name: "", caseSensitive: false, apenasGrupos: false, apenasPrivado: false, requerPlano: false, requerAdmin: false } },
       action: { label: "Criar Figurinha", config: { action: "make_sticker" } },
       condition: { label: "Tem imagem?", config: { condition: "has_image" } },
-      response: { label: "Mensagem", config: { text: "Mensagem de resposta" } },
+      response: { label: "Resposta", config: { tipoResposta: "texto", texto: "", temBotoes: false, linkPreview: false } },
     };
     const d = defaults[type];
     // Place new node in visible area (world coords)
@@ -841,7 +925,7 @@ export default function BuilderPage() {
       command: { label: "Comando", config: { prefix: ".", name: "", caseSensitive: false, apenasGrupos: false, apenasPrivado: false, requerPlano: false, requerAdmin: false } },
       action: { label: "Criar Figurinha", config: { action: "make_sticker" } },
       condition: { label: "Tem imagem?", config: { condition: "has_image" } },
-      response: { label: "Mensagem", config: { text: "Mensagem de resposta" } },
+      response: { label: "Resposta", config: { tipoResposta: "texto", texto: "", temBotoes: false, linkPreview: false } },
     };
 
     const onMove = (e: PointerEvent) => {
@@ -1306,14 +1390,20 @@ export default function BuilderPage() {
               )}
             </SelectContent>
           </Select>
-          <Button size="sm"
-            onClick={() => handleAddNode("command")}
-            disabled={!selectedBotId}
-            className="bg-primary hover:bg-primary/90 text-white">
-            <Plus className="h-4 w-4 mr-1.5" />
-            <MessageSquare className="h-3.5 w-3.5 mr-1" />
-            <span className="hidden sm:inline">Comando</span>
-          </Button>
+          {BLOCK_TYPES.map((bt) => {
+            const btCfg = nodeConfig[bt];
+            const BtIcon = btCfg.icon;
+            return (
+              <Button key={bt} size="sm"
+                onClick={() => handleAddNode(bt)}
+                disabled={!selectedBotId}
+                className={bt === "command" ? "bg-primary hover:bg-primary/90 text-white" : "bg-green-600 hover:bg-green-700 text-white"}>
+                <Plus className="h-4 w-4 mr-1" />
+                <BtIcon className="h-3.5 w-3.5 mr-1" />
+                <span className="hidden sm:inline">{btCfg.label}</span>
+              </Button>
+            );
+          })}
           <Button variant="outline" size="sm"
             onClick={() => { setShowSettings((v) => !v); setEditingNodeId(null); }}
             disabled={!selectedBotId}

@@ -1,0 +1,247 @@
+🔷 BLOCO RESPOSTA — LÓGICA PURA
+O que faz
+Envia uma mensagem de volta para o usuário (ou grupo) quando o fluxo chega nele.
+
+Entrada (o que recebe)
+jid — ID de quem enviou a mensagem (usuário ou grupo)
+
+nome — nome do usuário (para usar em variáveis)
+
+moedas — saldo do usuário
+
+plano — plano ativo do usuário
+
+expiraEm — data de expiração do plano
+
+grupos — lista de grupos do usuário
+
+Configurações que o usuário define
+Config	Tipo	Opções / Exemplo
+tipoResposta	select	texto, lista, imagem, audio, localizacao, contato
+texto	string	"Olá {nome}! Bem-vindo!"
+temBotões	boolean	true ou false
+botões	array	lista de botões (ver abaixo)
+imagemUrl	string	"https://exemplo.com/foto.jpg"
+legenda	string	"Texto abaixo da imagem"
+audioUrl	string	"https://exemplo.com/som.mp3"
+localizacao	objeto	{ latitude: -23.55, longitude: -46.63 }
+contato	string	"5511999999999"
+linkPreview	boolean	true → mostra prévia de links
+Tipos de RESPOSTA detalhados
+1️⃣ RESPOSTA TEXTO SIMPLES
+text
+Config:
+- tipoResposta = "texto"
+- texto = "Olá {nome}! Seu saldo é {moedas} moedas."
+O que faz: Envia apenas texto, com suporte a variáveis.
+
+Variáveis disponíveis:
+
+{nome} → nome do usuário
+
+{numero} → número do usuário
+
+{moedas} → saldo de moedas
+
+{plano} → nome do plano ativo
+
+{expiraEm} → dias/horas restantes
+
+{grupos} → quantidade de grupos
+
+{gruposLista} → lista dos grupos
+
+2️⃣ RESPOSTA COM BOTÕES (LISTA / SINGLE SELECT)
+text
+Config:
+- tipoResposta = "lista"
+- tituloLista = "📋 Menu Principal"
+- textoLista = "Escolha uma opção abaixo"
+- rodapeLista = "BotAluguel"
+- textoBotao = "VER OPÇÕES"
+- seções = [ ... ]
+O que faz: Cria uma mensagem com um botão que, ao clicar, abre uma lista de opções.
+
+Estrutura de uma SEÇÃO:
+
+text
+Seção = {
+  titulo: "Minha Conta",
+  rows: [
+    { id: ".painel", titulo: "📊 Meu Painel", descricao: "Ver saldo e plano" },
+    { id: ".recarregar", titulo: "💳 Recarregar", descricao: "Comprar moedas" }
+  ]
+}
+Regras:
+
+Cada SEÇÃO pode ter até 10 ROWS
+
+Cada ROW tem um ID (que será enviado como comando quando clicado)
+
+O título do ROW é o que o usuário vê
+
+A descrição é opcional (texto menor abaixo)
+
+3️⃣ RESPOSTA COM IMAGEM
+text
+Config:
+- tipoResposta = "imagem"
+- imagemUrl = "https://exemplo.com/qrcode.png"
+- legenda = "✅ PIX gerado! Valor: R$ 10,00"
+- temBotões = true (opcional)
+- botões = [ ... ]
+O que faz: Envia uma imagem (pode ser URL ou base64) com legenda opcional.
+
+4️⃣ RESPOSTA COM ÁUDIO
+text
+Config:
+- tipoResposta = "audio"
+- audioUrl = "https://exemplo.com/mensagem.mp3"
+- legenda = "Áudio automático" (opcional)
+O que faz: Envia um arquivo de áudio.
+
+5️⃣ RESPOSTA COM LOCALIZAÇÃO
+text
+Config:
+- tipoResposta = "localizacao"
+- latitude = -23.550520
+- longitude = -46.633309
+- nomeLocal = "Av. Paulista" (opcional)
+O que faz: Envia um ponto no mapa.
+
+6️⃣ RESPOSTA COM CONTATO
+text
+Config:
+- tipoResposta = "contato"
+- numeroContato = "5511999999999"
+- nomeContato = "Suporte BotAluguel"
+O que faz: Envia um cartão de contato.
+
+Estrutura de BOTÕES (quando temBotões = true)
+Os botões aparecem ABAIXO da mensagem principal.
+
+Propriedade	Descrição	Exemplo
+id	comando enviado ao clicar	".comprar"
+titulo	texto visível no botão	"🛒 Comprar"
+tipo	"reply" ou "call"	"reply"
+Exemplo de configuração de botões:
+
+text
+botões = [
+  { id: ".planos", titulo: "📦 Ver Planos", tipo: "reply" },
+  { id: ".suporte", titulo: "🆘 Suporte", tipo: "reply" },
+  { id: "5511999999999", titulo: "📞 Ligar", tipo: "call" }
+]
+Regras:
+
+Máximo de 3 botões por mensagem (limite do WhatsApp)
+
+Botão tipo "call" liga para o número informado no ID
+
+Botão tipo "reply" envia o ID como comando
+
+Lógica de execução (regras)
+text
+1. RECEBE os dados de entrada (jid, nome, moedas, etc.)
+
+2. SUBSTITUI variáveis no texto/legenda:
+   - {nome} → nome do usuário
+   - {moedas} → saldo
+   - {plano} → plano ativo
+   - {expiraEm} → tempo restante
+   - {grupos} → quantidade de grupos
+
+3. SE tipoResposta for "texto":
+      envia mensagem de texto simples
+
+4. SE tipoResposta for "lista":
+      ENVIA uma mensagem com botão "VER OPÇÕES"
+      QUANDO usuário clica → mostra as seções e rows
+      QUANDO usuário escolhe uma row → envia o ID como comando
+
+5. SE tipoResposta for "imagem":
+      BAIXA a imagem da URL (ou usa base64)
+      ENVIA imagem + legenda
+      SE temBotões = true → ENVIA botões após a imagem
+
+6. SE tipoResposta for "audio":
+      BAIXA o áudio da URL
+      ENVIA áudio + legenda opcional
+
+7. SE tipoResposta for "localizacao":
+      ENVIA localização com latitude/longitude
+
+8. SE tipoResposta for "contato":
+      ENVIA cartão de contato
+
+9. REGISTRA no log: "Resposta enviada para {jid}"
+Exemplo visual do que o usuário vê no bloco
+Modo texto simples:
+
+text
+┌─────────────────────────────┐
+│  💬 RESPOSTA                 │
+├─────────────────────────────┤
+│  "Olá {nome}! Seja bem-vindo"│
+│                             │
+│  📝 tipo: texto             │
+└─────────────────────────────┘
+         ▲ (entrada)
+Modo lista com botões:
+
+text
+┌─────────────────────────────┐
+│  💬 RESPOSTA                 │
+├─────────────────────────────┤
+│  📋 "Menu Principal"         │
+│                             │
+│  Seções:                    │
+│  ▶ Minha Conta (2 opções)   │
+│  ▶ Grupos (1 opção)         │
+│  ▶ Outros (2 opções)        │
+│                             │
+│  🔘 VER OPÇÕES              │
+└─────────────────────────────┘
+Modo imagem:
+
+text
+┌─────────────────────────────┐
+│  💬 RESPOSTA                 │
+├─────────────────────────────┤
+│  🖼️ imagem.jpg               │
+│  "Legenda da imagem"        │
+│                             │
+│  🔘 [Botão 1] [Botão 2]     │
+└─────────────────────────────┘
+Exemplo de JSON de configuração salva
+json
+{
+  "id": "bloco_resposta_1",
+  "tipo": "resposta",
+  "config": {
+    "tipoResposta": "lista",
+    "texto": "Bem-vindo {nome}!",
+    "tituloLista": "🤖 Bot Menu",
+    "textoLista": "Seu saldo: {moedas} moedas",
+    "rodapeLista": "Sistema de Bots",
+    "textoBotao": "ABRIR MENU",
+    "secoes": [
+      {
+        "titulo": "Conta",
+        "rows": [
+          { "id": ".saldo", "titulo": "💰 Saldo", "descricao": "Ver moedas" },
+          { "id": ".plano", "titulo": "📦 Plano", "descricao": "Ver plano ativo" }
+        ]
+      }
+    ],
+    "temBotoes": false,
+    "botoes": []
+  }
+}
+Fluxo completo de exemplo
+text
+[COMANDO: .menu] → [CONDIÇÃO: se privado?] → [SIM] → [RESPOSTA: lista com opções]
+                                                      ↓
+                                            (usuário clica em ".saldo")
+                                                      ↓
+                                            [COMANDO: .saldo] → [RESPOSTA: "Seu saldo é X"]

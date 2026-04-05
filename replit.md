@@ -50,7 +50,9 @@
   - **Drag from palette**: arrastar blocos da paleta direto pro canvas (mobile e desktop), ghost element durante drag
   - **Pinch-to-zoom fix**: 2 dedos detectados via touchCount global — cancela drag de bloco automaticamente
   - **Performance**: RAF throttle no handleMoveNode, will-change no container de transform e nodes
-  - **Gestos**: NodeCard tem seu proprio drag handler (setPointerCapture no card, stopPropagation). Canvas cuida do pan e pinch-to-zoom separadamente.
+  - **Gestos mobile**: 1 dedo = pan, pinça = zoom, long-press 200ms + arrastar = mover bloco, feedback visual (outline roxo + scale) e vibração
+  - **Bloco Resposta**: 6 tipos (texto, lista interativa, imagem, audio, localizacao, contato), variaveis ({nome}, {moedas}, etc.), botoes (max 3, reply/call), preview ao vivo no formulario, tags no card (tipo, botoes, preview)
+  - Formato secoes lista: linhas sem pipe = titulo secao, linhas com pipe = id | titulo_row | descricao
 - WhatsApp: auto-reconnect de sessoes ao iniciar servidor (restoreSessions), sessoes persistentes em `.baileys-sessions/`
 - Planos: Basico (100), Pro (250), Premium (500) moedas/30 dias
 - Pagamentos: recarga PIX com codigo copia-e-cola, historico
