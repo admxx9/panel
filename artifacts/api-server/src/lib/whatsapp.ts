@@ -13,7 +13,7 @@ import path from "path";
 import fs from "fs";
 import sharp from "sharp";
 import { logger } from "./logger.js";
-import { db, botsTable, botCommandsTable } from "@workspace/db";
+import { db, botsTable, botCommandsTable, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import type { Response } from "express";
 
@@ -129,19 +129,21 @@ function getMentionedJid(msg: WAMessage): string | null {
   return null;
 }
 
-function messageHasMedia(msg: WAMessage, type: "image" | "video" | "sticker" | "any"): boolean {
+function messageHasMedia(msg: WAMessage, type: "image" | "video" | "sticker" | "audio" | "any"): boolean {
   const m = msg.message;
   if (!m) return false;
 
   const hasImage = !!(m.imageMessage || m.extendedTextMessage?.contextInfo?.quotedMessage?.imageMessage);
   const hasVideo = !!(m.videoMessage || m.extendedTextMessage?.contextInfo?.quotedMessage?.videoMessage);
   const hasSticker = !!(m.stickerMessage || m.extendedTextMessage?.contextInfo?.quotedMessage?.stickerMessage);
+  const hasAudio = !!(m.audioMessage || m.extendedTextMessage?.contextInfo?.quotedMessage?.audioMessage);
 
   switch (type) {
     case "image": return hasImage;
     case "video": return hasVideo;
     case "sticker": return hasSticker;
-    case "any": return hasImage || hasVideo || hasSticker;
+    case "audio": return hasAudio;
+    case "any": return hasImage || hasVideo || hasSticker || hasAudio;
   }
 }
 
@@ -1245,9 +1247,55 @@ async function executeFlow(
           case "has_mention":
             result = !!getMentionedJid(msg);
             break;
+          case "has_audio":
+            result = messageHasMedia(msg, "audio");
+            break;
+          case "has_document":
+            result = !!msg.message?.documentMessage;
+            break;
+          case "has_contact":
+            result = !!msg.message?.contactMessage || !!msg.message?.contactsArrayMessage;
+            break;
+          case "has_location":
+            result = !!msg.message?.locationMessage || !!msg.message?.liveLocationMessage;
+            break;
           case "is_reply":
             result = !!msg.message?.extendedTextMessage?.contextInfo?.stanzaId;
             break;
+          case "is_quoted":
+            result = !!msg.message?.extendedTextMessage?.contextInfo?.quotedMessage;
+            break;
+          case "is_owner": {
+            const [botRow] = await db.select().from(botsTable).where(eq(botsTable.id, botId));
+            const ownerNum = normalizeJid(botRow?.ownerPhone || botRow?.phone || "");
+            const senderNum2 = normalizeJid(sender);
+            result = senderNum2 === ownerNum;
+            break;
+          }
+          case "has_prefix": {
+            const prefixes = [".", "!", "/", "#", "@", "$"];
+            result = prefixes.some((p) => text.startsWith(p));
+            break;
+          }
+          case "sender_has_plan": {
+            const sNum = normalizeJid(sender);
+            const [u] = await db.select().from(usersTable).where(eq(usersTable.phone, sNum));
+            result = !!(u && u.coins > 0);
+            break;
+          }
+          case "msg_length_gt": {
+            const minLen = Number(node.config?.min_length) || 0;
+            result = text.length > minLen;
+            break;
+          }
+          case "time_between": {
+            const tStart = (node.config?.time_start as string) || "00:00";
+            const tEnd = (node.config?.time_end as string) || "23:59";
+            const now = new Date();
+            const hhmm = `${String(now.getHours()).padStart(2, "0")}:${String(now.getMinutes()).padStart(2, "0")}`;
+            result = hhmm >= tStart && hhmm <= tEnd;
+            break;
+          }
           default:
             result = false;
         }

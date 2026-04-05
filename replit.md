@@ -42,7 +42,7 @@
   - **74+ tipos de acao** implementados no backend: menus (show_menu_photo/admin/games/owner), 12 jogos (moeda, dado, sorteio, amor, ship, nota, sorte, V/D, roleta, top5, rank, piada), moderacao completa (kick, ban, warn, reset_warns, promover, rebaixar, mutar, desmutar, apagar), grupo (fechar, abrir, info, link, revogar, nome, desc, membros, admins), dono (ligar, desligar, moedas, broadcast, bloquear, desbloquear), boas-vindas/despedida, enquete, CEP, calculadora, figurinha, hidetag, reagir, imagem
   - **16 variaveis** substituidas no backend: {nome}, {numero}, {user}, {grupo}, {membros}, {admins}, {moedas}, {plano}, {prefix}, {bot}, {data}, {hora}, {dono}, {args}, {quoted}, {botname}
   - **Permissoes de comando**: owner_only, admin_only, group_only, private_only aplicadas antes da execucao
-  - Condicoes: e grupo, e privado, e admin, nao e admin, bot e admin, tem imagem/video/sticker/midia, contem link, contem texto, tem mencao, e reply
+  - **Bloco Condicao**: bloco logico com DUAS saidas (SIM/NAO). 28 tipos de condicao (grupo/privado, admin, dono, bot admin, midia, texto, mencao, reply, citacao, flood, tamanho msg, membros, horario, prefixo, plano, bot ligado). Fios coloridos: verde (SIM) e vermelho (NAO). Tags de categoria no card. Backend avalia condicao e direciona fluxo. Template "Comando so no Privado" incluso.
   - Campos condicionais: showWhen mostra campos extras conforme tipo selecionado
   - Dicas contextuais para cada tipo de acao/condicao
   - **Templates prontos**: 9 templates (Figurinha, Menu com Foto, Moderacao, Protecao Total, Sistema de Dono, Diversao, Ferramentas de Grupo, Mensagens Interativas, TUDO INCLUSO com 96+ blocos)

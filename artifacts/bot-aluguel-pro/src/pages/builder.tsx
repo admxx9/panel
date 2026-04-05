@@ -34,10 +34,12 @@ interface FlowEdge {
   id: string;
   source: string;
   target: string;
+  sourceHandle?: "true" | "false";
 }
 
 interface ConnectingEdge {
   sourceId: string;
+  sourceHandle?: "true" | "false";
   mouseX: number;
   mouseY: number;
 }
@@ -284,7 +286,11 @@ const CONFIG_FIELDS: Record<NodeType, { key: string; label: string; type: "text"
   ],
 };
 
-const BLOCK_TYPES: NodeType[] = ["command", "response", "buttons"];
+const BLOCK_TYPES: NodeType[] = ["command", "response", "condition", "buttons"];
+
+const CONDITION_NODE_H = 110;
+const CONDITION_PORT_YES_Y = 36;
+const CONDITION_PORT_NO_Y = 80;
 
 interface FlowTemplate {
   id: string;
@@ -329,27 +335,52 @@ const TEMPLATES: FlowTemplate[] = [
       { id: "t2_e2", source: "t2_resp", target: "t2_btn" },
     ],
   },
+  {
+    id: "condicao_grupo",
+    name: "Comando so no Privado",
+    description: "Verifica se a mensagem e de grupo e responde diferente",
+    icon: GitBranch,
+    color: "yellow",
+    nodes: [
+      { id: "t3_cmd", type: "command", label: ".start", position: { x: 60, y: 60 }, config: { prefix: ".", name: "start", caseSensitive: false, apenasGrupos: false, apenasPrivado: false, requerPlano: false, requerAdmin: false } },
+      { id: "t3_cond", type: "condition", label: "E grupo?", position: { x: 60, y: 220 }, config: { condition: "is_group" } },
+      { id: "t3_resp_sim", type: "response", label: "Comando nao funciona em grupos", position: { x: -100, y: 400 }, config: { tipoResposta: "texto", texto: "Esse comando so funciona no privado! Me chama la no PV.", temBotoes: false, linkPreview: false } },
+      { id: "t3_resp_nao", type: "response", label: "Bot iniciado!", position: { x: 260, y: 400 }, config: { tipoResposta: "texto", texto: "Ola {nome}! Bot iniciado com sucesso!\n\nUse .menu para ver os comandos.", temBotoes: false, linkPreview: false } },
+    ],
+    edges: [
+      { id: "t3_e1", source: "t3_cmd", target: "t3_cond" },
+      { id: "t3_e2", source: "t3_cond", target: "t3_resp_sim", sourceHandle: "true" as const },
+      { id: "t3_e3", source: "t3_cond", target: "t3_resp_nao", sourceHandle: "false" as const },
+    ],
+  },
 ];
-function Port({ side, onPointerDown, onClick, isTarget, isConnecting, hasConnection }: {
+function Port({ side, onPointerDown, onClick, isTarget, isConnecting, hasConnection, label, color, topOffset }: {
   side: "left" | "right";
   onPointerDown?: (e: React.PointerEvent) => void;
   onClick?: (e: React.MouseEvent) => void;
   isTarget?: boolean;
   isConnecting?: boolean;
   hasConnection?: boolean;
+  label?: string;
+  color?: string;
+  topOffset?: string;
 }) {
   const isRight = side === "right";
+  const posStyle = topOffset
+    ? { top: topOffset, transform: "translateY(-50%)" }
+    : { top: "50%", transform: "translateY(-50%)" };
   return (
     <div
-      className={`absolute top-1/2 -translate-y-1/2 z-10 flex items-center justify-center ${isRight ? "-right-3" : "-left-3"}`}
-      style={{ touchAction: "none" }}
+      className={`absolute z-10 flex items-center justify-center ${isRight ? "-right-3" : "-left-3"}`}
+      style={{ touchAction: "none", ...posStyle }}
     >
-      {isRight && !isTarget && !hasConnection && <span className="absolute w-5 h-5 rounded-full bg-primary/20 animate-ping" />}
+      {isRight && !isTarget && !hasConnection && !label && <span className="absolute w-5 h-5 rounded-full bg-primary/20 animate-ping" />}
       <div
         className={`relative w-5 h-5 rounded-full border-2 transition-all duration-150 flex items-center justify-center
           ${isTarget ? "bg-green-400 border-green-300 scale-125 shadow-lg shadow-green-400/40"
             : hasConnection && !isRight ? "bg-red-400/80 border-red-400 hover:bg-red-500 hover:scale-125 hover:shadow-lg hover:shadow-red-400/40 cursor-pointer"
             : hasConnection && isRight ? "bg-orange-400/80 border-orange-400 hover:bg-orange-500 hover:scale-125 hover:shadow-lg hover:shadow-orange-400/40 cursor-pointer"
+            : color ? `${color} cursor-crosshair hover:scale-125 hover:shadow-lg`
             : isRight ? "bg-primary border-primary/80 hover:scale-125 hover:shadow-lg hover:shadow-primary/40 cursor-crosshair"
               : "bg-background border-white/20 cursor-default"}
           ${isConnecting && isRight ? "scale-125 shadow-primary/60 shadow-lg" : ""}`}
@@ -359,8 +390,11 @@ function Port({ side, onPointerDown, onClick, isTarget, isConnecting, hasConnect
         }}
         style={{ touchAction: "none" }}
       >
-        {hasConnection ? <X className="w-2.5 h-2.5 text-white" /> : isRight ? <Link2 className="w-2.5 h-2.5 text-white/80" /> : null}
+        {hasConnection ? <X className="w-2.5 h-2.5 text-white" /> : isRight && !label ? <Link2 className="w-2.5 h-2.5 text-white/80" /> : null}
       </div>
+      {label && (
+        <span className={`absolute text-[8px] font-bold uppercase tracking-wider whitespace-nowrap ${isRight ? "right-7" : "left-7"} ${color?.includes("green") ? "text-green-400" : "text-red-400"}`}>{label}</span>
+      )}
     </div>
   );
 }
@@ -369,15 +403,16 @@ function Port({ side, onPointerDown, onClick, isTarget, isConnecting, hasConnect
 function NodeCard({
   node, selected, isTarget, isConnecting,
   onSelect, onDelete, onEdit, onMove, onStartConnect, onDisconnectInput, onDisconnectOutput,
-  hasInputConnection, hasOutputConnection,
+  hasInputConnection, hasOutputConnection, hasYesConnection, hasNoConnection,
   transformRef, touchCount,
 }: {
   node: FlowNode; selected: boolean; isTarget: boolean; isConnecting: boolean;
   onSelect: () => void; onDelete: () => void; onEdit: () => void;
   onMove: (id: string, x: number, y: number) => void;
-  onStartConnect: (sourceId: string, e: React.PointerEvent) => void;
-  onDisconnectInput: () => void; onDisconnectOutput: () => void;
+  onStartConnect: (sourceId: string, e: React.PointerEvent, handle?: "true" | "false") => void;
+  onDisconnectInput: () => void; onDisconnectOutput: (handle?: "true" | "false") => void;
   hasInputConnection: boolean; hasOutputConnection: boolean;
+  hasYesConnection?: boolean; hasNoConnection?: boolean;
   transformRef: React.RefObject<CanvasTransform>;
   touchCount: React.RefObject<number>;
 }) {
@@ -482,6 +517,20 @@ function NodeCard({
     } else {
       displayLabel = TIPO_LABELS[tipo] || "Resposta";
     }
+  } else if (node.type === "condition" && node.config?.condition) {
+    const condLabelsMap: Record<string, string> = {
+      is_group: "E grupo?", is_private: "E privado?", is_admin: "E admin?", is_not_admin: "Nao e admin?",
+      is_owner: "E dono?", is_bot_admin: "Bot e admin?", has_image: "Tem imagem?", has_video: "Tem video?",
+      has_audio: "Tem audio?", has_sticker: "Tem figurinha?", has_document: "Tem doc?", has_media: "Tem midia?",
+      has_contact: "Tem contato?", has_location: "Tem local?", contains_link: "Tem link?",
+      contains_text: node.config.value ? `"${String(node.config.value).slice(0, 12)}"?` : "Contem texto?",
+      has_mention: "Tem mencao?", is_reply: "E resposta?", is_quoted: "Tem citacao?",
+      is_flood: "E flood?", msg_length_gt: `Msg > ${node.config.min_length || "?"}`,
+      member_count_gt: `${node.config.min_members || "?"} membros`,
+      time_between: `${node.config.time_start || "?"}-${node.config.time_end || "?"}`,
+      has_prefix: "Tem prefixo?", sender_has_plan: "Tem plano?", bot_is_on: "Bot ligado?",
+    };
+    displayLabel = condLabelsMap[String(node.config.condition)] || node.label;
   } else if (node.type === "buttons" && node.config) {
     const tipoBt = String(node.config.tipoBotao || "normal");
     if (tipoBt === "normal" && node.config.botoes) {
@@ -514,6 +563,19 @@ function NodeCard({
     if (node.config.temBotoes) nodeTags.push("botoes");
     if (node.config.linkPreview) nodeTags.push("preview");
   }
+  if (node.type === "condition" && node.config) {
+    const cond = String(node.config.condition || "");
+    const catMap: Record<string, string> = {
+      is_group: "chat", is_private: "chat", is_admin: "user", is_not_admin: "user", is_owner: "user",
+      is_bot_admin: "bot", has_image: "midia", has_video: "midia", has_audio: "midia", has_sticker: "midia",
+      has_document: "midia", has_media: "midia", has_contact: "msg", has_location: "msg", contains_link: "msg",
+      contains_text: "msg", has_mention: "msg", is_reply: "msg", is_quoted: "msg", is_flood: "msg",
+      msg_length_gt: "msg", member_count_gt: "grupo", time_between: "tempo", has_prefix: "msg",
+      sender_has_plan: "plano", bot_is_on: "bot",
+    };
+    const cat = catMap[cond];
+    if (cat) nodeTags.push(cat);
+  }
   if (node.type === "buttons" && node.config) {
     const tipoBt = String(node.config.tipoBotao || "normal");
     const btLabels: Record<string, string> = { normal: "Normal", lista: "Lista", ligar: "Ligar" };
@@ -535,7 +597,7 @@ function NodeCard({
         ${cfg.color} ${cfg.border}
         ${selected ? "ring-2 ring-primary ring-offset-1 ring-offset-background shadow-xl" : "shadow-md"}
         ${isTarget ? "ring-2 ring-green-400 ring-offset-1 ring-offset-background" : ""}`}
-      style={{ left: node.position.x, top: node.position.y, width: NODE_W, minHeight: NODE_H, cursor: "grab", touchAction: "none", willChange: "left, top" }}
+      style={{ left: node.position.x, top: node.position.y, width: NODE_W, minHeight: node.type === "condition" ? CONDITION_NODE_H : NODE_H, cursor: "grab", touchAction: "none", willChange: "left, top" }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -543,9 +605,22 @@ function NodeCard({
     >
       <Port side="left" isTarget={isTarget} hasConnection={hasInputConnection}
         onClick={(e) => { e.stopPropagation(); onDisconnectInput(); }} />
-      <Port side="right" isConnecting={isConnecting} hasConnection={hasOutputConnection}
-        onClick={(e) => { e.stopPropagation(); onDisconnectOutput(); }}
-        onPointerDown={(e) => { e.stopPropagation(); onStartConnect(node.id, e); }} />
+      {node.type === "condition" ? (
+        <>
+          <Port side="right" isConnecting={isConnecting} hasConnection={!!hasYesConnection}
+            label="SIM" color="bg-green-500 border-green-400" topOffset={`${CONDITION_PORT_YES_Y}px`}
+            onClick={(e) => { e.stopPropagation(); onDisconnectOutput("true"); }}
+            onPointerDown={(e) => { e.stopPropagation(); onStartConnect(node.id, e, "true"); }} />
+          <Port side="right" isConnecting={isConnecting} hasConnection={!!hasNoConnection}
+            label="NAO" color="bg-red-500 border-red-400" topOffset={`${CONDITION_PORT_NO_Y}px`}
+            onClick={(e) => { e.stopPropagation(); onDisconnectOutput("false"); }}
+            onPointerDown={(e) => { e.stopPropagation(); onStartConnect(node.id, e, "false"); }} />
+        </>
+      ) : (
+        <Port side="right" isConnecting={isConnecting} hasConnection={hasOutputConnection}
+          onClick={(e) => { e.stopPropagation(); onDisconnectOutput(); }}
+          onPointerDown={(e) => { e.stopPropagation(); onStartConnect(node.id, e); }} />
+      )}
 
       <div className="flex items-center justify-between mb-1.5">
         <div className="flex items-center gap-1.5">
@@ -598,6 +673,21 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
       else if (tipo === "lista" && localConfig.tituloLista) autoLabel = String(localConfig.tituloLista);
       else if (tipo === "imagem" && localConfig.legenda) autoLabel = String(localConfig.legenda).slice(0, 30);
       else autoLabel = tipoLabel[tipo] || "Resposta";
+    } else if (node.type === "condition") {
+      const cond = String(localConfig.condition || "has_image");
+      const condLabels: Record<string, string> = {
+        is_group: "E grupo?", is_private: "E privado?", is_admin: "E admin?", is_not_admin: "Nao e admin?",
+        is_owner: "E dono?", is_bot_admin: "Bot e admin?", has_image: "Tem imagem?", has_video: "Tem video?",
+        has_audio: "Tem audio?", has_sticker: "Tem figurinha?", has_document: "Tem documento?", has_media: "Tem midia?",
+        has_contact: "Tem contato?", has_location: "Tem localizacao?", contains_link: "Tem link?",
+        contains_text: localConfig.value ? `Contem "${String(localConfig.value).slice(0, 15)}"?` : "Contem texto?",
+        has_mention: "Tem mencao?", is_reply: "E resposta?", is_quoted: "Tem citacao?",
+        is_flood: "E flood?", msg_length_gt: `Msg > ${localConfig.min_length || "?"}?`,
+        member_count_gt: `Membros > ${localConfig.min_members || "?"}?`,
+        time_between: `${localConfig.time_start || "?"}-${localConfig.time_end || "?"}?`,
+        has_prefix: "Tem prefixo?", sender_has_plan: "Tem plano?", bot_is_on: "Bot ligado?",
+      };
+      autoLabel = condLabels[cond] || cond;
     } else if (node.type === "buttons") {
       const tipoBt = String(localConfig.tipoBotao || "normal");
       if (tipoBt === "ligar") autoLabel = String(localConfig.textoLigar || "Ligar");
@@ -1198,8 +1288,13 @@ export default function BuilderPage() {
       const wx = (e.clientX - rect.left - transform.x) / transform.scale;
       const wy = (e.clientY - rect.top - transform.y) / transform.scale;
       const targetId = findNodeAtWorldPoint(wx, wy, connectingEdge.sourceId);
-      if (targetId && !edges.some((ed) => ed.source === connectingEdge.sourceId && ed.target === targetId)) {
-        setEdges((prev) => [...prev, { id: `e${Date.now()}`, source: connectingEdge.sourceId, target: targetId }]);
+      if (targetId) {
+        const alreadyExists = edges.some((ed) => ed.source === connectingEdge.sourceId && ed.target === targetId && ed.sourceHandle === connectingEdge.sourceHandle);
+        if (!alreadyExists) {
+          const newEdge: FlowEdge = { id: `e${Date.now()}`, source: connectingEdge.sourceId, target: targetId };
+          if (connectingEdge.sourceHandle) newEdge.sourceHandle = connectingEdge.sourceHandle;
+          setEdges((prev) => [...prev, newEdge]);
+        }
       }
       setConnectingEdge(null); setHoverTargetId(null);
     }
@@ -1233,13 +1328,13 @@ export default function BuilderPage() {
     return null;
   };
 
-  const handleStartConnect = (sourceId: string, e: React.PointerEvent) => {
+  const handleStartConnect = (sourceId: string, e: React.PointerEvent, handle?: "true" | "false") => {
     e.stopPropagation(); e.preventDefault();
     const canvas = canvasRef.current;
     if (!canvas) return;
     canvas.setPointerCapture(e.pointerId);
     const world = screenToWorld(e.clientX, e.clientY);
-    setConnectingEdge({ sourceId, mouseX: world.x, mouseY: world.y });
+    setConnectingEdge({ sourceId, sourceHandle: handle, mouseX: world.x, mouseY: world.y });
   };
 
   // ── Zoom ──
@@ -1309,10 +1404,16 @@ export default function BuilderPage() {
     }
   };
 
-  const getNodePortPos = (node: FlowNode, side: "left" | "right") => ({
-    x: side === "right" ? node.position.x + NODE_W : node.position.x,
-    y: node.position.y + PORT_Y,
-  });
+  const getNodePortPos = (node: FlowNode, side: "left" | "right", handle?: "true" | "false") => {
+    if (side === "right" && node.type === "condition") {
+      const portY = handle === "false" ? CONDITION_PORT_NO_Y : CONDITION_PORT_YES_Y;
+      return { x: node.position.x + NODE_W, y: node.position.y + portY };
+    }
+    return {
+      x: side === "right" ? node.position.x + NODE_W : node.position.x,
+      y: node.position.y + PORT_Y,
+    };
+  };
 
   const buildCurve = (x1: number, y1: number, x2: number, y2: number) => {
     const cx = (x1 + x2) / 2;
@@ -1329,26 +1430,35 @@ export default function BuilderPage() {
           const src = nodes.find((n) => n.id === edge.source);
           const tgt = nodes.find((n) => n.id === edge.target);
           if (!src || !tgt) return null;
-          const p1 = getNodePortPos(src, "right");
+          const p1 = getNodePortPos(src, "right", edge.sourceHandle);
           const p2 = getNodePortPos(tgt, "left");
+          const edgeColor = edge.sourceHandle === "true" ? "rgba(34,197,94,0.6)" : edge.sourceHandle === "false" ? "rgba(239,68,68,0.6)" : "rgba(139,92,246,0.6)";
+          const markerId = edge.sourceHandle === "true" ? "arrow-green" : edge.sourceHandle === "false" ? "arrow-red" : "arrow";
           return (
             <g key={edge.id}>
-              <path d={buildCurve(p1.x, p1.y, p2.x, p2.y)} fill="none" stroke="rgba(139,92,246,0.6)" strokeWidth="2.5"
-                markerEnd="url(#arrow)" style={{ pointerEvents: "none" }} />
+              <path d={buildCurve(p1.x, p1.y, p2.x, p2.y)} fill="none" stroke={edgeColor} strokeWidth="2.5"
+                markerEnd={`url(#${markerId})`} style={{ pointerEvents: "none" }} />
             </g>
           );
         })}
         {connectingEdge && (() => {
           const src = nodes.find((n) => n.id === connectingEdge.sourceId);
           if (!src) return null;
-          const p1 = getNodePortPos(src, "right");
+          const p1 = getNodePortPos(src, "right", connectingEdge.sourceHandle);
+          const dashColor = connectingEdge.sourceHandle === "true" ? "rgba(34,197,94,0.9)" : connectingEdge.sourceHandle === "false" ? "rgba(239,68,68,0.9)" : "rgba(139,92,246,0.9)";
           return <path d={buildCurve(p1.x, p1.y, connectingEdge.mouseX, connectingEdge.mouseY)}
-            fill="none" stroke="rgba(139,92,246,0.9)" strokeWidth="2.5" strokeDasharray="7 3"
+            fill="none" stroke={dashColor} strokeWidth="2.5" strokeDasharray="7 3"
             style={{ pointerEvents: "none" }} />;
         })()}
         <defs>
           <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
             <path d="M0,0 L0,6 L8,3 z" fill="rgba(139,92,246,0.7)" />
+          </marker>
+          <marker id="arrow-green" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="rgba(34,197,94,0.7)" />
+          </marker>
+          <marker id="arrow-red" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="rgba(239,68,68,0.7)" />
           </marker>
         </defs>
       </svg>
@@ -1361,6 +1471,8 @@ export default function BuilderPage() {
           isConnecting={!!connectingEdge}
           hasInputConnection={edges.some((e) => e.target === node.id)}
           hasOutputConnection={edges.some((e) => e.source === node.id)}
+          hasYesConnection={node.type === "condition" ? edges.some((e) => e.source === node.id && e.sourceHandle === "true") : undefined}
+          hasNoConnection={node.type === "condition" ? edges.some((e) => e.source === node.id && e.sourceHandle === "false") : undefined}
           onSelect={() => setSelectedNode(node.id)}
           onDelete={() => handleDeleteNode(node.id)}
           onEdit={() => { setEditingNodeId(editingNodeId === node.id ? null : node.id); setShowSettings(false); }}
@@ -1368,8 +1480,10 @@ export default function BuilderPage() {
             const edgeToRemove = edges.find((e) => e.target === node.id);
             if (edgeToRemove) setEdges((prev) => prev.filter((e) => e.id !== edgeToRemove.id));
           }}
-          onDisconnectOutput={() => {
-            const edgeToRemove = edges.find((e) => e.source === node.id);
+          onDisconnectOutput={(handle) => {
+            const edgeToRemove = handle
+              ? edges.find((e) => e.source === node.id && e.sourceHandle === handle)
+              : edges.find((e) => e.source === node.id);
             if (edgeToRemove) setEdges((prev) => prev.filter((e) => e.id !== edgeToRemove.id));
           }}
           onMove={handleMoveNode}

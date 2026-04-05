@@ -1,0 +1,407 @@
+🔷 BLOCO CONDIÇÃO — LÓGICA PURA
+O que faz
+Verifica se uma condição é verdadeira ou falsa, e direciona o fluxo para caminhos diferentes.
+
+Diferencial importante
+Diferente dos outros blocos, a CONDIÇÃO tem DUAS saídas:
+
+Saída SIM → quando a condição é verdadeira
+
+Saída NÃO → quando a condição é falsa
+
+Entrada (o que recebe)
+conteudo — texto da mensagem
+
+sender — ID do usuário que enviou
+
+from — ID do grupo ou privado
+
+ehGrupo — se é grupo (true/false)
+
+ehAdmin — se usuário é admin do grupo
+
+moedas — saldo do usuário
+
+planoAtivo — se tem plano ativo (true/false)
+
+limiteGrupos — quantos grupos o plano permite
+
+gruposAtivos — quantos grupos o usuário já tem
+
+adminRecebido — se bot é admin no grupo
+
+grupoAtivo — se o grupo está ativado
+
+pagamentoConfirmado — se PIX foi pago
+
+respostaAnterior — texto da última resposta (para validação)
+
+Tipos de CONDIÇÃO
+1️⃣ CONDIÇÃO DE GRUPO/PRIVADO
+Configuração	O que verifica	Saída SIM	Saída NÃO
+tipo = "ehGrupo"	Mensagem veio de um grupo?	É grupo	É privado
+tipo = "ehPrivado"	Mensagem veio do privado?	É privado	É grupo
+Exemplo visual:
+
+text
+[CONDIÇÃO: é grupo?]
+      │
+      ├──► SIM (é grupo) ──► [RESPOSTA: "Comando não funciona em grupos"]
+      │
+      └──► NÃO (é privado) ──► [AÇÃO: processar comando]
+2️⃣ CONDIÇÃO DE ADMIN
+Configuração	O que verifica	Saída SIM	Saída NÃO
+tipo = "ehAdmin"	Usuário é admin do grupo?	É admin	Não é admin
+tipo = "botAdmin"	Bot é admin no grupo?	Bot é admin	Bot não é admin
+Exemplo visual:
+
+text
+[CONDIÇÃO: bot é admin?]
+      │
+      ├──► SIM ──► [AÇÃO: ativar bot no grupo]
+      │
+      └──► NÃO ──► [RESPOSTA: "Me promova a admin primeiro"]
+3️⃣ CONDIÇÃO DE PLANO
+Configuração	O que verifica	Saída SIM	Saída NÃO
+tipo = "temPlanoAtivo"	Usuário tem plano ativo?	Tem plano	Não tem plano
+tipo = "planoExpiraEm"	Plano expira em menos de X dias?	Expira em breve	Não expira em breve
+tipo = "planoNivel"	Plano é pelo menos X? (basico/pro/premium)	Nível ok	Nível insuficiente
+Configurações adicionais:
+
+diasRestantes (número) → para planoExpiraEm
+
+nivelMinimo (texto) → para planoNivel (opções: basico, pro, premium)
+
+Exemplo visual:
+
+text
+[CONDIÇÃO: tem plano ativo?]
+      │
+      ├──► SIM ──► [AÇÃO: executar comando]
+      │
+      └──► NÃO ──► [RESPOSTA: "Compre um plano primeiro"]
+4️⃣ CONDIÇÃO DE MOEDAS
+Configuração	O que verifica	Saída SIM	Saída NÃO
+tipo = "moedasSuficientes"	Saldo >= valor necessário?	Saldo ok	Saldo insuficiente
+tipo = "moedasMaiorQue"	Saldo > valor?	É maior	É menor ou igual
+tipo = "moedasMenorQue"	Saldo < valor?	É menor	É maior ou igual
+Configurações adicionais:
+
+valorNecessario (número) → para comparação
+
+Exemplo visual:
+
+text
+[CONDIÇÃO: moedas >= 10?]
+      │
+      ├──► SIM ──► [AÇÃO: debitar 10 moedas] ──► [RESPOSTA: "Compra realizada"]
+      │
+      └──► NÃO ──► [RESPOSTA: "Moedas insuficientes"]
+5️⃣ CONDIÇÃO DE GRUPO
+Configuração	O que verifica	Saída SIM	Saída NÃO
+tipo = "limiteGruposAtingido"	Grupos ativos >= limite do plano?	Limite atingido	Ainda tem vaga
+tipo = "grupoJaAdicionado"	Grupo já está cadastrado?	Já está cadastrado	Não está cadastrado
+tipo = "grupoEstaAtivo"	Grupo está com status "ativo"?	Está ativo	Não está ativo
+tipo = "adminJaRecebido"	Bot já recebeu admin no grupo?	Já recebeu	Ainda não
+Exemplo visual:
+
+text
+[CONDIÇÃO: limite de grupos atingido?]
+      │
+      ├──► SIM ──► [RESPOSTA: "Faça upgrade para adicionar mais grupos"]
+      │
+      └──► NÃO ──► [AÇÃO: adicionar novo grupo]
+6️⃣ CONDIÇÃO DE TEXTO/COMANDO
+Configuração	O que verifica	Saída SIM	Saída NÃO
+tipo = "comandoIgual"	Comando recebido é igual a X?	É igual	Não é igual
+tipo = "textoContem"	Mensagem contém determinada palavra?	Contém	Não contém
+tipo = "textoComecaCom"	Mensagem começa com X?	Começa	Não começa
+tipo = "textoTerminaCom"	Mensagem termina com X?	Termina	Não termina
+Configurações adicionais:
+
+valorComparacao (texto) → o texto para comparar
+
+caseSensitive (boolean) → diferenciar maiúsculas/minúsculas
+
+Exemplo visual:
+
+text
+[CONDIÇÃO: comando igual a ".start"?]
+      │
+      ├──► SIM ──► [RESPOSTA: "Bot iniciado"]
+      │
+      └──► NÃO ──► [CONDIÇÃO: comando igual a ".help"?] ──► ...
+7️⃣ CONDIÇÃO DE PAGAMENTO
+Configuração	O que verifica	Saída SIM	Saída NÃO
+tipo = "pagamentoConfirmado"	PIX com txid foi pago?	Já pagou	Ainda não pagou
+tipo = "pagamentoExpirado"	PIX já expirou (1 hora)?	Expirado	Ainda válido
+Configurações adicionais:
+
+txid (texto) → ID da transação PIX
+
+Exemplo visual:
+
+text
+[CONDIÇÃO: pagamento confirmado?]
+      │
+      ├──► SIM ──► [AÇÃO: adicionar moedas] ──► [RESPOSTA: "Pagamento recebido!"]
+      │
+      └──► NÃO ──► [RESPOSTA: "Aguardando pagamento..."] ──► (volta para verificar)
+8️⃣ CONDIÇÃO DE VARIÁVEL PERSONALIZADA
+Configuração	O que verifica	Saída SIM	Saída NÃO
+tipo = "variavelIgual"	Variável armazenada é igual a X?	É igual	Não é igual
+tipo = "variavelExiste"	Variável foi definida?	Existe	Não existe
+Configurações adicionais:
+
+nomeVariavel (texto) → nome da variável no sistema
+
+valorEsperado (texto/número) → valor para comparar
+
+Exemplo visual:
+
+text
+[CONDIÇÃO: etapa_atual == "aguardando_link"?]
+      │
+      ├──► SIM ──► [AÇÃO: processar link do grupo]
+      │
+      └──► NÃO ──► [RESPOSTA: "Comando não reconhecido"]
+9️⃣ CONDIÇÃO DE TEMPO
+Configuração	O que verifica	Saída SIM	Saída NÃO
+tipo = "horarioFuncionamento"	Horário atual está dentro do expediente?	Dentro do horário	Fora do horário
+tipo = "diaSemana"	Hoje é o dia X?	É o dia	Não é o dia
+Configurações adicionais:
+
+horaInicio (string "HH:MM") → início do expediente
+
+horaFim (string "HH:MM") → fim do expediente
+
+diasPermitidos (array) → dias da semana que funciona
+
+Exemplo visual:
+
+text
+[CONDIÇÃO: dentro do horário comercial?]
+      │
+      ├──► SIM ──► [RESPOSTA: "Atendimento normal"]
+      │
+      └──► NÃO ──► [RESPOSTA: "Fora do horário, responderei amanhã"]
+🔟 CONDIÇÃO DE USUÁRIO
+Configuração	O que verifica	Saída SIM	Saída NÃO
+tipo = "usuarioExiste"	Usuário já está cadastrado?	Existe	Não existe
+tipo = "usuarioBloqueado"	Usuário está bloqueado?	Bloqueado	Não bloqueado
+tipo = "donoBot"	Usuário é o dono do bot?	É o dono	Não é o dono
+Configurações adicionais:
+
+numeroDono (texto) → número do dono (opcional, se não usar variável global)
+
+Exemplo visual:
+
+text
+[CONDIÇÃO: é o dono do bot?]
+      │
+      ├──► SIM ──► [COMANDO: .desligar] ──► [AÇÃO: desligar bot]
+      │
+      └──► NÃO ──► [RESPOSTA: "Apenas o dono pode usar este comando"]
+Aparência visual do bloco
+Modo normal (sem ramificações visíveis)
+text
+┌─────────────────────────────┐
+│  🔍 CONDIÇÃO                 │
+├─────────────────────────────┤
+│  é grupo?                   │
+│                             │
+└─────────────────────────────┘
+         ▲ (entrada)
+         │
+    ┌────┴────┐
+    │         │
+    ▼         ▼
+  (SIM)     (NÃO)
+Com ramificações mostradas
+text
+                    ┌─────────────────────────────┐
+                    │  🔍 CONDIÇÃO                 │
+                    ├─────────────────────────────┤
+                    │  moedas >= 10?              │
+                    │                             │
+                    └──────────────┬──────────────┘
+                           (entrada)
+                                   │
+                    ┌──────────────┼──────────────┐
+                    │              │              │
+                    ▼ (SIM)        │              ▼ (NÃO)
+        ┌───────────────────┐      │    ┌───────────────────┐
+        │   AÇÃO            │      │    │   RESPOSTA        │
+        │   debitar 10      │      │    │   "Saldo insuf."  │
+        └───────────────────┘      │    └───────────────────┘
+                    │              │                   
+                    ▼              │                   
+        ┌───────────────────┐      │                   
+        │   RESPOSTA        │      │                   
+        │   "Compra ok"     │      │                   
+        └───────────────────┘      │                   
+                                   │
+                    ┌──────────────┴──────────────┐
+                    │                             │
+                    ▼                             ▼
+              (fim do fluxo)              (fim do fluxo)
+Exemplo visual no construtor (como o usuário vê)
+text
+┌─────────────────┐
+│   COMANDO       │
+│   .comprar      │
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│   CONDIÇÃO      │
+│   moedas >= 10? │
+└────────┬────────┘
+         │
+    ┌────┴────┐
+    │         │
+    ▼ (SIM)   ▼ (NÃO)
+┌─────────┐ ┌─────────────┐
+│  AÇÃO   │ │  RESPOSTA   │
+│ debitar │ │ "Saldo insuf"│
+│ 10      │ └─────────────┘
+└────┬────┘
+     │
+     ▼
+┌─────────┐
+│ RESPOSTA│
+│ "Compra │
+│  ok"    │
+└─────────┘
+JSON de configuração
+Exemplo 1: CONDIÇÃO de moedas
+json
+{
+  "id": "bloco_condicao_1",
+  "tipo": "condicao",
+  "config": {
+    "tipo": "moedasSuficientes",
+    "valorNecessario": 10
+  },
+  "conexoes": {
+    "entrada": "bloco_comando_1",
+    "saidaSim": "bloco_acao_debitar",
+    "saidaNao": "bloco_resposta_erro"
+  }
+}
+Exemplo 2: CONDIÇÃO de grupo
+json
+{
+  "id": "bloco_condicao_2",
+  "tipo": "condicao",
+  "config": {
+    "tipo": "ehGrupo"
+  },
+  "conexoes": {
+    "entrada": "bloco_comando_1",
+    "saidaSim": "bloco_resposta_nao_funciona_em_grupo",
+    "saidaNao": "bloco_acao_processar"
+  }
+}
+Exemplo 3: CONDIÇÃO de plano
+json
+{
+  "id": "bloco_condicao_3",
+  "tipo": "condicao",
+  "config": {
+    "tipo": "temPlanoAtivo"
+  },
+  "conexoes": {
+    "entrada": "bloco_comando_menu",
+    "saidaSim": "bloco_resposta_mostrar_menu",
+    "saidaNao": "bloco_resposta_sem_plano"
+  }
+}
+Exemplo 4: CONDIÇÃO de admin
+json
+{
+  "id": "bloco_condicao_4",
+  "tipo": "condicao",
+  "config": {
+    "tipo": "botAdmin"
+  },
+  "conexoes": {
+    "entrada": "bloco_comando_ativar",
+    "saidaSim": "bloco_acao_ativar_grupo",
+    "saidaNao": "bloco_resposta_aguardando_admin"
+  }
+}
+Exemplo 5: CONDIÇÃO de texto
+json
+{
+  "id": "bloco_condicao_5",
+  "tipo": "condicao",
+  "config": {
+    "tipo": "textoContem",
+    "valorComparacao": "obrigado",
+    "caseSensitive": false
+  },
+  "conexoes": {
+    "entrada": "bloco_comando_qualquer",
+    "saidaSim": "bloco_resposta_de_nada",
+    "saidaNao": "bloco_resposta_normal"
+  }
+}
+Fluxo de execução (regras)
+text
+1. RECEBE entrada de um bloco anterior
+
+2. LÊ a configuração do tipo de condição
+
+3. EXECUTA a verificação:
+   │
+   ├──► SE tipo = "ehGrupo"
+   │       resultado = (from termina com "@g.us")
+   │
+   ├──► SE tipo = "moedasSuficientes"
+   │       resultado = (moedas >= valorNecessario)
+   │
+   ├──► SE tipo = "temPlanoAtivo"
+   │       resultado = (planoAtivo === true)
+   │
+   ├──► SE tipo = "botAdmin"
+   │       resultado = (adminRecebido === true)
+   │
+   └──► (e assim por diante para cada tipo)
+
+4. SE resultado for TRUE:
+   │
+   ├──► SEGUE pela conexão "saidaSim"
+   │
+   └──► EXECUTA o próximo bloco conectado
+
+5. SE resultado for FALSE:
+   │
+   ├──► SEGUE pela conexão "saidaNao"
+   │
+   └──► EXECUTA o próximo bloco conectado
+Combinação com outros blocos
+Exemplo de fluxo completo:
+text
+[COMANDO: .vender]
+      │
+      ▼
+[CONDIÇÃO: tem plano ativo?]
+      │
+      ├──► SIM ──► [CONDIÇÃO: moedas >= 50?]
+      │                 │
+      │                 ├──► SIM ──► [AÇÃO: debitar 50]
+      │                 │               │
+      │                 │               ▼
+      │                 │         [RESPOSTA: "Venda registrada!"]
+      │                 │
+      │                 └──► NÃO ──► [RESPOSTA: "Moedas insuficientes"]
+      │
+      └──► NÃO ──► [RESPOSTA: "Compre um plano primeiro"]
+Resumo das saídas
+Bloco	Entradas	Saídas
+COMANDO	1 (de qualquer bloco)	1 (para o próximo bloco)
+AÇÃO	1 (de qualquer bloco)	1 (para o próximo bloco)
+RESPOSTA	1 (de qualquer bloco)	1 (para o próximo bloco, ou nenhum)
+CONDIÇÃO	1 (de qualquer bloco)	2 (SIM e NÃO)
+BOTÕES	1 (da RESPOSTA)	várias (para COMANDOS ou nenhum)
