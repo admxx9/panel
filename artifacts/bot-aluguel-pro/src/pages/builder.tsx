@@ -304,7 +304,7 @@ const CONFIG_FIELDS: Record<NodeType, { key: string; label: string; type: "text"
   ],
 };
 
-const BLOCK_TYPES: NodeType[] = ["command", "response", "condition", "buttons"];
+const BLOCK_TYPES: NodeType[] = ["command", "action", "condition", "response", "buttons"];
 
 const CONDITION_NODE_H = 110;
 const CONDITION_PORT_YES_Y = 36;
