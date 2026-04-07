@@ -1416,14 +1416,12 @@ export default function BuilderPage() {
         };
       });
     };
-    const preventNative = (e: TouchEvent) => { if (e.touches.length >= 1) e.preventDefault(); };
+    const preventNativeMove = (e: TouchEvent) => { e.preventDefault(); };
     canvas.addEventListener("wheel", onWheel, { passive: false });
-    canvas.addEventListener("touchmove", preventNative, { passive: false });
-    canvas.addEventListener("touchstart", preventNative, { passive: false });
+    canvas.addEventListener("touchmove", preventNativeMove, { passive: false });
     return () => {
       canvas.removeEventListener("wheel", onWheel);
-      canvas.removeEventListener("touchmove", preventNative);
-      canvas.removeEventListener("touchstart", preventNative);
+      canvas.removeEventListener("touchmove", preventNativeMove);
     };
   }, []);
 
