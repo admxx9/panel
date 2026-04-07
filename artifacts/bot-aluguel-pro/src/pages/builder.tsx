@@ -1214,13 +1214,23 @@ export default function BuilderPage() {
     };
   }, []);
 
+  const panRaf = useRef(0);
+  const pinchRaf = useRef(0);
+
+  const applyDomTransform = useCallback(() => {
+    const el = canvasInnerRef.current;
+    if (el) {
+      const t = transformRef.current;
+      el.style.transform = `translate(${t.x}px, ${t.y}px) scale(${t.scale})`;
+    }
+  }, []);
+
   // ── Pan handlers ──
   const handleCanvasPointerDown = (e: React.PointerEvent) => {
     activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 
     if (activePointers.current.size === 2) {
-      // Two fingers — start pinch
       isPanning.current = false;
       const pts = [...activePointers.current.values()];
       lastPinchDist.current = Math.hypot(pts[1].x - pts[0].x, pts[1].y - pts[0].y);
@@ -1236,12 +1246,11 @@ export default function BuilderPage() {
     isPanning.current = true;
     didPan.current = false;
     panStart.current = { x: e.clientX, y: e.clientY };
-    panOrigin.current = { x: transform.x, y: transform.y };
+    panOrigin.current = { x: transformRef.current.x, y: transformRef.current.y };
   };
 
   // ── Canvas pointer events (pan + connecting edge + pinch) ──
   const handleCanvasPointerMove = (e: React.PointerEvent) => {
-    // Update pointer position
     activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
     // ── Pinch-to-zoom (2 fingers) ──
@@ -1259,29 +1268,32 @@ export default function BuilderPage() {
           y: (pts[0].y + pts[1].y) / 2 - rect.top,
         };
         didPan.current = true;
-        setTransform((prev) => {
-          const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev.scale * ratio));
-          const actualRatio = newScale / prev.scale;
-          return {
-            scale: newScale,
-            x: mid.x - actualRatio * (mid.x - prev.x),
-            y: mid.y - actualRatio * (mid.y - prev.y),
-          };
-        });
+        const prev = transformRef.current;
+        const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, prev.scale * ratio));
+        const actualRatio = newScale / prev.scale;
+        transformRef.current = {
+          scale: newScale,
+          x: mid.x - actualRatio * (mid.x - prev.x),
+          y: mid.y - actualRatio * (mid.y - prev.y),
+        };
+        if (!pinchRaf.current) {
+          pinchRaf.current = requestAnimationFrame(() => {
+            pinchRaf.current = 0;
+            applyDomTransform();
+          });
+        }
       }
       return;
     }
 
     if (connectingEdge) {
-      const world = screenToWorld(e.clientX, e.clientY);
-      setConnectingEdge((prev) => prev ? { ...prev, mouseX: world.x, mouseY: world.y } : null);
+      const t = transformRef.current;
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
-      const sx = e.clientX - rect.left;
-      const sy = e.clientY - rect.top;
-      const wx = (sx - transform.x) / transform.scale;
-      const wy = (sy - transform.y) / transform.scale;
+      const wx = (e.clientX - rect.left - t.x) / t.scale;
+      const wy = (e.clientY - rect.top - t.y) / t.scale;
+      setConnectingEdge((prev) => prev ? { ...prev, mouseX: wx, mouseY: wy } : null);
       const target = findNodeAtWorldPoint(wx, wy, connectingEdge.sourceId);
       setHoverTargetId(target);
       return;
@@ -1290,21 +1302,23 @@ export default function BuilderPage() {
     const dx = e.clientX - panStart.current.x;
     const dy = e.clientY - panStart.current.y;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didPan.current = true;
-    const newX = panOrigin.current.x + dx;
-    const newY = panOrigin.current.y + dy;
-    transformRef.current = { ...transformRef.current, x: newX, y: newY };
-    if (canvasInnerRef.current) {
-      canvasInnerRef.current.style.transform = `translate(${newX}px, ${newY}px) scale(${transformRef.current.scale})`;
+    transformRef.current = { ...transformRef.current, x: panOrigin.current.x + dx, y: panOrigin.current.y + dy };
+    if (!panRaf.current) {
+      panRaf.current = requestAnimationFrame(() => {
+        panRaf.current = 0;
+        applyDomTransform();
+      });
     }
   };
 
   const handleCanvasPointerUp = (e: React.PointerEvent) => {
     if (connectingEdge) {
+      const t = transformRef.current;
       const canvas = canvasRef.current;
       if (!canvas) return;
       const rect = canvas.getBoundingClientRect();
-      const wx = (e.clientX - rect.left - transform.x) / transform.scale;
-      const wy = (e.clientY - rect.top - transform.y) / transform.scale;
+      const wx = (e.clientX - rect.left - t.x) / t.scale;
+      const wy = (e.clientY - rect.top - t.y) / t.scale;
       const targetId = findNodeAtWorldPoint(wx, wy, connectingEdge.sourceId);
       if (targetId) {
         const alreadyExists = edges.some((ed) => ed.source === connectingEdge.sourceId && ed.target === targetId && ed.sourceHandle === connectingEdge.sourceHandle);
@@ -1318,13 +1332,11 @@ export default function BuilderPage() {
     }
     isPanning.current = false;
     setTransform({ ...transformRef.current });
-    // Clean up pointer tracking
     activePointers.current.delete(e.pointerId);
     if (activePointers.current.size < 2) {
       lastPinchDist.current = null;
       lastPinchMid.current = null;
     }
-    // If one finger remains, restart pan from current position
     if (activePointers.current.size === 1) {
       const remaining = [...activePointers.current.values()][0];
       panStart.current = { x: remaining.x, y: remaining.y };
@@ -1384,7 +1396,7 @@ export default function BuilderPage() {
     });
   };
 
-  // ── Wheel zoom ──
+  // ── Wheel zoom + prevent native touch gestures on canvas ──
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -1396,7 +1408,6 @@ export default function BuilderPage() {
         const rect = canvas.getBoundingClientRect();
         const mx = e.clientX - rect.left;
         const my = e.clientY - rect.top;
-        // Zoom toward cursor
         const ratio = newScale / prev.scale;
         return {
           scale: newScale,
@@ -1405,8 +1416,15 @@ export default function BuilderPage() {
         };
       });
     };
+    const preventNative = (e: TouchEvent) => { if (e.touches.length >= 1) e.preventDefault(); };
     canvas.addEventListener("wheel", onWheel, { passive: false });
-    return () => canvas.removeEventListener("wheel", onWheel);
+    canvas.addEventListener("touchmove", preventNative, { passive: false });
+    canvas.addEventListener("touchstart", preventNative, { passive: false });
+    return () => {
+      canvas.removeEventListener("wheel", onWheel);
+      canvas.removeEventListener("touchmove", preventNative);
+      canvas.removeEventListener("touchstart", preventNative);
+    };
   }, []);
 
   const handleSave = async () => {
@@ -1442,7 +1460,7 @@ export default function BuilderPage() {
 
   // ── Canvas content (with transform) ──
   const canvasContent = (
-    <div style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`, transformOrigin: "0 0", position: "absolute", inset: 0, willChange: "transform" }}>
+    <div ref={canvasInnerRef} style={{ transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale})`, transformOrigin: "0 0", position: "absolute", inset: 0, willChange: "transform" }}>
       <svg style={{ position: "absolute", inset: 0, width: "9999px", height: "9999px", overflow: "visible", pointerEvents: "none" }}>
         {edges.map((edge) => {
           const src = nodes.find((n) => n.id === edge.source);
