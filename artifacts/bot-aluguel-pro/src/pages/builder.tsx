@@ -437,7 +437,7 @@ function NodeCard({
 }) {
   const cfg = nodeConfig[node.type];
   const Icon = cfg.icon;
-  const dragData = useRef<{ startX: number; startY: number; nodeX: number; nodeY: number; dragging: boolean } | null>(null);
+  const dragData = useRef<{ startX: number; startY: number; nodeX: number; nodeY: number; dragging: boolean; rafId: number } | null>(null);
   const cardRef = useRef<HTMLDivElement>(null);
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clickCount = useRef(0);
@@ -445,17 +445,23 @@ function NodeCard({
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    dragData.current = { startX: e.clientX, startY: e.clientY, nodeX: node.position.x, nodeY: node.position.y, dragging: false };
+    dragData.current = { startX: e.clientX, startY: e.clientY, nodeX: node.position.x, nodeY: node.position.y, dragging: false, rafId: 0 };
     blockDragRef.current = true;
     cardRef.current?.setPointerCapture(e.pointerId);
     onSelect();
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.stopPropagation();
     const d = dragData.current;
     if (!d) return;
     if (touchCount.current >= 2) {
-      if (d.dragging) cardRef.current?.releasePointerCapture(e.pointerId);
+      if (d.rafId) cancelAnimationFrame(d.rafId);
+      cardRef.current?.releasePointerCapture(e.pointerId);
+      if (d.dragging) {
+        cardRef.current!.style.transform = "";
+        onMove(node.id, d.nodeX, d.nodeY);
+      }
       dragData.current = null;
       blockDragRef.current = false;
       return;
@@ -466,13 +472,36 @@ function NodeCard({
       if (Math.hypot(dx, dy) < 6) return;
       d.dragging = true;
     }
-    e.stopPropagation();
     const scale = transformRef.current.scale;
-    onMove(node.id, Math.max(0, d.nodeX + dx / scale), Math.max(0, d.nodeY + dy / scale));
+    const newX = Math.max(0, d.nodeX + dx / scale);
+    const newY = Math.max(0, d.nodeY + dy / scale);
+    const offsetX = newX - node.position.x;
+    const offsetY = newY - node.position.y;
+    if (!d.rafId) {
+      d.rafId = requestAnimationFrame(() => {
+        d.rafId = 0;
+        if (cardRef.current) {
+          cardRef.current.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+        }
+      });
+    }
   };
 
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (dragData.current?.dragging) e.stopPropagation();
+    e.stopPropagation();
+    const d = dragData.current;
+    if (d) {
+      if (d.rafId) cancelAnimationFrame(d.rafId);
+      if (d.dragging) {
+        const scale = transformRef.current.scale;
+        const dx = e.clientX - d.startX;
+        const dy = e.clientY - d.startY;
+        const finalX = Math.max(0, d.nodeX + dx / scale);
+        const finalY = Math.max(0, d.nodeY + dy / scale);
+        if (cardRef.current) cardRef.current.style.transform = "";
+        onMove(node.id, finalX, finalY);
+      }
+    }
     dragData.current = null;
     blockDragRef.current = false;
   };
@@ -581,11 +610,12 @@ function NodeCard({
   return (
     <div
       ref={cardRef}
+      data-node-card
       className={`absolute rounded-xl border-2 p-3 select-none transition-shadow
         ${cfg.color} ${cfg.border}
         ${selected ? "ring-2 ring-primary ring-offset-1 ring-offset-background shadow-xl" : "shadow-md"}
         ${isTarget ? "ring-2 ring-green-400 ring-offset-1 ring-offset-background" : ""}`}
-      style={{ left: node.position.x, top: node.position.y, width: NODE_W, minHeight: node.type === "condition" ? CONDITION_NODE_H : NODE_H, cursor: "grab", touchAction: "none", willChange: "left, top" }}
+      style={{ left: node.position.x, top: node.position.y, width: NODE_W, minHeight: node.type === "condition" ? CONDITION_NODE_H : NODE_H, cursor: "grab", touchAction: "none", willChange: "transform" }}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -1198,6 +1228,9 @@ export default function BuilderPage() {
 
   // ── Pan handlers ──
   const handleCanvasPointerDown = (e: React.PointerEvent) => {
+    if (blockDragRef.current) return;
+    const target = e.target as HTMLElement;
+    if (target.closest("[data-node-card]")) return;
     activePointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
 
@@ -1314,13 +1347,13 @@ export default function BuilderPage() {
       panOrigin.current = { x: transformRef.current.x, y: transformRef.current.y };
       isPanning.current = true;
     }
-    if (!didPan.current && !connectingEdge) {
+    if (!didPan.current && !connectingEdge && !blockDragRef.current) {
       setSelectedNode(null);
     }
   };
 
   const handleCanvasClick = () => {
-    if (didPan.current) return;
+    if (didPan.current || blockDragRef.current) return;
     setSelectedNode(null);
   };
 

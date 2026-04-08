@@ -1,0 +1,78 @@
+📋 Relatório – Ajustes finais de interação (Mobile Canvas)
+❌ Problema 1:
+
+Ao arrastar um bloco, a câmera (pan) também se move
+
+🎯 Causa:
+
+Os eventos de drag do bloco e pan do canvas estão acontecendo ao mesmo tempo (conflito de handlers).
+
+✅ Comportamento correto:
+Quando o usuário toca em um bloco e começa a arrastar:
+→ APENAS o bloco deve se mover
+→ O canvas NÃO pode fazer pan
+🛠️ Correção (lógica):
+Ao iniciar interação no bloco:
+Definir um estado tipo: isDraggingBlock = true
+Enquanto isDraggingBlock === true:
+❌ Bloquear completamente o pan do canvas
+Quando soltar:
+isDraggingBlock = false
+💡 Regra importante:
+
+Drag de bloco tem prioridade total sobre pan
+
+❌ Problema 2:
+
+Travamento ao navegar (pan) no celular
+
+🎯 Possíveis causas:
+Re-render excessivo
+Atualização de estado a cada pixel
+Falta de otimização com requestAnimationFrame
+Eventos de touch disparando rápido demais
+Uso de setState direto no movimento
+✅ Comportamento esperado:
+Pan deve ser suave (60fps)
+Sem travar, sem delay
+🛠️ Correções recomendadas:
+1. Usar requestAnimationFrame
+
+Em vez de atualizar a posição direto no evento:
+
+onTouchMove → salvar posição
+requestAnimationFrame → atualizar canvas
+2. Evitar re-render pesado
+❌ NÃO usar state global (React state) pra posição do canvas
+✅ Usar:
+useRef (React)
+ou variável direta
+3. Throttle / limitar atualizações
+Não atualizar a cada evento bruto de touch
+Aplicar controle de frequência
+4. Usar transform em vez de layout
+✅ transform: translate(...) scale(...)
+❌ evitar mexer em top, left, width, etc.
+5. GPU acceleration (IMPORTANTE)
+
+Adicionar no CSS:
+
+will-change: transform;
+transform: translateZ(0);
+6. Desativar scroll nativo do navegador
+
+No canvas:
+
+touch-action: none;
+🧠 Resumo técnico direto:
+Drag de bloco:
+→ bloquear pan (isDraggingBlock)
+Performance:
+→ usar requestAnimationFrame
+→ evitar re-render
+→ usar transform
+→ aplicar touch-action: none
+🎯 Resultado esperado depois disso:
+Arrastar bloco = só bloco move
+Navegar = fluido, sem travar
+Experiência igual Figma / Miro
