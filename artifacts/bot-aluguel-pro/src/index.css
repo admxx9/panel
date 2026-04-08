@@ -202,6 +202,10 @@
     pointer-events: none;
   }
 
+  .safe-area-bottom {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
   .glow-primary {
     box-shadow: 0 0 20px hsl(262 100% 65% / 0.4), 0 0 40px hsl(262 100% 65% / 0.2);
   }

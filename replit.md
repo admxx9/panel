@@ -34,9 +34,10 @@
 
 ## Features Implementadas
 
-- Landing page animada (hero, features, pricing) em PT-BR
+- Landing page completa e animada (hero com contadores, features, como funciona em 3 passos, planos/precos, depoimentos, FAQ acordeao, CTA final, footer completo com links) em PT-BR
 - Auth: cadastro/login via telefone + senha, JWT, 30 moedas boas-vindas
-- Dashboard: stats (moedas, bots, plano ativo, mensagens), atividade recente
+- Dashboard: stats animados com contadores (moedas, bots, plano ativo, mensagens), cards de atalho rapido, atividade recente com animacao de entrada
+  - **Mobile**: bottom navigation bar fixa (5 itens: Inicio, Bots, Builder, Planos, Moedas), header compacto com hamburger menu, safe-area pra iPhones
 - Bots: listar, criar, deletar, gerenciar (QR Code / codigo de 8 digitos)
 - Builder Visual: editor drag-and-drop de no-code com blocos (Comando, Acao, Condicao, Resposta)
   - **85+ tipos de acao** implementados no backend: menus (show_menu_photo/admin/games/owner), 12 jogos (moeda, dado, sorteio, amor, ship, nota, sorte, V/D, roleta, top5, rank, piada), moderacao completa (kick, ban, warn, reset_warns, promover, rebaixar, mutar, desmutar, apagar), grupo (fechar, abrir, info, link, revogar, nome, desc, membros, admins, entrar via link, sair), dono (ligar, desligar, moedas, broadcast, bloquear, desbloquear), boas-vindas/despedida, enquete, CEP, calculadora, figurinha, hidetag, reagir, imagem, **novas acoes**: simular digitando, aguardar (delay), marcar como lido, adicionar/remover/definir moedas, entrar no grupo via link, sair do grupo, enviar log (debug), requisicao HTTP (webhook)
