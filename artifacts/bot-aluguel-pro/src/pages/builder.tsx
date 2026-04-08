@@ -422,7 +422,7 @@ function NodeCard({
   node, selected, isTarget, isConnecting,
   onSelect, onDelete, onEdit, onMove, onStartConnect, onDisconnectInput, onDisconnectOutput,
   hasInputConnection, hasOutputConnection, hasYesConnection, hasNoConnection,
-  transformRef, touchCount,
+  transformRef, touchCount, blockDragRef,
 }: {
   node: FlowNode; selected: boolean; isTarget: boolean; isConnecting: boolean;
   onSelect: () => void; onDelete: () => void; onEdit: () => void;
@@ -433,6 +433,7 @@ function NodeCard({
   hasYesConnection?: boolean; hasNoConnection?: boolean;
   transformRef: React.RefObject<CanvasTransform>;
   touchCount: React.RefObject<number>;
+  blockDragRef: React.RefObject<boolean>;
 }) {
   const cfg = nodeConfig[node.type];
   const Icon = cfg.icon;
@@ -445,6 +446,7 @@ function NodeCard({
     e.preventDefault();
     e.stopPropagation();
     dragData.current = { startX: e.clientX, startY: e.clientY, nodeX: node.position.x, nodeY: node.position.y, dragging: false };
+    blockDragRef.current = true;
     cardRef.current?.setPointerCapture(e.pointerId);
     onSelect();
   };
@@ -455,6 +457,7 @@ function NodeCard({
     if (touchCount.current >= 2) {
       if (d.dragging) cardRef.current?.releasePointerCapture(e.pointerId);
       dragData.current = null;
+      blockDragRef.current = false;
       return;
     }
     const dx = e.clientX - d.startX;
@@ -471,6 +474,7 @@ function NodeCard({
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (dragData.current?.dragging) e.stopPropagation();
     dragData.current = null;
+    blockDragRef.current = false;
   };
 
   const handleClick = (e: React.MouseEvent) => {
@@ -981,6 +985,7 @@ export default function BuilderPage() {
   const lastPinchDist = useRef<number | null>(null);
   const lastPinchMid = useRef<{ x: number; y: number } | null>(null);
   const touchCount = useRef(0);
+  const blockDragRef = useRef(false);
 
   // Init smaller scale on mobile + detect mobile
   useEffect(() => {
@@ -1208,7 +1213,7 @@ export default function BuilderPage() {
       return;
     }
 
-    if (connectingEdge) return;
+    if (connectingEdge || blockDragRef.current) return;
     isPanning.current = true;
     didPan.current = false;
     panStart.current = { x: e.clientX, y: e.clientY };
@@ -1264,7 +1269,7 @@ export default function BuilderPage() {
       setHoverTargetId(target);
       return;
     }
-    if (!isPanning.current) return;
+    if (!isPanning.current || blockDragRef.current) return;
     const dx = e.clientX - panStart.current.x;
     const dy = e.clientY - panStart.current.y;
     if (Math.abs(dx) > 3 || Math.abs(dy) > 3) didPan.current = true;
@@ -1493,6 +1498,7 @@ export default function BuilderPage() {
           onStartConnect={handleStartConnect}
           transformRef={transformRef}
           touchCount={touchCount}
+          blockDragRef={blockDragRef}
         />
       ))}
     </div>
