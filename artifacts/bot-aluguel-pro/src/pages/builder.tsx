@@ -1345,10 +1345,13 @@ export default function BuilderPage() {
       panOrigin.current = { x: transformRef.current.x, y: transformRef.current.y };
       isPanning.current = true;
     }
+    if (!didPan.current && !connectingEdge) {
+      setSelectedNode(null);
+    }
   };
 
   const handleCanvasClick = () => {
-    if (didPan.current) return; // don't deselect if we just panned
+    if (didPan.current) return;
     setSelectedNode(null);
   };
 
