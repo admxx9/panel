@@ -441,31 +441,12 @@ function NodeCard({
   const clickTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const clickCount = useRef(0);
 
-  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isLongPressed = useRef(false);
-  const pendingPointerId = useRef<number | null>(null);
-
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
-    const isTouch = e.pointerType === "touch";
     dragData.current = { startX: e.clientX, startY: e.clientY, nodeX: node.position.x, nodeY: node.position.y, dragging: false };
+    cardRef.current?.setPointerCapture(e.pointerId);
     onSelect();
-    if (isTouch) {
-      isLongPressed.current = false;
-      pendingPointerId.current = e.pointerId;
-      longPressTimer.current = setTimeout(() => {
-        isLongPressed.current = true;
-        if (cardRef.current && pendingPointerId.current !== null) {
-          cardRef.current.setPointerCapture(pendingPointerId.current);
-          cardRef.current.style.outline = "2px solid rgba(168,85,247,0.6)";
-          cardRef.current.style.transform = "scale(1.04)";
-          try { navigator.vibrate?.(30); } catch (_) {}
-        }
-      }, 200);
-    } else {
-      isLongPressed.current = true;
-    }
   };
 
   const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
@@ -474,26 +455,13 @@ function NodeCard({
     if (touchCount.current >= 2) {
       if (d.dragging) cardRef.current?.releasePointerCapture(e.pointerId);
       dragData.current = null;
-      isLongPressed.current = false;
-      if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
-      if (cardRef.current) { cardRef.current.style.outline = ""; cardRef.current.style.transform = ""; }
       return;
     }
     const dx = e.clientX - d.startX;
     const dy = e.clientY - d.startY;
-    const dist = Math.hypot(dx, dy);
-    if (!isLongPressed.current && e.pointerType === "touch") {
-      if (dist > 8) {
-        if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
-        dragData.current = null;
-        return;
-      }
-      return;
-    }
     if (!d.dragging) {
-      if (dist < 6) return;
+      if (Math.hypot(dx, dy) < 6) return;
       d.dragging = true;
-      cardRef.current?.setPointerCapture(e.pointerId);
     }
     e.stopPropagation();
     const scale = transformRef.current.scale;
@@ -503,10 +471,6 @@ function NodeCard({
   const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
     if (dragData.current?.dragging) e.stopPropagation();
     dragData.current = null;
-    isLongPressed.current = false;
-    pendingPointerId.current = null;
-    if (longPressTimer.current) { clearTimeout(longPressTimer.current); longPressTimer.current = null; }
-    if (cardRef.current) { cardRef.current.style.outline = ""; cardRef.current.style.transform = ""; }
   };
 
   const handleClick = (e: React.MouseEvent) => {
