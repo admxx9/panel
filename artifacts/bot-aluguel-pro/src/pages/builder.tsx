@@ -447,8 +447,8 @@ function NodeCard({
 
   const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     e.preventDefault();
+    e.stopPropagation();
     const isTouch = e.pointerType === "touch";
-    if (!isTouch) e.stopPropagation();
     dragData.current = { startX: e.clientX, startY: e.clientY, nodeX: node.position.x, nodeY: node.position.y, dragging: false };
     onSelect();
     if (isTouch) {
@@ -495,11 +495,13 @@ function NodeCard({
       d.dragging = true;
       cardRef.current?.setPointerCapture(e.pointerId);
     }
+    e.stopPropagation();
     const scale = transformRef.current.scale;
     onMove(node.id, Math.max(0, d.nodeX + dx / scale), Math.max(0, d.nodeY + dy / scale));
   };
 
-  const handlePointerUp = () => {
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (dragData.current?.dragging) e.stopPropagation();
     dragData.current = null;
     isLongPressed.current = false;
     pendingPointerId.current = null;
