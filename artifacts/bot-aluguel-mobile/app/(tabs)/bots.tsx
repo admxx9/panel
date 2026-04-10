@@ -36,10 +36,10 @@ type Bot = {
 };
 
 const STATUS_CFG = {
-  connected:    { color: "#22C55E", label: "Online", bg: "#F0FDF4" },
-  connecting:   { color: "#F59E0B", label: "Conectando", bg: "#FFFBEB" },
-  disconnected: { color: "#9CA3AF", label: "Offline", bg: "#F3F4F6" },
-  error:        { color: "#EF4444", label: "Erro", bg: "#FEF2F2" },
+  connected:    { color: "#22C55E", label: "Online", bg: "#0D2818" },
+  connecting:   { color: "#F59E0B", label: "Conectando", bg: "#2D2506" },
+  disconnected: { color: "#9CA3AF", label: "Offline", bg: "#1E1E28" },
+  error:        { color: "#EF4444", label: "Erro", bg: "#2D0A0A" },
 };
 
 function BotRow({ bot, onDelete }: { bot: Bot; onDelete: (id: string, name: string) => void }) {
@@ -241,7 +241,7 @@ export default function BotsScreen() {
 
 const row = StyleSheet.create({
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 16,
     padding: 16,
     gap: 12,
@@ -266,7 +266,7 @@ const row = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: "600",
-    color: "#1F2937",
+    color: "#F0F0F5",
     fontFamily: "Inter_600SemiBold",
   },
   phone: {
@@ -322,7 +322,7 @@ const row = StyleSheet.create({
     borderRadius: 10,
   },
   btnOutline: {
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#1E1E28",
   },
   btnOutlineText: {
     fontSize: 12,
@@ -340,12 +340,12 @@ const row = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
   },
   btnDanger: {
-    backgroundColor: "#FEF2F2",
+    backgroundColor: "#2D0A0A",
   },
 });
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F5F5F5" },
+  root: { flex: 1, backgroundColor: "#0F0F14" },
 
   header: {
     paddingHorizontal: 20,
@@ -372,7 +372,7 @@ const s = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#FFF",
+    backgroundColor: "#1A1A24",
     alignItems: "center",
     justifyContent: "center",
     shadowColor: "#000",
@@ -387,12 +387,12 @@ const s = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 20,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#1E1E28",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
   },
-  emptyTitle: { fontSize: 18, fontWeight: "700", color: "#374151", fontFamily: "Inter_700Bold" },
+  emptyTitle: { fontSize: 18, fontWeight: "700", color: "#D1D1DB", fontFamily: "Inter_700Bold" },
   emptyDesc: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 280, lineHeight: 20 },
   emptyText: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
   emptyBtn: {
@@ -416,7 +416,7 @@ const s = StyleSheet.create({
   },
   modal: {
     width: "100%",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 20,
     padding: 24,
     shadowColor: "#000",
@@ -425,12 +425,12 @@ const s = StyleSheet.create({
     shadowRadius: 12,
     elevation: 8,
   },
-  modalTitle: { fontSize: 18, fontWeight: "700", color: "#1F2937", fontFamily: "Inter_700Bold", marginBottom: 20 },
+  modalTitle: { fontSize: 18, fontWeight: "700", color: "#F0F0F5", fontFamily: "Inter_700Bold", marginBottom: 20 },
   modalLabel: { fontSize: 11, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 8 },
   modalInput: {
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#1E1E28",
     borderRadius: 12,
-    color: "#1F2937",
+    color: "#F0F0F5",
     fontSize: 15,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -441,7 +441,7 @@ const s = StyleSheet.create({
   cancelBtn: {
     flex: 1,
     borderRadius: 12,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#1E1E28",
     paddingVertical: 14,
     alignItems: "center",
   },

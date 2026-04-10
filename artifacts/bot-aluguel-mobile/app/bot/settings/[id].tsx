@@ -179,7 +179,7 @@ export default function BotSettingsScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F5F5F5" },
+  root: { flex: 1, backgroundColor: "#0F0F14" },
 
   nav: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
@@ -192,7 +192,7 @@ const s = StyleSheet.create({
   loader: { paddingVertical: 60, alignItems: "center" },
 
   card: {
-    backgroundColor: "#FFFFFF", borderRadius: 16, padding: 20, gap: 18,
+    backgroundColor: "#1A1A24", borderRadius: 16, padding: 20, gap: 18,
     shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
   },
   cardSectionLabel: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
@@ -201,17 +201,17 @@ const s = StyleSheet.create({
   label: { fontSize: 11, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
   inputRow: {
     flexDirection: "row", alignItems: "center", gap: 10,
-    backgroundColor: "#F3F4F6", borderRadius: 12, paddingHorizontal: 14,
+    backgroundColor: "#1E1E28", borderRadius: 12, paddingHorizontal: 14,
   },
-  input: { flex: 1, color: "#1F2937", fontSize: 15, paddingVertical: 14, fontFamily: "Inter_400Regular" },
+  input: { flex: 1, color: "#F0F0F5", fontSize: 15, paddingVertical: 14, fontFamily: "Inter_400Regular" },
   hint: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
 
   prefixRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   prefixBtn: {
     paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#1E1E28",
   },
-  prefixBtnActive: { backgroundColor: "#EDE9FE" },
+  prefixBtnActive: { backgroundColor: "#1E1635" },
   prefixText: { fontSize: 14, fontWeight: "600", color: "#9CA3AF", fontFamily: "Inter_600SemiBold" },
   prefixTextActive: { color: "#7C3AED" },
 

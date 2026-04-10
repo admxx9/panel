@@ -23,10 +23,10 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 
 const STATUS_CONFIG = {
-  connected:    { color: "#22C55E", label: "Online",      icon: "wifi",          bg: "#F0FDF4" },
-  connecting:   { color: "#F59E0B", label: "Conectando",  icon: "loader",        bg: "#FFFBEB" },
-  disconnected: { color: "#9CA3AF", label: "Offline",     icon: "wifi-off",      bg: "#F3F4F6" },
-  error:        { color: "#EF4444", label: "Erro",        icon: "alert-circle",  bg: "#FEF2F2" },
+  connected:    { color: "#22C55E", label: "Online",      icon: "wifi",          bg: "#0D2818" },
+  connecting:   { color: "#F59E0B", label: "Conectando",  icon: "loader",        bg: "#2D2506" },
+  disconnected: { color: "#9CA3AF", label: "Offline",     icon: "wifi-off",      bg: "#1E1E28" },
+  error:        { color: "#EF4444", label: "Erro",        icon: "alert-circle",  bg: "#2D0A0A" },
 };
 
 export default function BotDetailScreen() {
@@ -132,14 +132,14 @@ export default function BotDetailScreen() {
 
         <View style={s.quickRow}>
           <Pressable
-            style={({ pressed }) => [s.quickBtn, { backgroundColor: "#EDE9FE" }, pressed && { opacity: 0.75 }]}
+            style={({ pressed }) => [s.quickBtn, { backgroundColor: "#1E1635" }, pressed && { opacity: 0.75 }]}
             onPress={() => router.push(`/builder/${id}` as any)}
           >
             <Feather name="git-branch" size={16} color="#7C3AED" />
             <Text style={[s.quickBtnText, { color: "#7C3AED" }]}>Construtor</Text>
           </Pressable>
           <Pressable
-            style={({ pressed }) => [s.quickBtn, { backgroundColor: "#F3F4F6" }, pressed && { opacity: 0.75 }]}
+            style={({ pressed }) => [s.quickBtn, { backgroundColor: "#1E1E28" }, pressed && { opacity: 0.75 }]}
             onPress={() => router.push(`/bot/settings/${id}` as any)}
           >
             <Feather name="sliders" size={16} color="#6B7280" />
@@ -271,8 +271,8 @@ export default function BotDetailScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F5F5F5" },
-  center: { flex: 1, backgroundColor: "#F5F5F5", alignItems: "center", justifyContent: "center" },
+  root: { flex: 1, backgroundColor: "#0F0F14" },
+  center: { flex: 1, backgroundColor: "#0F0F14", alignItems: "center", justifyContent: "center" },
 
   nav: {
     flexDirection: "row",
@@ -287,7 +287,7 @@ const s = StyleSheet.create({
   scroll: { padding: 20, gap: 14 },
 
   statusCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 16,
     padding: 16,
     flexDirection: "row",
@@ -306,7 +306,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  statusLabel: { fontSize: 16, fontWeight: "700", color: "#1F2937", fontFamily: "Inter_700Bold" },
+  statusLabel: { fontSize: 16, fontWeight: "700", color: "#F0F0F5", fontFamily: "Inter_700Bold" },
   botPhone: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
   statusBadge: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
   statusDot: { width: 10, height: 10, borderRadius: 5 },
@@ -320,22 +320,22 @@ const s = StyleSheet.create({
 
   connectedCard: {
     flexDirection: "row", alignItems: "center", gap: 10,
-    backgroundColor: "#F0FDF4", borderRadius: 12, padding: 16,
+    backgroundColor: "#0D2818", borderRadius: 12, padding: 16,
   },
   connectedText: { fontSize: 15, fontWeight: "600", color: "#22C55E", fontFamily: "Inter_600SemiBold" },
   disconnectBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 8, paddingVertical: 13, borderRadius: 12, backgroundColor: "#FEF2F2",
+    gap: 8, paddingVertical: 13, borderRadius: 12, backgroundColor: "#2D0A0A",
   },
   disconnectBtnText: { fontSize: 14, fontWeight: "600", color: "#EF4444", fontFamily: "Inter_600SemiBold" },
 
   connectSection: {
-    backgroundColor: "#FFFFFF", borderRadius: 16, padding: 20, gap: 14,
+    backgroundColor: "#1A1A24", borderRadius: 16, padding: 20, gap: 14,
     shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
   },
   sectionLabel: { fontSize: 11, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
   typeToggle: {
-    flexDirection: "row", backgroundColor: "#F3F4F6", borderRadius: 10, padding: 3, gap: 3,
+    flexDirection: "row", backgroundColor: "#1E1E28", borderRadius: 10, padding: 3, gap: 3,
   },
   toggleBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10, borderRadius: 8 },
   toggleBtnActive: { backgroundColor: "#7C3AED" },
@@ -343,9 +343,9 @@ const s = StyleSheet.create({
   toggleTextActive: { color: "#FFF" },
   phoneBox: {
     flexDirection: "row", alignItems: "center", gap: 10,
-    backgroundColor: "#F3F4F6", borderRadius: 12, paddingHorizontal: 14,
+    backgroundColor: "#1E1E28", borderRadius: 12, paddingHorizontal: 14,
   },
-  phoneInput: { flex: 1, color: "#1F2937", fontSize: 15, paddingVertical: 14, fontFamily: "Inter_400Regular" },
+  phoneInput: { flex: 1, color: "#F0F0F5", fontSize: 15, paddingVertical: 14, fontFamily: "Inter_400Regular" },
   connectHint: { fontSize: 13, color: "#9CA3AF", fontFamily: "Inter_400Regular", lineHeight: 20 },
   connectBtn: {
     backgroundColor: "#7C3AED", borderRadius: 12, paddingVertical: 14,
@@ -354,18 +354,18 @@ const s = StyleSheet.create({
   connectBtnText: { color: "#FFF", fontSize: 15, fontWeight: "700", fontFamily: "Inter_700Bold" },
 
   connectingSection: {
-    backgroundColor: "#FFFFFF", borderRadius: 16, borderLeftWidth: 4, borderLeftColor: "#F59E0B",
+    backgroundColor: "#1A1A24", borderRadius: 16, borderLeftWidth: 4, borderLeftColor: "#F59E0B",
     padding: 20, gap: 16,
     shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
   },
   qrContainer: { alignItems: "center", gap: 12 },
-  connectingLabel: { fontSize: 17, fontWeight: "700", color: "#1F2937", fontFamily: "Inter_700Bold" },
+  connectingLabel: { fontSize: 17, fontWeight: "700", color: "#F0F0F5", fontFamily: "Inter_700Bold" },
   connectingHint: { fontSize: 13, color: "#9CA3AF", fontFamily: "Inter_400Regular", textAlign: "center" },
-  qrBox: { backgroundColor: "#FFF", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#E5E7EB" },
+  qrBox: { backgroundColor: "#FFFFFF", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#2A2A35" },
   qrImage: { width: 200, height: 200 },
   pairContainer: { alignItems: "center", gap: 12 },
   pairBox: {
-    backgroundColor: "#EDE9FE", borderRadius: 12, borderWidth: 2,
+    backgroundColor: "#1E1635", borderRadius: 12, borderWidth: 2,
     borderColor: "#7C3AED40", paddingHorizontal: 30, paddingVertical: 18,
   },
   pairCode: { fontSize: 32, fontWeight: "800", color: "#7C3AED", fontFamily: "Inter_700Bold", letterSpacing: 6 },
@@ -374,17 +374,17 @@ const s = StyleSheet.create({
   waitingCenter: { alignItems: "center", gap: 14, paddingVertical: 24 },
   cancelBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    paddingVertical: 12, borderRadius: 12, backgroundColor: "#FEF2F2",
+    paddingVertical: 12, borderRadius: 12, backgroundColor: "#2D0A0A",
   },
   cancelBtnText: { fontSize: 14, fontWeight: "600", color: "#EF4444", fontFamily: "Inter_600SemiBold" },
 
   infoCard: {
-    backgroundColor: "#FFFFFF", borderRadius: 16, overflow: "hidden",
+    backgroundColor: "#1A1A24", borderRadius: 16, overflow: "hidden",
     shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
   },
   infoCardTitle: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1, padding: 16, paddingBottom: 8 },
   infoRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingVertical: 13 },
-  infoRowBorder: { borderBottomWidth: 1, borderBottomColor: "#F3F4F6" },
+  infoRowBorder: { borderBottomWidth: 1, borderBottomColor: "#1E1E28" },
   infoLabel: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
-  infoValue: { fontSize: 14, fontWeight: "500", color: "#374151", fontFamily: "Inter_500Medium" },
+  infoValue: { fontSize: 14, fontWeight: "500", color: "#D1D1DB", fontFamily: "Inter_500Medium" },
 });

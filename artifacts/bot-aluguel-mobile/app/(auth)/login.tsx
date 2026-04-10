@@ -146,7 +146,7 @@ export default function LoginScreen() {
 const s = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#0F0F14",
   },
   headerGradient: {
     alignItems: "center",
@@ -191,7 +191,7 @@ const s = StyleSheet.create({
     paddingBottom: 40,
   },
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 20,
     padding: 24,
     shadowColor: "#000",
@@ -203,7 +203,7 @@ const s = StyleSheet.create({
   cardTitle: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#1F2937",
+    color: "#F0F0F5",
     fontFamily: "Inter_700Bold",
     marginBottom: 24,
   },
@@ -221,10 +221,10 @@ const s = StyleSheet.create({
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#1E1E28",
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#F3F4F6",
+    borderColor: "#1E1E28",
     paddingHorizontal: 14,
   },
   inputFocused: {
@@ -236,7 +236,7 @@ const s = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: "#1F2937",
+    color: "#F0F0F5",
     fontSize: 15,
     paddingVertical: 14,
     fontFamily: "Inter_400Regular",
@@ -249,7 +249,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: "#FEF2F2",
+    backgroundColor: "#2D0A0A",
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,

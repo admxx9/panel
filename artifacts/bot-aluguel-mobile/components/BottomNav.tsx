@@ -17,7 +17,7 @@ interface Props {
 const BAR_H = 64;
 const DOT = 56;
 const GREEN = "#2FAE8F";
-const DARK = "#374151";
+const DARK = "#D1D1DB";
 
 export default function BottomNav({ tabs }: Props) {
   const pathname = usePathname();
@@ -55,7 +55,7 @@ export default function BottomNav({ tabs }: Props) {
 
 const s = StyleSheet.create({
   wrap: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderTopLeftRadius: 22,
     borderTopRightRadius: 22,
     shadowColor: "#000",

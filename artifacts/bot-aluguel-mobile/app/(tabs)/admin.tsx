@@ -20,10 +20,10 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/context/AuthContext";
 
 const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  pending: { label: "Pendente", color: "#F59E0B", bg: "#FFFBEB" },
-  paid:    { label: "Pago",     color: "#22C55E", bg: "#F0FDF4" },
-  expired: { label: "Expirado", color: "#9CA3AF", bg: "#F3F4F6" },
-  error:   { label: "Erro",     color: "#EF4444", bg: "#FEF2F2" },
+  pending: { label: "Pendente", color: "#F59E0B", bg: "#2D2506" },
+  paid:    { label: "Pago",     color: "#22C55E", bg: "#0D2818" },
+  expired: { label: "Expirado", color: "#9CA3AF", bg: "#1E1E28" },
+  error:   { label: "Erro",     color: "#EF4444", bg: "#2D0A0A" },
 };
 
 type Tab = "users" | "payments";
@@ -168,14 +168,14 @@ export default function AdminScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F5F5F5" },
+  root: { flex: 1, backgroundColor: "#0F0F14" },
 
-  center: { flex: 1, backgroundColor: "#F5F5F5", alignItems: "center", justifyContent: "center", gap: 12, padding: 40 },
+  center: { flex: 1, backgroundColor: "#0F0F14", alignItems: "center", justifyContent: "center", gap: 12, padding: 40 },
   noAccessIcon: {
-    width: 64, height: 64, borderRadius: 18, backgroundColor: "#F3F4F6",
+    width: 64, height: 64, borderRadius: 18, backgroundColor: "#1E1E28",
     alignItems: "center", justifyContent: "center", marginBottom: 4,
   },
-  noAccessTitle: { fontSize: 18, fontWeight: "700", color: "#374151", fontFamily: "Inter_700Bold" },
+  noAccessTitle: { fontSize: 18, fontWeight: "700", color: "#D1D1DB", fontFamily: "Inter_700Bold" },
   noAccessSub: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular", textAlign: "center" },
 
   header: { paddingHorizontal: 20, paddingBottom: 20 },
@@ -188,7 +188,7 @@ const s = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: "28%",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 14,
     padding: 14,
     gap: 6,
@@ -203,12 +203,12 @@ const s = StyleSheet.create({
     width: 32, height: 32, borderRadius: 10,
     alignItems: "center", justifyContent: "center",
   },
-  statValue: { fontSize: 18, fontWeight: "800", color: "#1F2937", fontFamily: "Inter_700Bold" },
+  statValue: { fontSize: 18, fontWeight: "800", color: "#F0F0F5", fontFamily: "Inter_700Bold" },
   statLabel: { fontSize: 10, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
 
   tabBar: {
     flexDirection: "row",
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 12,
     padding: 4,
     gap: 4,
@@ -225,7 +225,7 @@ const s = StyleSheet.create({
   tabTextActive: { color: "#FFF" },
 
   listCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 16,
     overflow: "hidden",
     shadowColor: "#000",
@@ -235,22 +235,22 @@ const s = StyleSheet.create({
     elevation: 2,
   },
   listRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 14 },
-  listRowBorder: { borderBottomWidth: 1, borderBottomColor: "#F3F4F6" },
+  listRowBorder: { borderBottomWidth: 1, borderBottomColor: "#1E1E28" },
 
   userAvatar: {
     width: 36, height: 36, borderRadius: 12,
-    backgroundColor: "#EDE9FE",
+    backgroundColor: "#1E1635",
     alignItems: "center", justifyContent: "center",
   },
   userInitial: { fontSize: 15, fontWeight: "700", color: "#7C3AED", fontFamily: "Inter_700Bold" },
   payIcon: {
     width: 36, height: 36, borderRadius: 12,
-    backgroundColor: "#EDE9FE",
+    backgroundColor: "#1E1635",
     alignItems: "center", justifyContent: "center",
   },
-  rowTitle: { fontSize: 14, fontWeight: "600", color: "#1F2937", fontFamily: "Inter_600SemiBold" },
+  rowTitle: { fontSize: 14, fontWeight: "600", color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
   rowSub: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
-  adminBadge: { backgroundColor: "#EDE9FE", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  adminBadge: { backgroundColor: "#1E1635", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
   adminBadgeText: { fontSize: 11, fontWeight: "700", color: "#7C3AED", fontFamily: "Inter_700Bold" },
   statusBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
   statusText: { fontSize: 12, fontWeight: "600", fontFamily: "Inter_600SemiBold" },

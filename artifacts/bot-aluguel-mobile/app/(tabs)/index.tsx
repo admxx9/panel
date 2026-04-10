@@ -106,7 +106,7 @@ export default function DashboardScreen() {
                   onPress={() => router.push(action.route as any)}
                 >
                   <View style={s.actionIconWrap}>
-                    <Feather name={action.icon as any} size={22} color="#374151" />
+                    <Feather name={action.icon as any} size={22} color="#D1D1DB" />
                   </View>
                   <Text style={s.actionLabel}>{action.label}</Text>
                 </Pressable>
@@ -179,7 +179,7 @@ export default function DashboardScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F5F5F5" },
+  root: { flex: 1, backgroundColor: "#0F0F14" },
 
   header: {
     paddingHorizontal: 20,
@@ -243,17 +243,17 @@ const s = StyleSheet.create({
 
   dotsRow: { flexDirection: "row", justifyContent: "center", gap: 6, marginTop: 14 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: "rgba(255,255,255,0.3)" },
-  dotActive: { backgroundColor: "#FFF" },
+  dotActive: { backgroundColor: "#FFFFFF" },
 
   section: { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 14 },
-  sectionTitle: { fontSize: 18, color: "#1F2937", fontFamily: "Inter_700Bold" },
+  sectionTitle: { fontSize: 18, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
 
   actionsRow: { paddingHorizontal: 20, gap: 12 },
   actionCard: {
     width: 90,
     alignItems: "center",
     gap: 10,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 16,
     paddingVertical: 18,
     paddingHorizontal: 8,
@@ -267,16 +267,16 @@ const s = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#1E1E28",
     alignItems: "center",
     justifyContent: "center",
   },
-  actionLabel: { fontSize: 12, color: "#374151", fontFamily: "Inter_500Medium", textAlign: "center" },
+  actionLabel: { fontSize: 12, color: "#D1D1DB", fontFamily: "Inter_500Medium", textAlign: "center" },
 
   featureCard: {
     marginHorizontal: 20,
     marginTop: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 16,
     padding: 20,
     flexDirection: "row",
@@ -287,12 +287,12 @@ const s = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  featureTitle: { fontSize: 16, color: "#1F2937", fontFamily: "Inter_700Bold" },
+  featureTitle: { fontSize: 16, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
   featureSub: { fontSize: 13, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
 
   activityCard: {
     marginHorizontal: 20,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 16,
     padding: 16,
     shadowColor: "#000",
@@ -311,13 +311,13 @@ const s = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#1E1E28",
     alignItems: "center",
     justifyContent: "center",
   },
-  activityDesc: { fontSize: 14, color: "#374151", fontFamily: "Inter_500Medium", lineHeight: 20 },
+  activityDesc: { fontSize: 14, color: "#D1D1DB", fontFamily: "Inter_500Medium", lineHeight: 20 },
   activityTime: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
-  activityLine: { height: 1, backgroundColor: "#F3F4F6", marginLeft: 48 },
+  activityLine: { height: 1, backgroundColor: "#1E1E28", marginLeft: 48 },
 
   loader: { paddingVertical: 80, alignItems: "center" },
 });

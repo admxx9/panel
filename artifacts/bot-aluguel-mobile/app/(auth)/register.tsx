@@ -144,7 +144,7 @@ export default function RegisterScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F5F5F5" },
+  root: { flex: 1, backgroundColor: "#0F0F14" },
 
   headerGradient: {
     alignItems: "center",
@@ -170,7 +170,7 @@ const s = StyleSheet.create({
   scroll: { flexGrow: 1, paddingHorizontal: 20, paddingTop: 24, paddingBottom: 40 },
 
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 20,
     padding: 24,
     gap: 16,
@@ -180,7 +180,7 @@ const s = StyleSheet.create({
     shadowRadius: 8,
     elevation: 4,
   },
-  cardTitle: { fontSize: 20, fontWeight: "700", color: "#1F2937", fontFamily: "Inter_700Bold" },
+  cardTitle: { fontSize: 20, fontWeight: "700", color: "#F0F0F5", fontFamily: "Inter_700Bold" },
 
   field: { gap: 8 },
   label: { fontSize: 11, fontWeight: "600", color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
@@ -188,15 +188,15 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#1E1E28",
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: "#F3F4F6",
+    borderColor: "#1E1E28",
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
   inputFocus: { borderColor: "#7C3AED", backgroundColor: "#FAFAFF" },
-  input: { flex: 1, fontSize: 15, color: "#1F2937", fontFamily: "Inter_400Regular" },
+  input: { flex: 1, fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_400Regular" },
 
   btn: {
     backgroundColor: "#7C3AED",

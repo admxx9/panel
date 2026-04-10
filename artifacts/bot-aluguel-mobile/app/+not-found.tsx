@@ -21,12 +21,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     padding: 20,
-    backgroundColor: "#F5F5F5",
+    backgroundColor: "#0F0F14",
   },
   title: {
     fontSize: 20,
     fontWeight: "700",
-    color: "#1F2937",
+    color: "#F0F0F5",
     fontFamily: "Inter_700Bold",
   },
   link: {

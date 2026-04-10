@@ -25,10 +25,10 @@ import { LinearGradient } from "expo-linear-gradient";
 const PRESETS = [5, 10, 25, 50, 100];
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-  pending: { label: "Pendente",  color: "#F59E0B", bg: "#FFFBEB" },
-  paid:    { label: "Pago",      color: "#22C55E", bg: "#F0FDF4" },
-  expired: { label: "Expirado",  color: "#9CA3AF", bg: "#F3F4F6" },
-  error:   { label: "Erro",      color: "#EF4444", bg: "#FEF2F2" },
+  pending: { label: "Pendente",  color: "#F59E0B", bg: "#2D2506" },
+  paid:    { label: "Pago",      color: "#22C55E", bg: "#0D2818" },
+  expired: { label: "Expirado",  color: "#9CA3AF", bg: "#1E1E28" },
+  error:   { label: "Erro",      color: "#EF4444", bg: "#2D0A0A" },
 };
 
 export default function PaymentsScreen() {
@@ -208,7 +208,7 @@ export default function PaymentsScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F5F5F5" },
+  root: { flex: 1, backgroundColor: "#0F0F14" },
 
   header: {
     paddingHorizontal: 20,
@@ -218,7 +218,7 @@ const s = StyleSheet.create({
   headerSub: { fontSize: 13, color: "#FFFFFFBB", fontFamily: "Inter_400Regular", marginTop: 4 },
 
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
@@ -229,16 +229,16 @@ const s = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  cardTitle: { fontSize: 16, fontWeight: "700", color: "#1F2937", fontFamily: "Inter_700Bold" },
+  cardTitle: { fontSize: 16, fontWeight: "700", color: "#F0F0F5", fontFamily: "Inter_700Bold" },
 
   presetsRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   preset: {
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#1E1E28",
   },
-  presetActive: { backgroundColor: "#EDE9FE" },
+  presetActive: { backgroundColor: "#1E1635" },
   presetText: { fontSize: 14, color: "#6B7280", fontFamily: "Inter_600SemiBold" },
   presetTextActive: { color: "#7C3AED" },
 
@@ -246,12 +246,12 @@ const s = StyleSheet.create({
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#1E1E28",
     borderRadius: 12,
     paddingHorizontal: 14,
   },
   currency: { fontSize: 18, color: "#9CA3AF", fontFamily: "Inter_700Bold", marginRight: 4 },
-  input: { flex: 1, color: "#1F2937", fontSize: 20, fontWeight: "700", paddingVertical: 14, fontFamily: "Inter_700Bold" },
+  input: { flex: 1, color: "#F0F0F5", fontSize: 20, fontWeight: "700", paddingVertical: 14, fontFamily: "Inter_700Bold" },
 
   preview: { flexDirection: "row", alignItems: "center", gap: 6 },
   previewText: { fontSize: 14, color: "#6B7280", fontFamily: "Inter_400Regular" },
@@ -268,7 +268,7 @@ const s = StyleSheet.create({
   btnText: { color: "#FFF", fontSize: 15, fontWeight: "700", fontFamily: "Inter_700Bold" },
 
   pixCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 16,
     borderLeftWidth: 4,
     borderLeftColor: "#22C55E",
@@ -286,13 +286,13 @@ const s = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#F0FDF4",
+    backgroundColor: "#0D2818",
     alignItems: "center",
     justifyContent: "center",
   },
-  pixHeaderText: { fontSize: 15, fontWeight: "700", color: "#1F2937", fontFamily: "Inter_700Bold" },
+  pixHeaderText: { fontSize: 15, fontWeight: "700", color: "#F0F0F5", fontFamily: "Inter_700Bold" },
   pixSub: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
-  codeBox: { backgroundColor: "#F3F4F6", borderRadius: 12, padding: 14 },
+  codeBox: { backgroundColor: "#1E1E28", borderRadius: 12, padding: 14 },
   codeText: { fontSize: 12, color: "#6B7280", fontFamily: "Inter_400Regular", lineHeight: 18 },
   copyBtn: {
     flexDirection: "row",
@@ -300,19 +300,19 @@ const s = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     borderRadius: 12,
-    backgroundColor: "#EDE9FE",
+    backgroundColor: "#1E1635",
     paddingVertical: 12,
   },
-  copyBtnDone: { backgroundColor: "#F0FDF4" },
+  copyBtnDone: { backgroundColor: "#0D2818" },
   copyText: { fontSize: 14, fontWeight: "600", color: "#7C3AED", fontFamily: "Inter_600SemiBold" },
   waitText: { textAlign: "center", fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
-  paidBadge: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#F0FDF4", borderRadius: 12, padding: 14 },
+  paidBadge: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#0D2818", borderRadius: 12, padding: 14 },
   paidText: { fontSize: 14, color: "#22C55E", fontFamily: "Inter_600SemiBold" },
 
-  sectionTitle: { fontSize: 18, color: "#1F2937", fontFamily: "Inter_700Bold", marginBottom: 12 },
+  sectionTitle: { fontSize: 18, color: "#F0F0F5", fontFamily: "Inter_700Bold", marginBottom: 12 },
 
   historyCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 16,
     overflow: "hidden",
     shadowColor: "#000",
@@ -322,21 +322,21 @@ const s = StyleSheet.create({
     elevation: 2,
   },
   historyRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
-  historyRowBorder: { borderBottomWidth: 1, borderBottomColor: "#F3F4F6" },
+  historyRowBorder: { borderBottomWidth: 1, borderBottomColor: "#1E1E28" },
   historyIconWrap: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#EDE9FE",
+    backgroundColor: "#1E1635",
     alignItems: "center",
     justifyContent: "center",
   },
-  historyAmount: { fontSize: 15, fontWeight: "600", color: "#1F2937", fontFamily: "Inter_600SemiBold" },
+  historyAmount: { fontSize: 15, fontWeight: "600", color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
   historyDate: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
   statusBadge: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 },
   statusText: { fontSize: 12, fontWeight: "600", fontFamily: "Inter_600SemiBold" },
 
   loader: { paddingVertical: 30, alignItems: "center" },
-  emptyHistory: { alignItems: "center", gap: 8, paddingVertical: 40, backgroundColor: "#FFF", borderRadius: 16 },
+  emptyHistory: { alignItems: "center", gap: 8, paddingVertical: 40, backgroundColor: "#1A1A24", borderRadius: 16 },
   emptyHistoryText: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
 });

@@ -37,7 +37,7 @@ function Row({
       onPress={onPress}
       disabled={!onPress}
     >
-      <View style={[s.rowIcon, { backgroundColor: destructive ? "#FEF2F2" : "#EDE9FE" }]}>
+      <View style={[s.rowIcon, { backgroundColor: destructive ? "#2D0A0A" : "#1E1635" }]}>
         <Feather name={icon as any} size={16} color={destructive ? "#EF4444" : "#7C3AED"} />
       </View>
       <Text style={[s.rowLabel, destructive && { color: "#EF4444" }]}>{label}</Text>
@@ -117,7 +117,7 @@ export default function SettingsScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F5F5F5" },
+  root: { flex: 1, backgroundColor: "#0F0F14" },
 
   header: {
     paddingHorizontal: 20,
@@ -150,7 +150,7 @@ const s = StyleSheet.create({
   section: { marginBottom: 20 },
   sectionTitle: { fontSize: 12, fontWeight: "600", color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 8, paddingLeft: 4 },
   sectionCard: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 16,
     overflow: "hidden",
     shadowColor: "#000",
@@ -167,7 +167,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  rowBorder: { borderBottomWidth: 1, borderBottomColor: "#F3F4F6" },
+  rowBorder: { borderBottomWidth: 1, borderBottomColor: "#1E1E28" },
   rowIcon: {
     width: 34,
     height: 34,
@@ -175,7 +175,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  rowLabel: { flex: 1, fontSize: 15, color: "#374151", fontFamily: "Inter_500Medium" },
+  rowLabel: { flex: 1, fontSize: 15, color: "#D1D1DB", fontFamily: "Inter_500Medium" },
   rowValue: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
 
   version: { textAlign: "center", fontSize: 12, color: "#D1D5DB", fontFamily: "Inter_400Regular", marginTop: 12 },

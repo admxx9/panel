@@ -180,7 +180,7 @@ export default function PlansScreen() {
 
 const c = StyleSheet.create({
   card: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 16,
     padding: 20,
     gap: 14,
@@ -208,11 +208,11 @@ const c = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#1F2937",
+    color: "#F0F0F5",
     fontFamily: "Inter_700Bold",
   },
   activeBadge: {
-    backgroundColor: "#EDE9FE",
+    backgroundColor: "#1E1635",
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 3,
@@ -227,7 +227,7 @@ const c = StyleSheet.create({
   desc: { fontSize: 13, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
   price: { fontSize: 24, fontWeight: "800", color: "#7C3AED", fontFamily: "Inter_700Bold" },
   priceUnit: { fontSize: 11, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
-  divider: { height: 1, backgroundColor: "#F3F4F6" },
+  divider: { height: 1, backgroundColor: "#1E1E28" },
   features: { gap: 8 },
   feature: {
     flexDirection: "row",
@@ -245,10 +245,10 @@ const c = StyleSheet.create({
     backgroundColor: "#7C3AED",
   },
   btnActive: {
-    backgroundColor: "#EDE9FE",
+    backgroundColor: "#1E1635",
   },
   btnDisabled: {
-    backgroundColor: "#F3F4F6",
+    backgroundColor: "#1E1E28",
   },
   btnText: { fontSize: 14, fontWeight: "700", color: "#FFF", fontFamily: "Inter_700Bold" },
   btnActiveText: { color: "#7C3AED" },
@@ -256,7 +256,7 @@ const c = StyleSheet.create({
 });
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#F5F5F5" },
+  root: { flex: 1, backgroundColor: "#0F0F14" },
 
   header: {
     paddingHorizontal: 20,
@@ -269,7 +269,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: "#FFFFFF",
+    backgroundColor: "#1A1A24",
     borderRadius: 16,
     padding: 18,
     marginBottom: 20,
@@ -283,14 +283,14 @@ const s = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: "#EDE9FE",
+    backgroundColor: "#1E1635",
     alignItems: "center",
     justifyContent: "center",
   },
-  coinsValue: { fontSize: 18, fontWeight: "700", color: "#1F2937", fontFamily: "Inter_700Bold" },
+  coinsValue: { fontSize: 18, fontWeight: "700", color: "#F0F0F5", fontFamily: "Inter_700Bold" },
   coinsLabel: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 1 },
   activePlanBadge: {
-    backgroundColor: "#EDE9FE",
+    backgroundColor: "#1E1635",
     borderRadius: 10,
     paddingHorizontal: 10,
     paddingVertical: 5,
