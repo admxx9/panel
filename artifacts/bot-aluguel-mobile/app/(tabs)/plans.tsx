@@ -18,6 +18,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 
 type Plan = {
   id: string;
@@ -29,68 +30,63 @@ type Plan = {
   features: string[];
 };
 
-const PLAN_COLORS: Record<string, string> = {
-  Basico:  "#7C3AED",
-  Pro:     "#7C3AED",
-  Premium: "#F59E0B",
-};
-
-function PlanRow({ plan, isActive, coins, onActivate, loading }: {
+function PlanCard({ plan, isActive, coins, onActivate, loading }: {
   plan: Plan; isActive: boolean; coins: number; onActivate: () => void; loading: boolean;
 }) {
-  const color = PLAN_COLORS[plan.name] ?? "#7C3AED";
   const canAfford = coins >= plan.coins;
 
   return (
-    <View style={[row.card, isActive && { borderLeftColor: color }]}>
-      <View style={row.header}>
-        <View>
-          <View style={row.nameLine}>
-            <Text style={row.name}>{plan.name}</Text>
+    <View style={[c.card, isActive && c.cardActive]}>
+      <View style={c.header}>
+        <View style={{ flex: 1 }}>
+          <View style={c.nameLine}>
+            <Text style={c.name}>{plan.name}</Text>
             {isActive && (
-              <View style={[row.activeBadge, { backgroundColor: color + "20", borderColor: color + "40" }]}>
-                <Text style={[row.activeBadgeText, { color }]}>ATIVO</Text>
+              <View style={c.activeBadge}>
+                <Text style={c.activeBadgeText}>ATIVO</Text>
               </View>
             )}
           </View>
-          <Text style={row.desc}>{plan.description}</Text>
+          <Text style={c.desc}>{plan.description}</Text>
         </View>
         <View style={{ alignItems: "flex-end" }}>
-          <Text style={[row.price, { color }]}>{plan.coins} <Text style={row.priceUnit}>moedas</Text></Text>
-          <Text style={row.days}>{plan.days} dias</Text>
+          <Text style={c.price}>{plan.coins}</Text>
+          <Text style={c.priceUnit}>moedas / {plan.days} dias</Text>
         </View>
       </View>
 
-      <View style={row.features}>
+      <View style={c.divider} />
+
+      <View style={c.features}>
         {plan.features.slice(0, 3).map((f, i) => (
-          <View key={i} style={row.feature}>
-            <Feather name="check" size={11} color={color} />
-            <Text style={row.featureText}>{f}</Text>
+          <View key={i} style={c.feature}>
+            <Feather name="check" size={12} color="#7C3AED" />
+            <Text style={c.featureText}>{f}</Text>
           </View>
         ))}
-        <View style={row.feature}>
-          <Feather name="users" size={11} color="#4B4C6B" />
-          <Text style={row.featureText}>Até {plan.maxGroups} grupos</Text>
+        <View style={c.feature}>
+          <Feather name="users" size={12} color="#9CA3AF" />
+          <Text style={c.featureText}>Até {plan.maxGroups} grupos</Text>
         </View>
       </View>
 
       <Pressable
         style={({ pressed }) => [
-          row.btn,
+          c.btn,
           isActive
-            ? { borderColor: color + "40", backgroundColor: color + "15" }
+            ? c.btnActive
             : canAfford
-            ? { backgroundColor: color, borderColor: color }
-            : { borderColor: "#1A1B28", backgroundColor: "#131420" },
+            ? c.btnPrimary
+            : c.btnDisabled,
           { opacity: pressed || loading ? 0.8 : 1 },
         ]}
         onPress={onActivate}
         disabled={isActive || loading || !canAfford}
       >
         {loading ? (
-          <ActivityIndicator color={isActive ? color : "#FFF"} size="small" />
+          <ActivityIndicator color={isActive ? "#7C3AED" : "#FFF"} size="small" />
         ) : (
-          <Text style={[row.btnText, !canAfford && !isActive && { color: "#4B4C6B" }, isActive && { color }]}>
+          <Text style={[c.btnText, isActive && c.btnActiveText, !canAfford && !isActive && c.btnDisabledText]}>
             {isActive ? "Plano ativo" : canAfford ? "Ativar plano" : `Faltam ${plan.coins - coins} moedas`}
           </Text>
         )}
@@ -106,8 +102,7 @@ export default function PlansScreen() {
   const activatePlan = useActivatePlan();
   const [activatingId, setActivatingId] = useState<string | null>(null);
 
-  const paddingTop = Platform.OS === "web" ? insets.top + 67 : insets.top + 16;
-  const paddingBottom = Platform.OS === "web" ? 34 + 84 : insets.bottom + 80;
+  const paddingBottom = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
 
   const handleActivate = (plan: Plan) => {
     Alert.alert("Ativar plano", `Ativar "${plan.name}" por ${plan.coins} moedas?`, [
@@ -134,64 +129,70 @@ export default function PlansScreen() {
   const activePlan = stats?.activePlan;
 
   return (
-    <ScrollView
-      style={s.root}
-      contentContainerStyle={{ paddingTop, paddingBottom, paddingHorizontal: 20 }}
-      showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#7C3AED" />}
-    >
-      <View style={s.topBar}>
-        <Text style={s.pageLabel}>ASSINATURA</Text>
-        <Text style={s.pageTitle}>Planos</Text>
-      </View>
+    <View style={s.root}>
+      <LinearGradient colors={["#7C3AED", "#6D28D9"]} style={[s.header, { paddingTop: insets.top + 12 }]}>
+        <Text style={s.headerTitle}>Planos</Text>
+        <Text style={s.headerSub}>Escolha o melhor plano para seus bots</Text>
+      </LinearGradient>
 
-      <View style={s.coinsCard}>
-        <View style={s.coinsLeft}>
-          <Feather name="dollar-sign" size={18} color="#7C3AED" />
-          <View>
-            <Text style={s.coinsValue}>{coins}</Text>
-            <Text style={s.coinsLabel}>moedas disponíveis</Text>
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#7C3AED" />}
+      >
+        <View style={s.coinsCard}>
+          <View style={s.coinsIconWrap}>
+            <Feather name="dollar-sign" size={20} color="#7C3AED" />
           </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.coinsValue}>{coins} moedas</Text>
+            <Text style={s.coinsLabel}>disponíveis</Text>
+          </View>
+          {activePlan && (
+            <View style={s.activePlanBadge}>
+              <Text style={s.activePlanText}>{activePlan}</Text>
+            </View>
+          )}
         </View>
-        {activePlan && (
-          <View style={s.activePlanBadge}>
-            <Text style={s.activePlanText}>{activePlan}</Text>
+
+        {plansLoading ? (
+          <View style={s.loader}>
+            <ActivityIndicator color="#7C3AED" size="large" />
+          </View>
+        ) : (
+          <View style={s.plansList}>
+            {(plans as Plan[] | undefined)?.map((plan) => (
+              <PlanCard
+                key={plan.id}
+                plan={plan}
+                isActive={activePlan === plan.name}
+                coins={coins}
+                onActivate={() => handleActivate(plan)}
+                loading={activatingId === plan.id}
+              />
+            ))}
           </View>
         )}
-      </View>
-
-      {plansLoading ? (
-        <View style={s.loader}>
-          <ActivityIndicator color="#7C3AED" />
-        </View>
-      ) : (
-        <View style={s.plansList}>
-          {(plans as Plan[] | undefined)?.map((plan) => (
-            <PlanRow
-              key={plan.id}
-              plan={plan}
-              isActive={activePlan === plan.name}
-              coins={coins}
-              onActivate={() => handleActivate(plan)}
-              loading={activatingId === plan.id}
-            />
-          ))}
-        </View>
-      )}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
-const row = StyleSheet.create({
+const c = StyleSheet.create({
   card: {
-    backgroundColor: "#0D0E16",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#1A1B28",
-    borderLeftWidth: 3,
-    borderLeftColor: "#1A1B28",
-    padding: 16,
-    gap: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 20,
+    gap: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  cardActive: {
+    borderWidth: 2,
+    borderColor: "#7C3AED",
   },
   header: {
     flexDirection: "row",
@@ -205,77 +206,97 @@ const row = StyleSheet.create({
     marginBottom: 4,
   },
   name: {
-    fontSize: 16,
-    fontWeight: "700" as const,
-    color: "#F1F2F6",
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#1F2937",
     fontFamily: "Inter_700Bold",
   },
   activeBadge: {
-    borderRadius: 4,
-    borderWidth: 1,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
+    backgroundColor: "#EDE9FE",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
   },
   activeBadgeText: {
-    fontSize: 9,
-    fontWeight: "700" as const,
+    fontSize: 10,
+    fontWeight: "700",
+    color: "#7C3AED",
     fontFamily: "Inter_700Bold",
     letterSpacing: 0.5,
   },
-  desc: { fontSize: 12, color: "#4B4C6B", fontFamily: "Inter_400Regular" },
-  price: { fontSize: 20, fontWeight: "800" as const, fontFamily: "Inter_700Bold" },
-  priceUnit: { fontSize: 12, fontWeight: "400" as const, color: "#8B8EA0" },
-  days: { fontSize: 11, color: "#4B4C6B", fontFamily: "Inter_400Regular", marginTop: 2 },
-  features: { gap: 6 },
+  desc: { fontSize: 13, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
+  price: { fontSize: 24, fontWeight: "800", color: "#7C3AED", fontFamily: "Inter_700Bold" },
+  priceUnit: { fontSize: 11, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
+  divider: { height: 1, backgroundColor: "#F3F4F6" },
+  features: { gap: 8 },
   feature: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
-  featureText: { fontSize: 12, color: "#8B8EA0", fontFamily: "Inter_400Regular" },
+  featureText: { fontSize: 13, color: "#6B7280", fontFamily: "Inter_400Regular" },
   btn: {
-    borderRadius: 6,
-    borderWidth: 1,
-    paddingVertical: 11,
+    borderRadius: 12,
+    paddingVertical: 13,
     alignItems: "center",
     justifyContent: "center",
   },
-  btnText: { fontSize: 13, fontWeight: "700" as const, color: "#FFF", fontFamily: "Inter_700Bold" },
+  btnPrimary: {
+    backgroundColor: "#7C3AED",
+  },
+  btnActive: {
+    backgroundColor: "#EDE9FE",
+  },
+  btnDisabled: {
+    backgroundColor: "#F3F4F6",
+  },
+  btnText: { fontSize: 14, fontWeight: "700", color: "#FFF", fontFamily: "Inter_700Bold" },
+  btnActiveText: { color: "#7C3AED" },
+  btnDisabledText: { color: "#9CA3AF" },
 });
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#090A0F" },
+  root: { flex: 1, backgroundColor: "#F5F5F5" },
 
-  topBar: { marginBottom: 20 },
-  pageLabel: { fontSize: 10, color: "#4B4C6B", fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 4 },
-  pageTitle: { fontSize: 22, fontWeight: "800" as const, color: "#F1F2F6", fontFamily: "Inter_700Bold", letterSpacing: -0.5 },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  headerTitle: { fontSize: 24, fontWeight: "700", color: "#FFF", fontFamily: "Inter_700Bold" },
+  headerSub: { fontSize: 13, color: "#FFFFFFBB", fontFamily: "Inter_400Regular", marginTop: 4 },
 
   coinsCard: {
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
-    backgroundColor: "#0D0E16",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#1A1B28",
-    borderLeftWidth: 3,
-    borderLeftColor: "#7C3AED",
-    padding: 16,
+    gap: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 18,
     marginBottom: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  coinsLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
-  coinsValue: { fontSize: 22, fontWeight: "800" as const, color: "#7C3AED", fontFamily: "Inter_700Bold" },
-  coinsLabel: { fontSize: 11, color: "#4B4C6B", fontFamily: "Inter_400Regular" },
+  coinsIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: "#EDE9FE",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  coinsValue: { fontSize: 18, fontWeight: "700", color: "#1F2937", fontFamily: "Inter_700Bold" },
+  coinsLabel: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 1 },
   activePlanBadge: {
-    backgroundColor: "#7C3AED15",
-    borderRadius: 4,
-    borderWidth: 1,
-    borderColor: "#7C3AED30",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    backgroundColor: "#EDE9FE",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
   },
-  activePlanText: { fontSize: 11, fontWeight: "700" as const, color: "#7C3AED", fontFamily: "Inter_700Bold" },
+  activePlanText: { fontSize: 12, fontWeight: "700", color: "#7C3AED", fontFamily: "Inter_700Bold" },
 
-  plansList: { gap: 10 },
-  loader: { paddingVertical: 40, alignItems: "center" },
+  plansList: { gap: 14 },
+  loader: { paddingVertical: 60, alignItems: "center" },
 });

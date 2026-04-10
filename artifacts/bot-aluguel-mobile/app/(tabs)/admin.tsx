@@ -16,14 +16,14 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
+import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/context/AuthContext";
 
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  pending: { label: "Pendente", color: "#F59E0B" },
-  paid:    { label: "Pago",     color: "#22C55E" },
-  expired: { label: "Expirado", color: "#4B4C6B" },
-  error:   { label: "Erro",     color: "#EF4444" },
+const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
+  pending: { label: "Pendente", color: "#F59E0B", bg: "#FFFBEB" },
+  paid:    { label: "Pago",     color: "#22C55E", bg: "#F0FDF4" },
+  expired: { label: "Expirado", color: "#9CA3AF", bg: "#F3F4F6" },
+  error:   { label: "Erro",     color: "#EF4444", bg: "#FEF2F2" },
 };
 
 type Tab = "users" | "payments";
@@ -46,16 +46,15 @@ export default function AdminScreen() {
   const { data: users, isLoading: usersLoading, refetch: refetchUsers } = useAdminListUsers();
   const { data: payments, isLoading: paymentsLoading, refetch: refetchPayments } = useAdminListPayments();
 
-  const paddingTop = Platform.OS === "web" ? insets.top + 67 : insets.top + 16;
-  const paddingBottom = Platform.OS === "web" ? 34 + 84 : insets.bottom + 80;
+  const paddingBottom = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
 
   function refetchAll() { refetchStats(); refetchUsers(); refetchPayments(); }
 
   if (!user?.isAdmin) {
     return (
-      <View style={[s.center, { paddingTop: paddingTop + 32 }]}>
+      <View style={s.center}>
         <View style={s.noAccessIcon}>
-          <Feather name="shield-off" size={28} color="#2A2B3E" />
+          <Feather name="shield-off" size={28} color="#9CA3AF" />
         </View>
         <Text style={s.noAccessTitle}>Acesso restrito</Text>
         <Text style={s.noAccessSub}>Área exclusiva para administradores</Text>
@@ -67,165 +66,194 @@ export default function AdminScreen() {
   const paymentList = (payments as any[] | undefined) ?? [];
 
   return (
-    <ScrollView
-      style={s.root}
-      contentContainerStyle={{ paddingTop, paddingBottom, paddingHorizontal: 20 }}
-      showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={false} onRefresh={refetchAll} tintColor="#7C3AED" />}
-    >
-      <View style={s.topBar}>
-        <Text style={s.pageLabel}>PLATAFORMA</Text>
-        <Text style={s.pageTitle}>Painel Admin</Text>
-      </View>
+    <View style={s.root}>
+      <LinearGradient colors={["#7C3AED", "#6D28D9"]} style={[s.header, { paddingTop: insets.top + 12 }]}>
+        <Text style={s.headerTitle}>Painel Admin</Text>
+        <Text style={s.headerSub}>Gerenciar plataforma</Text>
+      </LinearGradient>
 
-      {statsLoading ? (
-        <View style={s.loader}><ActivityIndicator color="#7C3AED" /></View>
-      ) : stats && (
-        <View style={s.statsGrid}>
-          {STAT_ITEMS(stats).map((item) => (
-            <View key={item.label} style={[s.statCard, { borderLeftColor: item.color }]}>
-              <Feather name={item.icon as any} size={14} color={item.color} />
-              <Text style={[s.statValue, { color: item.color }]}>{item.value}</Text>
-              <Text style={s.statLabel}>{item.label}</Text>
-            </View>
-          ))}
-        </View>
-      )}
-
-      <View style={s.tabBar}>
-        {(["users", "payments"] as Tab[]).map((t) => (
-          <Pressable
-            key={t}
-            style={[s.tabBtn, tab === t && s.tabBtnActive]}
-            onPress={() => setTab(t)}
-          >
-            <Text style={[s.tabText, tab === t && s.tabTextActive]}>
-              {t === "users" ? "Usuários" : "Pagamentos"}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      {tab === "users" && (
-        usersLoading ? (
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom }}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={false} onRefresh={refetchAll} tintColor="#7C3AED" />}
+      >
+        {statsLoading ? (
           <View style={s.loader}><ActivityIndicator color="#7C3AED" /></View>
-        ) : (
-          <View style={s.listCard}>
-            {userList.length === 0 ? (
-              <View style={s.emptyBox}><Text style={s.emptyText}>Nenhum usuário</Text></View>
-            ) : userList.map((u: any, i: number) => (
-              <View key={u.id} style={[s.listRow, i < userList.length - 1 && s.listRowBorder]}>
-                <View style={s.userAvatar}>
-                  <Text style={s.userInitial}>{u.name?.[0]?.toUpperCase() ?? "?"}</Text>
+        ) : stats && (
+          <View style={s.statsGrid}>
+            {STAT_ITEMS(stats).map((item) => (
+              <View key={item.label} style={s.statCard}>
+                <View style={[s.statIconWrap, { backgroundColor: item.color + "15" }]}>
+                  <Feather name={item.icon as any} size={16} color={item.color} />
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.rowTitle}>{u.name}</Text>
-                  <Text style={s.rowSub}>{u.phone} · {u.coins} moedas</Text>
-                </View>
-                {u.isAdmin && (
-                  <View style={s.adminBadge}>
-                    <Text style={s.adminBadgeText}>Admin</Text>
-                  </View>
-                )}
+                <Text style={s.statValue}>{item.value}</Text>
+                <Text style={s.statLabel}>{item.label}</Text>
               </View>
             ))}
           </View>
-        )
-      )}
+        )}
 
-      {tab === "payments" && (
-        paymentsLoading ? (
-          <View style={s.loader}><ActivityIndicator color="#7C3AED" /></View>
-        ) : (
-          <View style={s.listCard}>
-            {paymentList.length === 0 ? (
-              <View style={s.emptyBox}><Text style={s.emptyText}>Nenhum pagamento</Text></View>
-            ) : paymentList.map((p: any, i: number) => {
-              const cfg = STATUS_LABELS[p.status] ?? STATUS_LABELS.pending;
-              const date = new Date(p.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
-              return (
-                <View key={p.id} style={[s.listRow, i < paymentList.length - 1 && s.listRowBorder]}>
+        <View style={s.tabBar}>
+          {(["users", "payments"] as Tab[]).map((t) => (
+            <Pressable
+              key={t}
+              style={[s.tabBtn, tab === t && s.tabBtnActive]}
+              onPress={() => setTab(t)}
+            >
+              <Text style={[s.tabText, tab === t && s.tabTextActive]}>
+                {t === "users" ? "Usuários" : "Pagamentos"}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {tab === "users" && (
+          usersLoading ? (
+            <View style={s.loader}><ActivityIndicator color="#7C3AED" /></View>
+          ) : (
+            <View style={s.listCard}>
+              {userList.length === 0 ? (
+                <View style={s.emptyBox}><Text style={s.emptyText}>Nenhum usuário</Text></View>
+              ) : userList.map((u: any, i: number) => (
+                <View key={u.id} style={[s.listRow, i < userList.length - 1 && s.listRowBorder]}>
+                  <View style={s.userAvatar}>
+                    <Text style={s.userInitial}>{u.name?.[0]?.toUpperCase() ?? "?"}</Text>
+                  </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={s.rowTitle}>+{p.coins} moedas</Text>
-                    <Text style={s.rowSub}>R$ {p.amount.toFixed(2)} · {date}</Text>
+                    <Text style={s.rowTitle}>{u.name}</Text>
+                    <Text style={s.rowSub}>{u.phone} · {u.coins} moedas</Text>
                   </View>
-                  <View style={[s.statusBadge, { backgroundColor: cfg.color + "15", borderColor: cfg.color + "30" }]}>
-                    <Text style={[s.statusText, { color: cfg.color }]}>{cfg.label}</Text>
-                  </View>
+                  {u.isAdmin && (
+                    <View style={s.adminBadge}>
+                      <Text style={s.adminBadgeText}>Admin</Text>
+                    </View>
+                  )}
                 </View>
-              );
-            })}
-          </View>
-        )
-      )}
-    </ScrollView>
+              ))}
+            </View>
+          )
+        )}
+
+        {tab === "payments" && (
+          paymentsLoading ? (
+            <View style={s.loader}><ActivityIndicator color="#7C3AED" /></View>
+          ) : (
+            <View style={s.listCard}>
+              {paymentList.length === 0 ? (
+                <View style={s.emptyBox}><Text style={s.emptyText}>Nenhum pagamento</Text></View>
+              ) : paymentList.map((p: any, i: number) => {
+                const cfg = STATUS_LABELS[p.status] ?? STATUS_LABELS.pending;
+                const date = new Date(p.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" });
+                return (
+                  <View key={p.id} style={[s.listRow, i < paymentList.length - 1 && s.listRowBorder]}>
+                    <View style={s.payIcon}>
+                      <Feather name="dollar-sign" size={14} color="#7C3AED" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.rowTitle}>+{p.coins} moedas</Text>
+                      <Text style={s.rowSub}>R$ {p.amount.toFixed(2)} · {date}</Text>
+                    </View>
+                    <View style={[s.statusBadge, { backgroundColor: cfg.bg }]}>
+                      <Text style={[s.statusText, { color: cfg.color }]}>{cfg.label}</Text>
+                    </View>
+                  </View>
+                );
+              })}
+            </View>
+          )
+        )}
+      </ScrollView>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#090A0F" },
+  root: { flex: 1, backgroundColor: "#F5F5F5" },
 
-  center: { flex: 1, backgroundColor: "#090A0F", alignItems: "center", gap: 10, padding: 40 },
+  center: { flex: 1, backgroundColor: "#F5F5F5", alignItems: "center", justifyContent: "center", gap: 12, padding: 40 },
   noAccessIcon: {
-    width: 60, height: 60, borderRadius: 12, backgroundColor: "#0D0E16",
-    borderWidth: 1, borderColor: "#1A1B28", alignItems: "center", justifyContent: "center", marginBottom: 4,
+    width: 64, height: 64, borderRadius: 18, backgroundColor: "#F3F4F6",
+    alignItems: "center", justifyContent: "center", marginBottom: 4,
   },
-  noAccessTitle: { fontSize: 18, fontWeight: "700" as const, color: "#C9CADB", fontFamily: "Inter_700Bold" },
-  noAccessSub: { fontSize: 13, color: "#4B4C6B", fontFamily: "Inter_400Regular", textAlign: "center" as const },
+  noAccessTitle: { fontSize: 18, fontWeight: "700", color: "#374151", fontFamily: "Inter_700Bold" },
+  noAccessSub: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular", textAlign: "center" },
 
-  topBar: { marginBottom: 20 },
-  pageLabel: { fontSize: 10, color: "#4B4C6B", fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 4 },
-  pageTitle: { fontSize: 22, fontWeight: "800" as const, color: "#F1F2F6", fontFamily: "Inter_700Bold", letterSpacing: -0.5 },
+  header: { paddingHorizontal: 20, paddingBottom: 20 },
+  headerTitle: { fontSize: 24, fontWeight: "700", color: "#FFF", fontFamily: "Inter_700Bold" },
+  headerSub: { fontSize: 13, color: "#FFFFFFBB", fontFamily: "Inter_400Regular", marginTop: 4 },
 
   loader: { paddingVertical: 32, alignItems: "center" },
 
-  statsGrid: { flexDirection: "row", flexWrap: "wrap" as const, gap: 8, marginBottom: 20 },
+  statsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 20 },
   statCard: {
     flex: 1,
     minWidth: "28%",
-    backgroundColor: "#0D0E16",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#1A1B28",
-    borderLeftWidth: 3,
-    padding: 10,
-    gap: 4,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 14,
+    padding: 14,
+    gap: 6,
     alignItems: "flex-start",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  statValue: { fontSize: 18, fontWeight: "800" as const, fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 10, color: "#4B4C6B", fontFamily: "Inter_400Regular" },
+  statIconWrap: {
+    width: 32, height: 32, borderRadius: 10,
+    alignItems: "center", justifyContent: "center",
+  },
+  statValue: { fontSize: 18, fontWeight: "800", color: "#1F2937", fontFamily: "Inter_700Bold" },
+  statLabel: { fontSize: 10, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
 
   tabBar: {
     flexDirection: "row",
-    backgroundColor: "#0D0E16",
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#1A1B28",
-    padding: 3,
-    gap: 3,
-    marginBottom: 12,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 12,
+    padding: 4,
+    gap: 4,
+    marginBottom: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  tabBtn: { flex: 1, paddingVertical: 8, borderRadius: 4, alignItems: "center" },
+  tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: "center" },
   tabBtnActive: { backgroundColor: "#7C3AED" },
-  tabText: { fontSize: 13, fontWeight: "600" as const, color: "#4B4C6B", fontFamily: "Inter_600SemiBold" },
+  tabText: { fontSize: 14, fontWeight: "600", color: "#9CA3AF", fontFamily: "Inter_600SemiBold" },
   tabTextActive: { color: "#FFF" },
 
-  listCard: { backgroundColor: "#0D0E16", borderRadius: 8, borderWidth: 1, borderColor: "#1A1B28", overflow: "hidden" as const },
-  listRow: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 14, paddingVertical: 12 },
-  listRowBorder: { borderBottomWidth: 1, borderBottomColor: "#1A1B28" },
+  listCard: {
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  listRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 14 },
+  listRowBorder: { borderBottomWidth: 1, borderBottomColor: "#F3F4F6" },
 
   userAvatar: {
-    width: 32, height: 32, borderRadius: 6,
-    backgroundColor: "#7C3AED20", borderWidth: 1, borderColor: "#7C3AED30",
+    width: 36, height: 36, borderRadius: 12,
+    backgroundColor: "#EDE9FE",
     alignItems: "center", justifyContent: "center",
   },
-  userInitial: { fontSize: 14, fontWeight: "700" as const, color: "#7C3AED", fontFamily: "Inter_700Bold" },
-  rowTitle: { fontSize: 13, fontWeight: "600" as const, color: "#C9CADB", fontFamily: "Inter_600SemiBold" },
-  rowSub: { fontSize: 11, color: "#4B4C6B", fontFamily: "Inter_400Regular", marginTop: 2 },
-  adminBadge: { backgroundColor: "#7C3AED15", borderRadius: 4, borderWidth: 1, borderColor: "#7C3AED30", paddingHorizontal: 8, paddingVertical: 3 },
-  adminBadgeText: { fontSize: 10, fontWeight: "700" as const, color: "#7C3AED", fontFamily: "Inter_700Bold" },
-  statusBadge: { borderRadius: 4, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
-  statusText: { fontSize: 11, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
-  emptyBox: { paddingVertical: 24, alignItems: "center" },
-  emptyText: { fontSize: 13, color: "#4B4C6B", fontFamily: "Inter_400Regular" },
+  userInitial: { fontSize: 15, fontWeight: "700", color: "#7C3AED", fontFamily: "Inter_700Bold" },
+  payIcon: {
+    width: 36, height: 36, borderRadius: 12,
+    backgroundColor: "#EDE9FE",
+    alignItems: "center", justifyContent: "center",
+  },
+  rowTitle: { fontSize: 14, fontWeight: "600", color: "#1F2937", fontFamily: "Inter_600SemiBold" },
+  rowSub: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
+  adminBadge: { backgroundColor: "#EDE9FE", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  adminBadgeText: { fontSize: 11, fontWeight: "700", color: "#7C3AED", fontFamily: "Inter_700Bold" },
+  statusBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
+  statusText: { fontSize: 12, fontWeight: "600", fontFamily: "Inter_600SemiBold" },
+  emptyBox: { paddingVertical: 30, alignItems: "center" },
+  emptyText: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
 });

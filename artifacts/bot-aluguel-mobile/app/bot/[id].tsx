@@ -20,12 +20,13 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 
 const STATUS_CONFIG = {
-  connected:    { color: "#22C55E", label: "Online",      icon: "wifi" },
-  connecting:   { color: "#F59E0B", label: "Conectando",  icon: "loader" },
-  disconnected: { color: "#4B4C6B", label: "Offline",     icon: "wifi-off" },
-  error:        { color: "#EF4444", label: "Erro",        icon: "alert-circle" },
+  connected:    { color: "#22C55E", label: "Online",      icon: "wifi",          bg: "#F0FDF4" },
+  connecting:   { color: "#F59E0B", label: "Conectando",  icon: "loader",        bg: "#FFFBEB" },
+  disconnected: { color: "#9CA3AF", label: "Offline",     icon: "wifi-off",      bg: "#F3F4F6" },
+  error:        { color: "#EF4444", label: "Erro",        icon: "alert-circle",  bg: "#FEF2F2" },
 };
 
 export default function BotDetailScreen() {
@@ -95,12 +96,9 @@ export default function BotDetailScreen() {
     ]);
   }
 
-  const paddingTop = Platform.OS === "web" ? insets.top + 67 : insets.top;
-  const paddingBottom = Platform.OS === "web" ? 34 : insets.bottom + 20;
-
   if (!bot) {
     return (
-      <View style={[s.center, { paddingTop: paddingTop + 60 }]}>
+      <View style={s.center}>
         <ActivityIndicator color="#7C3AED" size="large" />
       </View>
     );
@@ -108,37 +106,44 @@ export default function BotDetailScreen() {
 
   return (
     <View style={s.root}>
-      <View style={[s.nav, { paddingTop: paddingTop + 8 }]}>
+      <LinearGradient colors={["#7C3AED", "#6D28D9"]} style={[s.nav, { paddingTop: insets.top + 8 }]}>
         <Pressable style={s.backBtn} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={20} color="#C9CADB" />
+          <Feather name="arrow-left" size={20} color="#FFF" />
         </Pressable>
         <Text style={s.navTitle} numberOfLines={1}>{bot.name}</Text>
-        <View style={{ width: 36 }} />
-      </View>
+        <Pressable style={s.backBtn} onPress={() => router.push(`/bot/settings/${id}` as any)}>
+          <Feather name="settings" size={18} color="#FFFFFFCC" />
+        </Pressable>
+      </LinearGradient>
 
-      <ScrollView contentContainerStyle={[s.scroll, { paddingBottom }]} showsVerticalScrollIndicator={false}>
-        <View style={[s.statusCard, { borderLeftColor: status.color }]}>
-          <View style={s.statusRow}>
-            <View style={[s.dot, { backgroundColor: status.color }]} />
-            <Text style={[s.statusLabel, { color: status.color }]}>{status.label}</Text>
+      <ScrollView contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 20 }]} showsVerticalScrollIndicator={false}>
+        <View style={s.statusCard}>
+          <View style={[s.statusIconWrap, { backgroundColor: status.bg }]}>
+            <Feather name={status.icon as any} size={20} color={status.color} />
           </View>
-          {bot.phone && <Text style={s.botPhone}>+{bot.phone} · {bot.totalGroups} grupos</Text>}
+          <View style={{ flex: 1 }}>
+            <Text style={s.statusLabel}>{status.label}</Text>
+            {bot.phone && <Text style={s.botPhone}>+{bot.phone} · {bot.totalGroups} grupos</Text>}
+          </View>
+          <View style={[s.statusBadge, { backgroundColor: status.bg }]}>
+            <View style={[s.statusDot, { backgroundColor: status.color }]} />
+          </View>
         </View>
 
         <View style={s.quickRow}>
           <Pressable
-            style={({ pressed }) => [s.quickBtn, s.quickBtnPrimary, { opacity: pressed ? 0.75 : 1 }]}
+            style={({ pressed }) => [s.quickBtn, { backgroundColor: "#EDE9FE" }, pressed && { opacity: 0.75 }]}
             onPress={() => router.push(`/builder/${id}` as any)}
           >
             <Feather name="git-branch" size={16} color="#7C3AED" />
             <Text style={[s.quickBtnText, { color: "#7C3AED" }]}>Construtor</Text>
           </Pressable>
           <Pressable
-            style={({ pressed }) => [s.quickBtn, s.quickBtnSecondary, { opacity: pressed ? 0.75 : 1 }]}
+            style={({ pressed }) => [s.quickBtn, { backgroundColor: "#F3F4F6" }, pressed && { opacity: 0.75 }]}
             onPress={() => router.push(`/bot/settings/${id}` as any)}
           >
-            <Feather name="sliders" size={16} color="#8B8EA0" />
-            <Text style={[s.quickBtnText, { color: "#8B8EA0" }]}>Configurar</Text>
+            <Feather name="sliders" size={16} color="#6B7280" />
+            <Text style={[s.quickBtnText, { color: "#6B7280" }]}>Configurar</Text>
           </Pressable>
         </View>
 
@@ -164,7 +169,7 @@ export default function BotDetailScreen() {
                   style={[s.toggleBtn, connectionType === t && s.toggleBtnActive]}
                   onPress={() => setConnectionType(t)}
                 >
-                  <Feather name={icon} size={13} color={connectionType === t ? "#FFF" : "#4B4C6B"} />
+                  <Feather name={icon} size={13} color={connectionType === t ? "#FFF" : "#9CA3AF"} />
                   <Text style={[s.toggleText, connectionType === t && s.toggleTextActive]}>{label}</Text>
                 </Pressable>
               ))}
@@ -172,11 +177,11 @@ export default function BotDetailScreen() {
 
             {connectionType === "code" && (
               <View style={s.phoneBox}>
-                <Feather name="phone" size={14} color="#4B4C6B" />
+                <Feather name="phone" size={14} color="#9CA3AF" />
                 <TextInput
                   style={s.phoneInput}
                   placeholder="5511999999999"
-                  placeholderTextColor="#4B4C6B"
+                  placeholderTextColor="#9CA3AF"
                   value={phone}
                   onChangeText={setPhone}
                   keyboardType="phone-pad"
@@ -266,110 +271,120 @@ export default function BotDetailScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#090A0F" },
-  center: { flex: 1, backgroundColor: "#090A0F", alignItems: "center" },
+  root: { flex: 1, backgroundColor: "#F5F5F5" },
+  center: { flex: 1, backgroundColor: "#F5F5F5", alignItems: "center", justifyContent: "center" },
 
   nav: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: "#1A1B28",
-    backgroundColor: "#090A0F",
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
-  backBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
-  navTitle: { flex: 1, textAlign: "center" as const, fontSize: 15, fontWeight: "600" as const, color: "#F1F2F6", fontFamily: "Inter_600SemiBold" },
+  backBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
+  navTitle: { flex: 1, textAlign: "center", fontSize: 17, fontWeight: "700", color: "#FFF", fontFamily: "Inter_700Bold" },
 
-  scroll: { paddingHorizontal: 20, paddingTop: 20, gap: 16 },
+  scroll: { padding: 20, gap: 14 },
 
   statusCard: {
-    backgroundColor: "#0D0E16",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#1A1B28",
-    borderLeftWidth: 3,
-    padding: 14,
-    gap: 6,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  statusRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  dot: { width: 8, height: 8, borderRadius: 4 },
-  statusLabel: { fontSize: 14, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
-  botPhone: { fontSize: 12, color: "#4B4C6B", fontFamily: "Inter_400Regular" },
+  statusIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statusLabel: { fontSize: 16, fontWeight: "700", color: "#1F2937", fontFamily: "Inter_700Bold" },
+  botPhone: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
+  statusBadge: { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center" },
+  statusDot: { width: 10, height: 10, borderRadius: 5 },
 
   quickRow: { flexDirection: "row", gap: 10 },
   quickBtn: {
     flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 6, paddingVertical: 11, borderRadius: 8, borderWidth: 1,
+    gap: 8, paddingVertical: 13, borderRadius: 12,
   },
-  quickBtnPrimary: { backgroundColor: "#7C3AED15", borderColor: "#7C3AED30" },
-  quickBtnSecondary: { backgroundColor: "#131420", borderColor: "#1A1B28" },
-  quickBtnText: { fontSize: 13, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
+  quickBtnText: { fontSize: 14, fontWeight: "600", fontFamily: "Inter_600SemiBold" },
 
   connectedCard: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    backgroundColor: "#22C55E10", borderRadius: 8, borderWidth: 1, borderColor: "#22C55E30",
-    borderLeftWidth: 3, borderLeftColor: "#22C55E", padding: 14,
+    flexDirection: "row", alignItems: "center", gap: 10,
+    backgroundColor: "#F0FDF4", borderRadius: 12, padding: 16,
   },
-  connectedText: { fontSize: 14, fontWeight: "600" as const, color: "#22C55E", fontFamily: "Inter_600SemiBold" },
+  connectedText: { fontSize: 15, fontWeight: "600", color: "#22C55E", fontFamily: "Inter_600SemiBold" },
   disconnectBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center",
-    gap: 8, paddingVertical: 12, borderRadius: 8,
-    backgroundColor: "#EF444415", borderWidth: 1, borderColor: "#EF444430",
+    gap: 8, paddingVertical: 13, borderRadius: 12, backgroundColor: "#FEF2F2",
   },
-  disconnectBtnText: { fontSize: 14, fontWeight: "600" as const, color: "#EF4444", fontFamily: "Inter_600SemiBold" },
+  disconnectBtnText: { fontSize: 14, fontWeight: "600", color: "#EF4444", fontFamily: "Inter_600SemiBold" },
 
-  connectSection: { backgroundColor: "#0D0E16", borderRadius: 8, borderWidth: 1, borderColor: "#1A1B28", padding: 16, gap: 12 },
-  sectionLabel: { fontSize: 9, color: "#4B4C6B", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
-  typeToggle: {
-    flexDirection: "row", backgroundColor: "#131420", borderRadius: 6,
-    borderWidth: 1, borderColor: "#1A1B28", padding: 3, gap: 3,
+  connectSection: {
+    backgroundColor: "#FFFFFF", borderRadius: 16, padding: 20, gap: 14,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
   },
-  toggleBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 8, borderRadius: 4 },
+  sectionLabel: { fontSize: 11, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
+  typeToggle: {
+    flexDirection: "row", backgroundColor: "#F3F4F6", borderRadius: 10, padding: 3, gap: 3,
+  },
+  toggleBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10, borderRadius: 8 },
   toggleBtnActive: { backgroundColor: "#7C3AED" },
-  toggleText: { fontSize: 13, fontWeight: "600" as const, color: "#4B4C6B", fontFamily: "Inter_600SemiBold" },
+  toggleText: { fontSize: 14, fontWeight: "600", color: "#9CA3AF", fontFamily: "Inter_600SemiBold" },
   toggleTextActive: { color: "#FFF" },
   phoneBox: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    backgroundColor: "#131420", borderRadius: 6, borderWidth: 1, borderColor: "#1E1F2E", paddingHorizontal: 12,
+    flexDirection: "row", alignItems: "center", gap: 10,
+    backgroundColor: "#F3F4F6", borderRadius: 12, paddingHorizontal: 14,
   },
-  phoneInput: { flex: 1, color: "#F1F2F6", fontSize: 15, paddingVertical: 12, fontFamily: "Inter_400Regular" },
-  connectHint: { fontSize: 12, color: "#4B4C6B", fontFamily: "Inter_400Regular", lineHeight: 18 },
+  phoneInput: { flex: 1, color: "#1F2937", fontSize: 15, paddingVertical: 14, fontFamily: "Inter_400Regular" },
+  connectHint: { fontSize: 13, color: "#9CA3AF", fontFamily: "Inter_400Regular", lineHeight: 20 },
   connectBtn: {
-    backgroundColor: "#7C3AED", borderRadius: 6, paddingVertical: 13,
+    backgroundColor: "#7C3AED", borderRadius: 12, paddingVertical: 14,
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
   },
-  connectBtnText: { color: "#FFF", fontSize: 14, fontWeight: "700" as const, fontFamily: "Inter_700Bold" },
+  connectBtnText: { color: "#FFF", fontSize: 15, fontWeight: "700", fontFamily: "Inter_700Bold" },
 
   connectingSection: {
-    backgroundColor: "#0D0E16", borderRadius: 8, borderWidth: 1,
-    borderColor: "#F59E0B30", borderLeftWidth: 3, borderLeftColor: "#F59E0B", padding: 16, gap: 16,
+    backgroundColor: "#FFFFFF", borderRadius: 16, borderLeftWidth: 4, borderLeftColor: "#F59E0B",
+    padding: 20, gap: 16,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
   },
-  qrContainer: { alignItems: "center", gap: 10 },
-  connectingLabel: { fontSize: 15, fontWeight: "700" as const, color: "#F1F2F6", fontFamily: "Inter_700Bold" },
-  connectingHint: { fontSize: 12, color: "#4B4C6B", fontFamily: "Inter_400Regular", textAlign: "center" as const },
-  qrBox: { backgroundColor: "#FFF", borderRadius: 8, padding: 12 },
+  qrContainer: { alignItems: "center", gap: 12 },
+  connectingLabel: { fontSize: 17, fontWeight: "700", color: "#1F2937", fontFamily: "Inter_700Bold" },
+  connectingHint: { fontSize: 13, color: "#9CA3AF", fontFamily: "Inter_400Regular", textAlign: "center" },
+  qrBox: { backgroundColor: "#FFF", borderRadius: 12, padding: 12, borderWidth: 1, borderColor: "#E5E7EB" },
   qrImage: { width: 200, height: 200 },
-  pairContainer: { alignItems: "center", gap: 10 },
+  pairContainer: { alignItems: "center", gap: 12 },
   pairBox: {
-    backgroundColor: "#7C3AED10", borderRadius: 8, borderWidth: 2,
-    borderColor: "#7C3AED40", paddingHorizontal: 28, paddingVertical: 16,
+    backgroundColor: "#EDE9FE", borderRadius: 12, borderWidth: 2,
+    borderColor: "#7C3AED40", paddingHorizontal: 30, paddingVertical: 18,
   },
-  pairCode: { fontSize: 32, fontWeight: "800" as const, color: "#7C3AED", fontFamily: "Inter_700Bold", letterSpacing: 6 },
+  pairCode: { fontSize: 32, fontWeight: "800", color: "#7C3AED", fontFamily: "Inter_700Bold", letterSpacing: 6 },
   waitRow: { flexDirection: "row", alignItems: "center", gap: 8 },
-  waitText: { fontSize: 13, color: "#4B4C6B", fontFamily: "Inter_400Regular" },
-  waitingCenter: { alignItems: "center", gap: 12, paddingVertical: 24 },
+  waitText: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
+  waitingCenter: { alignItems: "center", gap: 14, paddingVertical: 24 },
   cancelBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    paddingVertical: 11, borderRadius: 6, backgroundColor: "#EF444415", borderWidth: 1, borderColor: "#EF444430",
+    paddingVertical: 12, borderRadius: 12, backgroundColor: "#FEF2F2",
   },
-  cancelBtnText: { fontSize: 13, fontWeight: "600" as const, color: "#EF4444", fontFamily: "Inter_600SemiBold" },
+  cancelBtnText: { fontSize: 14, fontWeight: "600", color: "#EF4444", fontFamily: "Inter_600SemiBold" },
 
-  infoCard: { backgroundColor: "#0D0E16", borderRadius: 8, borderWidth: 1, borderColor: "#1A1B28", overflow: "hidden" as const },
-  infoCardTitle: { fontSize: 9, color: "#2A2B3E", fontFamily: "Inter_600SemiBold", letterSpacing: 1, padding: 14, paddingBottom: 8 },
-  infoRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 14, paddingVertical: 11 },
-  infoRowBorder: { borderBottomWidth: 1, borderBottomColor: "#1A1B28" },
-  infoLabel: { fontSize: 13, color: "#4B4C6B", fontFamily: "Inter_400Regular" },
-  infoValue: { fontSize: 13, fontWeight: "500" as const, color: "#C9CADB", fontFamily: "Inter_500Medium" },
+  infoCard: {
+    backgroundColor: "#FFFFFF", borderRadius: 16, overflow: "hidden",
+    shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+  },
+  infoCardTitle: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1, padding: 16, paddingBottom: 8 },
+  infoRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", paddingHorizontal: 16, paddingVertical: 13 },
+  infoRowBorder: { borderBottomWidth: 1, borderBottomColor: "#F3F4F6" },
+  infoLabel: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
+  infoValue: { fontSize: 14, fontWeight: "500", color: "#374151", fontFamily: "Inter_500Medium" },
 });

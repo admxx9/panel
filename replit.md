@@ -59,10 +59,9 @@
 - Planos: Basico (100), Pro (250), Premium (500) moedas/30 dias
 - Pagamentos: recarga PIX com codigo copia-e-cola, historico
 - Admin: stats da plataforma, tabela de usuarios e pagamentos
-- Tema Pterodactyl: fundo muito escuro (#090A0F), roxo primário (#7C3AED), accent indigo (#6D28D9). Sem shadcn nos pages — HTML raw com Tailwind.
-- Mobile app (Expo): `constants/colors.ts` define paleta com primary `#7C3AED`. Cores hardcoded via constante `C` (não `useColors()`).
-- Web app: CSS variables em `index.css` — `--primary: 263 84% 57%`, `--accent: 263 70% 50%`
-- Dashboard redesenhado: wave header SVG, feature cards (Criar Bot/Construtor/Moedas/Planos), lista "SEUS BOTS" com status, painel lateral com stats e pré-visualização de comandos
+- **Web — Tema Pterodactyl**: fundo muito escuro (#090A0F), roxo primário (#7C3AED), accent indigo (#6D28D9). Sem shadcn nos pages — HTML raw com Tailwind. CSS variables em `index.css` — `--primary: 263 84% 57%`, `--accent: 263 70% 50%`. Dashboard redesenhado: wave header SVG, feature cards (Criar Bot/Construtor/Moedas/Planos), lista "SEUS BOTS" com status, painel lateral com stats e pré-visualização de comandos.
+- **Mobile — Tema PicPay**: fundo claro `#F5F5F5`, cards brancos `#FFFFFF` com `borderRadius: 16` e sombras sutis, headers gradient roxo `LinearGradient ["#7C3AED","#6D28D9"]`, bottom tab ativa com pill/circle roxo, scroll horizontal de ações rápidas, avatar/busca no header, card de saldo. `constants/colors.ts` define paleta light. Todas as 11 telas redesenhadas: `_layout`, `index`, `bots`, `payments`, `plans`, `settings`, `admin`, `login`, `register`, `bot/[id]`, `bot/settings/[id]`. Builder visual mantém tema escuro (contraste para canvas).
+- **Cores consistentes**: primary `#7C3AED`, darker `#6D28D9`, light purple bg `#EDE9FE`. Status: online `#22C55E`, warning `#F59E0B`, error `#EF4444`, offline `#9CA3AF`
 
 ## Admin Credentials
 

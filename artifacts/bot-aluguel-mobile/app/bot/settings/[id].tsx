@@ -16,6 +16,7 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 
 const PREFIX_OPTIONS = [".", "!", "/", "#", "@", "$", "nenhum"];
 
@@ -36,9 +37,6 @@ export default function BotSettingsScreen() {
       });
     }
   }, [bot]);
-
-  const paddingTop = Platform.OS === "web" ? insets.top + 67 : insets.top;
-  const paddingBottom = Platform.OS === "web" ? 34 : insets.bottom + 20;
 
   async function handleSave() {
     setSaving(true);
@@ -66,161 +64,166 @@ export default function BotSettingsScreen() {
   }
 
   return (
-    <KeyboardAvoidingView style={s.root} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <View style={[s.nav, { paddingTop: paddingTop + 8 }]}>
+    <View style={s.root}>
+      <LinearGradient colors={["#7C3AED", "#6D28D9"]} style={[s.nav, { paddingTop: insets.top + 8 }]}>
         <Pressable style={s.backBtn} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={20} color="#C9CADB" />
+          <Feather name="arrow-left" size={20} color="#FFF" />
         </Pressable>
         <Text style={s.navTitle}>Configurações do Bot</Text>
-        <View style={{ width: 36 }} />
-      </View>
+        <View style={{ width: 40 }} />
+      </LinearGradient>
 
-      <ScrollView
-        contentContainerStyle={[s.scroll, { paddingBottom }]}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
-      >
-        {!bot ? (
-          <View style={s.loader}><ActivityIndicator color="#7C3AED" size="large" /></View>
-        ) : (
-          <>
-            <View style={s.card}>
-              <Text style={s.cardSectionLabel}>GERAL</Text>
+      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+        <ScrollView
+          contentContainerStyle={[s.scroll, { paddingBottom: insets.bottom + 20 }]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          {!bot ? (
+            <View style={s.loader}><ActivityIndicator color="#7C3AED" size="large" /></View>
+          ) : (
+            <>
+              <View style={s.card}>
+                <Text style={s.cardSectionLabel}>GERAL</Text>
 
-              <View style={s.field}>
-                <Text style={s.label}>NOME DO BOT</Text>
-                <View style={s.inputRow}>
-                  <Feather name="cpu" size={14} color="#4B4C6B" />
-                  <TextInput
-                    style={s.input}
-                    value={settings.name}
-                    onChangeText={(v) => setSettings((p) => ({ ...p, name: v }))}
-                    placeholder="Ex: MeuBot"
-                    placeholderTextColor="#4B4C6B"
-                  />
-                </View>
-                <Text style={s.hint}>Nome de exibição do bot na plataforma</Text>
-              </View>
-
-              <View style={s.field}>
-                <Text style={s.label}>PREFIXO DOS COMANDOS</Text>
-                <View style={s.prefixRow}>
-                  {PREFIX_OPTIONS.map((p) => {
-                    const sel = settings.prefix === p;
-                    return (
-                      <Pressable
-                        key={p}
-                        style={[s.prefixBtn, sel && s.prefixBtnActive]}
-                        onPress={() => setSettings((st) => ({ ...st, prefix: p }))}
-                      >
-                        <Text style={[s.prefixText, sel && s.prefixTextActive]}>{p}</Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-                <Text style={s.hint}>
-                  Caractere que precede os comandos. Ex: <Text style={{ color: "#8B8EA0" }}>{settings.prefix !== "nenhum" ? settings.prefix : ""}sticker</Text>
-                </Text>
-              </View>
-
-              <View style={s.field}>
-                <Text style={s.label}>NÚMERO DO DONO (COM DDI)</Text>
-                <View style={s.inputRow}>
-                  <Feather name="phone" size={14} color="#4B4C6B" />
-                  <TextInput
-                    style={s.input}
-                    value={settings.ownerPhone}
-                    onChangeText={(v) => setSettings((p) => ({ ...p, ownerPhone: v.replace(/\D/g, "") }))}
-                    placeholder="Ex: 5511999990000"
-                    placeholderTextColor="#4B4C6B"
-                    keyboardType="phone-pad"
-                    maxLength={15}
-                  />
-                </View>
-                <Text style={s.hint}>Número com DDI (55 para Brasil)</Text>
-              </View>
-            </View>
-
-            <View style={s.card}>
-              <Text style={s.cardSectionLabel}>COMO OS COMANDOS FUNCIONAM</Text>
-              {[
-                { badge: `${settings.prefix !== "nenhum" ? settings.prefix : ""}sticker`, badgeColor: "#7C3AED", desc: "Com o prefixo e gatilho definidos, o bot responde ao comando em grupos." },
-                { badge: "Builder", badgeColor: "#7C3AED", desc: "Use o Construtor Visual para montar o fluxo: Comando → Ação → Resposta." },
-                { badge: "Live", badgeColor: "#22C55E", desc: "O bot precisa estar conectado ao WhatsApp para processar comandos." },
-              ].map((tip) => (
-                <View key={tip.badge} style={s.tipRow}>
-                  <View style={[s.tipBadge, { backgroundColor: tip.badgeColor + "15" }]}>
-                    <Text style={[s.tipBadgeText, { color: tip.badgeColor }]}>{tip.badge}</Text>
+                <View style={s.field}>
+                  <Text style={s.label}>NOME DO BOT</Text>
+                  <View style={s.inputRow}>
+                    <Feather name="cpu" size={14} color="#9CA3AF" />
+                    <TextInput
+                      style={s.input}
+                      value={settings.name}
+                      onChangeText={(v) => setSettings((p) => ({ ...p, name: v }))}
+                      placeholder="Ex: MeuBot"
+                      placeholderTextColor="#9CA3AF"
+                    />
                   </View>
-                  <Text style={s.tipText}>{tip.desc}</Text>
+                  <Text style={s.hint}>Nome de exibição do bot na plataforma</Text>
                 </View>
-              ))}
-            </View>
 
-            <Pressable
-              style={({ pressed }) => [s.saveBtn, { opacity: pressed || saving ? 0.8 : 1 }]}
-              onPress={handleSave}
-              disabled={saving}
-            >
-              {saving ? (
-                <ActivityIndicator color="#FFF" size="small" />
-              ) : (
-                <>
-                  <Feather name="save" size={16} color="#FFF" />
-                  <Text style={s.saveBtnText}>Salvar Configurações</Text>
-                </>
-              )}
-            </Pressable>
-          </>
-        )}
-      </ScrollView>
-    </KeyboardAvoidingView>
+                <View style={s.field}>
+                  <Text style={s.label}>PREFIXO DOS COMANDOS</Text>
+                  <View style={s.prefixRow}>
+                    {PREFIX_OPTIONS.map((p) => {
+                      const sel = settings.prefix === p;
+                      return (
+                        <Pressable
+                          key={p}
+                          style={[s.prefixBtn, sel && s.prefixBtnActive]}
+                          onPress={() => setSettings((st) => ({ ...st, prefix: p }))}
+                        >
+                          <Text style={[s.prefixText, sel && s.prefixTextActive]}>{p}</Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                  <Text style={s.hint}>
+                    Caractere que precede os comandos. Ex: <Text style={{ color: "#6B7280" }}>{settings.prefix !== "nenhum" ? settings.prefix : ""}sticker</Text>
+                  </Text>
+                </View>
+
+                <View style={s.field}>
+                  <Text style={s.label}>NÚMERO DO DONO (COM DDI)</Text>
+                  <View style={s.inputRow}>
+                    <Feather name="phone" size={14} color="#9CA3AF" />
+                    <TextInput
+                      style={s.input}
+                      value={settings.ownerPhone}
+                      onChangeText={(v) => setSettings((p) => ({ ...p, ownerPhone: v.replace(/\D/g, "") }))}
+                      placeholder="Ex: 5511999990000"
+                      placeholderTextColor="#9CA3AF"
+                      keyboardType="phone-pad"
+                      maxLength={15}
+                    />
+                  </View>
+                  <Text style={s.hint}>Número com DDI (55 para Brasil)</Text>
+                </View>
+              </View>
+
+              <View style={s.card}>
+                <Text style={s.cardSectionLabel}>COMO OS COMANDOS FUNCIONAM</Text>
+                {[
+                  { badge: `${settings.prefix !== "nenhum" ? settings.prefix : ""}sticker`, badgeColor: "#7C3AED", desc: "Com o prefixo e gatilho definidos, o bot responde ao comando em grupos." },
+                  { badge: "Builder", badgeColor: "#7C3AED", desc: "Use o Construtor Visual para montar o fluxo: Comando → Ação → Resposta." },
+                  { badge: "Live", badgeColor: "#22C55E", desc: "O bot precisa estar conectado ao WhatsApp para processar comandos." },
+                ].map((tip) => (
+                  <View key={tip.badge} style={s.tipRow}>
+                    <View style={[s.tipBadge, { backgroundColor: tip.badgeColor + "15" }]}>
+                      <Text style={[s.tipBadgeText, { color: tip.badgeColor }]}>{tip.badge}</Text>
+                    </View>
+                    <Text style={s.tipText}>{tip.desc}</Text>
+                  </View>
+                ))}
+              </View>
+
+              <Pressable
+                style={({ pressed }) => [s.saveBtn, { opacity: pressed || saving ? 0.8 : 1 }]}
+                onPress={handleSave}
+                disabled={saving}
+              >
+                {saving ? (
+                  <ActivityIndicator color="#FFF" size="small" />
+                ) : (
+                  <>
+                    <Feather name="save" size={16} color="#FFF" />
+                    <Text style={s.saveBtnText}>Salvar Configurações</Text>
+                  </>
+                )}
+              </Pressable>
+            </>
+          )}
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#090A0F" },
+  root: { flex: 1, backgroundColor: "#F5F5F5" },
 
   nav: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 20, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: "#1A1B28", backgroundColor: "#090A0F",
+    paddingHorizontal: 16, paddingBottom: 16,
   },
-  backBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
-  navTitle: { fontSize: 15, fontWeight: "600" as const, color: "#F1F2F6", fontFamily: "Inter_600SemiBold" },
+  backBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
+  navTitle: { fontSize: 17, fontWeight: "700", color: "#FFF", fontFamily: "Inter_700Bold" },
 
-  scroll: { paddingHorizontal: 20, paddingTop: 20, gap: 14 },
+  scroll: { padding: 20, gap: 16 },
   loader: { paddingVertical: 60, alignItems: "center" },
 
-  card: { backgroundColor: "#0D0E16", borderRadius: 8, borderWidth: 1, borderColor: "#1A1B28", padding: 16, gap: 16 },
-  cardSectionLabel: { fontSize: 9, color: "#4B4C6B", fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: -4 },
+  card: {
+    backgroundColor: "#FFFFFF", borderRadius: 16, padding: 20, gap: 18,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+  },
+  cardSectionLabel: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
 
-  field: { gap: 6 },
-  label: { fontSize: 9, color: "#4B4C6B", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
+  field: { gap: 8 },
+  label: { fontSize: 11, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
   inputRow: {
-    flexDirection: "row", alignItems: "center", gap: 8,
-    backgroundColor: "#131420", borderRadius: 6, borderWidth: 1, borderColor: "#1E1F2E", paddingHorizontal: 12,
+    flexDirection: "row", alignItems: "center", gap: 10,
+    backgroundColor: "#F3F4F6", borderRadius: 12, paddingHorizontal: 14,
   },
-  input: { flex: 1, color: "#F1F2F6", fontSize: 14, paddingVertical: 12, fontFamily: "Inter_400Regular" },
-  hint: { fontSize: 11, color: "#4B4C6B", fontFamily: "Inter_400Regular" },
+  input: { flex: 1, color: "#1F2937", fontSize: 15, paddingVertical: 14, fontFamily: "Inter_400Regular" },
+  hint: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
 
-  prefixRow: { flexDirection: "row", flexWrap: "wrap" as const, gap: 6 },
+  prefixRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   prefixBtn: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 6,
-    backgroundColor: "#131420", borderWidth: 1, borderColor: "#1A1B28",
+    paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10,
+    backgroundColor: "#F3F4F6",
   },
-  prefixBtnActive: { backgroundColor: "#7C3AED18", borderColor: "#7C3AED" },
-  prefixText: { fontSize: 13, fontWeight: "600" as const, color: "#4B4C6B", fontFamily: "Inter_600SemiBold" },
+  prefixBtnActive: { backgroundColor: "#EDE9FE" },
+  prefixText: { fontSize: 14, fontWeight: "600", color: "#9CA3AF", fontFamily: "Inter_600SemiBold" },
   prefixTextActive: { color: "#7C3AED" },
 
   tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
-  tipBadge: { borderRadius: 4, paddingHorizontal: 8, paddingVertical: 3, marginTop: 2 },
-  tipBadgeText: { fontSize: 11, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
-  tipText: { flex: 1, fontSize: 12, color: "#8B8EA0", fontFamily: "Inter_400Regular", lineHeight: 18 },
+  tipBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, marginTop: 2 },
+  tipBadgeText: { fontSize: 12, fontWeight: "600", fontFamily: "Inter_600SemiBold" },
+  tipText: { flex: 1, fontSize: 13, color: "#6B7280", fontFamily: "Inter_400Regular", lineHeight: 20 },
 
   saveBtn: {
-    backgroundColor: "#7C3AED", borderRadius: 6, paddingVertical: 14,
+    backgroundColor: "#7C3AED", borderRadius: 12, paddingVertical: 15,
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    shadowColor: "#7C3AED", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
   },
-  saveBtnText: { color: "#FFF", fontSize: 14, fontWeight: "700" as const, fontFamily: "Inter_700Bold" },
+  saveBtnText: { color: "#FFF", fontSize: 15, fontWeight: "700", fontFamily: "Inter_700Bold" },
 });

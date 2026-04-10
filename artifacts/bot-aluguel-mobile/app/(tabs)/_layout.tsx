@@ -1,28 +1,26 @@
-import { Tabs, usePathname } from "expo-router";
+import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
 import { useAuth } from "@/context/AuthContext";
 
 const TABS = [
-  { name: "index", title: "Painel", icon: "grid" },
+  { name: "index", title: "Início", icon: "home" },
   { name: "bots", title: "Bots", icon: "cpu" },
   { name: "payments", title: "Moedas", icon: "dollar-sign" },
   { name: "plans", title: "Planos", icon: "star" },
-  { name: "settings", title: "Conta", icon: "user" },
+  { name: "settings", title: "Menu", icon: "menu" },
   { name: "admin", title: "Admin", icon: "shield", adminOnly: true },
 ] as const;
 
 function TabBarIcon({ name, label, focused }: { name: string; label: string; focused: boolean }) {
   return (
-    <View style={tbStyles.item}>
-      {focused && <View style={tbStyles.indicator} />}
-      <View style={[tbStyles.iconWrap, focused && tbStyles.iconActive]}>
-        <Feather name={name as any} size={18} color={focused ? "#7C3AED" : "#4B4C6B"} />
+    <View style={tb.item}>
+      <View style={[tb.iconWrap, focused && tb.iconActive]}>
+        <Feather name={name as any} size={20} color={focused ? "#FFFFFF" : "#9CA3AF"} />
       </View>
-      <Text style={[tbStyles.label, focused && tbStyles.labelActive]}>{label}</Text>
+      <Text style={[tb.label, focused && tb.labelActive]}>{label}</Text>
     </View>
   );
 }
@@ -36,12 +34,12 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          ...tbStyles.tabBar,
-          height: 54 + (Platform.OS === "ios" ? insets.bottom : 6),
-          paddingBottom: Platform.OS === "ios" ? insets.bottom : 6,
+          ...tb.tabBar,
+          height: 64 + (Platform.OS === "ios" ? insets.bottom : 8),
+          paddingBottom: Platform.OS === "ios" ? insets.bottom : 8,
         },
         tabBarBackground: () => (
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: "#0A0B12", borderTopWidth: 1, borderTopColor: "#1A1B26" }]} />
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: "#FFFFFF", borderTopWidth: 1, borderTopColor: "#F0F0F0" }]} />
         ),
         tabBarShowLabel: false,
       }}
@@ -66,45 +64,50 @@ export default function TabLayout() {
   );
 }
 
-const tbStyles = StyleSheet.create({
+const tb = StyleSheet.create({
   tabBar: {
-    position: "absolute" as const,
+    position: "absolute",
     backgroundColor: "transparent",
     borderTopWidth: 0,
-    elevation: 0,
+    elevation: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
   },
   item: {
     alignItems: "center",
     justifyContent: "center",
     gap: 4,
-    paddingTop: 6,
-    width: 60,
-  },
-  indicator: {
-    position: "absolute",
-    top: 0,
-    width: 24,
-    height: 2,
-    backgroundColor: "#7C3AED",
-    borderRadius: 2,
+    paddingTop: 8,
+    width: 64,
   },
   iconWrap: {
-    width: 36,
-    height: 28,
+    width: 44,
+    height: 32,
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 6,
+    borderRadius: 16,
   },
   iconActive: {
-    backgroundColor: "#7C3AED18",
+    backgroundColor: "#7C3AED",
+    borderRadius: 20,
+    width: 48,
+    height: 34,
+    shadowColor: "#7C3AED",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
   },
   label: {
-    fontSize: 9,
-    color: "#4B4C6B",
+    fontSize: 10,
+    color: "#9CA3AF",
     fontFamily: "Inter_500Medium",
-    letterSpacing: 0.3,
+    letterSpacing: 0.2,
   },
   labelActive: {
     color: "#7C3AED",
+    fontFamily: "Inter_700Bold",
   },
 });

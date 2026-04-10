@@ -16,7 +16,6 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-
 import { useAuth } from "@/context/AuthContext";
 
 export default function LoginScreen() {
@@ -51,7 +50,17 @@ export default function LoginScreen() {
   }
 
   return (
-    <View style={[s.root, { paddingTop: insets.top }]}>
+    <View style={s.root}>
+      <LinearGradient colors={["#7C3AED", "#6D28D9", "#5B21B6"]} style={[s.headerGradient, { paddingTop: insets.top + 40 }]}>
+        <View style={s.logoWrap}>
+          <View style={s.logoBox}>
+            <Feather name="cpu" size={28} color="#7C3AED" />
+          </View>
+        </View>
+        <Text style={s.brandName}>BotAluguel<Text style={s.brandDot}>.Pro</Text></Text>
+        <Text style={s.brandSub}>Gerencie seus bots WhatsApp</Text>
+      </LinearGradient>
+
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === "ios" ? "padding" : undefined}
@@ -61,32 +70,17 @@ export default function LoginScreen() {
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
-          <View style={s.brand}>
-            <View style={s.logoWrap}>
-              <LinearGradient
-                colors={["#7C3AED", "#7C3AED"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={s.logoBox}
-              >
-                <Feather name="cpu" size={26} color="#FFF" />
-              </LinearGradient>
-            </View>
-            <Text style={s.brandName}>BotAluguel<Text style={s.brandDot}>.Pro</Text></Text>
-            <Text style={s.brandSub}>Painel de gerenciamento de bots</Text>
-          </View>
-
           <View style={s.card}>
             <Text style={s.cardTitle}>Entrar na conta</Text>
 
             <View style={s.field}>
               <Text style={s.label}>TELEFONE</Text>
               <View style={[s.inputRow, focusPhone && s.inputFocused]}>
-                <Feather name="phone" size={15} color={focusPhone ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
+                <Feather name="phone" size={16} color={focusPhone ? "#7C3AED" : "#9CA3AF"} style={s.inputIcon} />
                 <TextInput
                   style={s.input}
                   placeholder="55 11 99999-9999"
-                  placeholderTextColor="#4B4C6B"
+                  placeholderTextColor="#9CA3AF"
                   value={phone}
                   onChangeText={setPhone}
                   keyboardType="phone-pad"
@@ -100,11 +94,11 @@ export default function LoginScreen() {
             <View style={s.field}>
               <Text style={s.label}>SENHA</Text>
               <View style={[s.inputRow, focusPass && s.inputFocused]}>
-                <Feather name="lock" size={15} color={focusPass ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
+                <Feather name="lock" size={16} color={focusPass ? "#7C3AED" : "#9CA3AF"} style={s.inputIcon} />
                 <TextInput
                   style={s.input}
                   placeholder="Sua senha"
-                  placeholderTextColor="#4B4C6B"
+                  placeholderTextColor="#9CA3AF"
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
@@ -112,14 +106,14 @@ export default function LoginScreen() {
                   onBlur={() => setFocusPass(false)}
                 />
                 <Pressable onPress={() => setShowPassword((v) => !v)} style={s.eyeBtn}>
-                  <Feather name={showPassword ? "eye-off" : "eye"} size={15} color="#4B4C6B" />
+                  <Feather name={showPassword ? "eye-off" : "eye"} size={16} color="#9CA3AF" />
                 </Pressable>
               </View>
             </View>
 
             {error ? (
               <View style={s.errorRow}>
-                <Feather name="alert-circle" size={13} color="#EF4444" />
+                <Feather name="alert-circle" size={14} color="#EF4444" />
                 <Text style={s.errorText}>{error}</Text>
               </View>
             ) : null}
@@ -135,16 +129,12 @@ export default function LoginScreen() {
                 <Text style={s.btnText}>Entrar</Text>
               )}
             </Pressable>
-
-            <View style={s.divider}>
-              <View style={s.dividerLine} />
-            </View>
-
-            <Pressable style={s.registerRow} onPress={() => router.push("/(auth)/register")}>
-              <Text style={s.registerText}>Não tem conta?</Text>
-              <Text style={s.registerLink}> Criar conta grátis</Text>
-            </Pressable>
           </View>
+
+          <Pressable style={s.registerRow} onPress={() => router.push("/(auth)/register")}>
+            <Text style={s.registerText}>Não tem conta?</Text>
+            <Text style={s.registerLink}> Criar conta grátis</Text>
+          </Pressable>
 
           <Text style={s.footer}>BotAluguel Pro © 2025</Text>
         </ScrollView>
@@ -156,95 +146,99 @@ export default function LoginScreen() {
 const s = StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: "#090A0F",
+    backgroundColor: "#F5F5F5",
   },
-  scroll: {
-    flexGrow: 1,
-    justifyContent: "center",
-    paddingHorizontal: 20,
-    paddingVertical: 32,
-  },
-  brand: {
+  headerGradient: {
     alignItems: "center",
-    marginBottom: 32,
+    paddingBottom: 36,
   },
   logoWrap: {
     marginBottom: 16,
-    shadowColor: "#7C3AED",
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.5,
-    shadowRadius: 20,
-    elevation: 10,
   },
   logoBox: {
-    width: 60,
-    height: 60,
-    borderRadius: 12,
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.95)",
     alignItems: "center",
     justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
   },
   brandName: {
-    fontSize: 24,
-    fontWeight: "800" as const,
-    color: "#F1F2F6",
+    fontSize: 26,
+    fontWeight: "800",
+    color: "#FFF",
     fontFamily: "Inter_700Bold",
     letterSpacing: -0.5,
   },
   brandDot: {
-    color: "#7C3AED",
+    color: "#E9D5FF",
   },
   brandSub: {
-    fontSize: 12,
-    color: "#4B4C6B",
+    fontSize: 14,
+    color: "#FFFFFFBB",
     fontFamily: "Inter_400Regular",
     marginTop: 4,
-    letterSpacing: 0.2,
+  },
+  scroll: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingTop: 24,
+    paddingBottom: 40,
   },
   card: {
-    backgroundColor: "#0D0E16",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#1A1B28",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
     padding: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 4,
   },
   cardTitle: {
-    fontSize: 16,
-    fontWeight: "700" as const,
-    color: "#F1F2F6",
+    fontSize: 20,
+    fontWeight: "700",
+    color: "#1F2937",
     fontFamily: "Inter_700Bold",
-    marginBottom: 20,
+    marginBottom: 24,
   },
   field: {
-    marginBottom: 16,
+    marginBottom: 18,
   },
   label: {
-    fontSize: 10,
-    fontWeight: "600" as const,
-    color: "#4B4C6B",
+    fontSize: 11,
+    fontWeight: "600",
+    color: "#9CA3AF",
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 1,
-    marginBottom: 6,
+    marginBottom: 8,
   },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#131420",
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#1E1F2E",
-    paddingHorizontal: 12,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: "#F3F4F6",
+    paddingHorizontal: 14,
   },
   inputFocused: {
     borderColor: "#7C3AED",
+    backgroundColor: "#FAFAFF",
   },
   inputIcon: {
-    marginRight: 8,
+    marginRight: 10,
   },
   input: {
     flex: 1,
-    color: "#F1F2F6",
-    fontSize: 14,
-    paddingVertical: 13,
+    color: "#1F2937",
+    fontSize: 15,
+    paddingVertical: 14,
     fontFamily: "Inter_400Regular",
   },
   eyeBtn: {
@@ -254,65 +248,58 @@ const s = StyleSheet.create({
   errorRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: "#EF444415",
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#EF444430",
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    marginBottom: 12,
+    gap: 8,
+    backgroundColor: "#FEF2F2",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    marginBottom: 14,
   },
   errorText: {
     color: "#EF4444",
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
+    fontSize: 14,
+    fontFamily: "Inter_500Medium",
   },
   btn: {
     backgroundColor: "#7C3AED",
-    borderRadius: 6,
-    paddingVertical: 14,
+    borderRadius: 12,
+    paddingVertical: 15,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 4,
+    shadowColor: "#7C3AED",
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 4,
   },
   btnText: {
     color: "#FFF",
-    fontSize: 15,
-    fontWeight: "700" as const,
+    fontSize: 16,
+    fontWeight: "700",
     fontFamily: "Inter_700Bold",
-    letterSpacing: 0.3,
-  },
-  divider: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: 16,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: "#1A1B28",
   },
   registerRow: {
     flexDirection: "row",
     justifyContent: "center",
+    marginTop: 24,
   },
   registerText: {
-    color: "#4B4C6B",
-    fontSize: 13,
+    color: "#9CA3AF",
+    fontSize: 14,
     fontFamily: "Inter_400Regular",
   },
   registerLink: {
     color: "#7C3AED",
-    fontSize: 13,
-    fontWeight: "600" as const,
-    fontFamily: "Inter_600SemiBold",
+    fontSize: 14,
+    fontWeight: "700",
+    fontFamily: "Inter_700Bold",
   },
   footer: {
-    color: "#2A2B3E",
-    fontSize: 11,
+    color: "#D1D5DB",
+    fontSize: 12,
     fontFamily: "Inter_400Regular",
     textAlign: "center",
-    marginTop: 32,
+    marginTop: 24,
   },
 });

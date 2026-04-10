@@ -23,6 +23,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListBotsQueryKey } from "@workspace/api-client-react";
+import { LinearGradient } from "expo-linear-gradient";
 
 type Bot = {
   id: string;
@@ -35,66 +36,67 @@ type Bot = {
 };
 
 const STATUS_CFG = {
-  connected:    { color: "#22C55E", label: "Online" },
-  connecting:   { color: "#F59E0B", label: "Conectando" },
-  disconnected: { color: "#4B4C6B", label: "Offline" },
-  error:        { color: "#EF4444", label: "Erro" },
+  connected:    { color: "#22C55E", label: "Online", bg: "#F0FDF4" },
+  connecting:   { color: "#F59E0B", label: "Conectando", bg: "#FFFBEB" },
+  disconnected: { color: "#9CA3AF", label: "Offline", bg: "#F3F4F6" },
+  error:        { color: "#EF4444", label: "Erro", bg: "#FEF2F2" },
 };
 
 function BotRow({ bot, onDelete }: { bot: Bot; onDelete: (id: string, name: string) => void }) {
   const cfg = STATUS_CFG[bot.status] ?? STATUS_CFG.disconnected;
 
   return (
-    <View style={[row.card, { borderLeftColor: cfg.color }]}>
+    <View style={row.card}>
       <View style={row.top}>
-        <View style={row.dotWrap}>
-          <View style={[row.dot, { backgroundColor: cfg.color }]} />
+        <View style={[row.iconWrap, { backgroundColor: cfg.bg }]}>
+          <Feather name="cpu" size={18} color={cfg.color} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={row.name}>{bot.name}</Text>
           <Text style={row.phone}>{bot.phone ? `+${bot.phone}` : "Sem número"}</Text>
         </View>
-        <View style={[row.badge, { borderColor: cfg.color + "40", backgroundColor: cfg.color + "15" }]}>
+        <View style={[row.badge, { backgroundColor: cfg.bg }]}>
+          <View style={[row.dot, { backgroundColor: cfg.color }]} />
           <Text style={[row.badgeText, { color: cfg.color }]}>{cfg.label}</Text>
         </View>
       </View>
 
       <View style={row.meta}>
         <View style={row.metaItem}>
-          <Feather name="users" size={11} color="#4B4C6B" />
+          <Feather name="users" size={12} color="#9CA3AF" />
           <Text style={row.metaText}>{bot.totalGroups} grupo{bot.totalGroups !== 1 ? "s" : ""}</Text>
         </View>
         <View style={row.metaItem}>
-          <Feather name="hash" size={11} color="#4B4C6B" />
+          <Feather name="hash" size={12} color="#9CA3AF" />
           <Text style={row.metaText}>prefix: {bot.prefix || "!"}</Text>
         </View>
       </View>
 
       <View style={row.actions}>
         <Pressable
-          style={({ pressed }) => [row.btn, row.btnGhost, { opacity: pressed ? 0.7 : 1 }]}
+          style={({ pressed }) => [row.btn, row.btnOutline, pressed && { opacity: 0.7 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             router.push(`/bot/${bot.id}` as any);
           }}
         >
-          <Feather name="settings" size={13} color="#8B8EA0" />
-          <Text style={[row.btnText, { color: "#8B8EA0" }]}>Gerenciar</Text>
+          <Feather name="settings" size={13} color="#6B7280" />
+          <Text style={row.btnOutlineText}>Gerenciar</Text>
         </Pressable>
 
         <Pressable
-          style={({ pressed }) => [row.btn, row.btnPrimary, { opacity: pressed ? 0.7 : 1 }]}
+          style={({ pressed }) => [row.btn, row.btnPrimary, pressed && { opacity: 0.7 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             router.push(`/builder/${bot.id}` as any);
           }}
         >
           <Feather name="layout" size={13} color="#FFF" />
-          <Text style={[row.btnText, { color: "#FFF" }]}>Construtor</Text>
+          <Text style={row.btnPrimaryText}>Construtor</Text>
         </Pressable>
 
         <Pressable
-          style={({ pressed }) => [row.btn, row.btnDanger, { opacity: pressed ? 0.7 : 1 }]}
+          style={({ pressed }) => [row.btn, row.btnDanger, pressed && { opacity: 0.7 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             onDelete(bot.id, bot.name);
@@ -116,8 +118,7 @@ export default function BotsScreen() {
   const [showCreate, setShowCreate] = useState(false);
   const [newBotName, setNewBotName] = useState("");
 
-  const paddingTop = Platform.OS === "web" ? insets.top + 67 : insets.top + 16;
-  const paddingBottom = insets.bottom + 80;
+  const paddingBottom = insets.bottom + 84;
 
   const handleCreate = async () => {
     if (!newBotName.trim()) return;
@@ -146,62 +147,49 @@ export default function BotsScreen() {
   };
 
   const botList = (bots as Bot[] | undefined) ?? [];
+  const onlineCount = botList.filter(b => b.status === "connected").length;
 
   return (
-    <View style={[s.root]}>
-      <View style={[s.header, { paddingTop }]}>
-        <View>
-          <Text style={s.pageLabel}>GERENCIAMENTO</Text>
-          <Text style={s.pageTitle}>Meus Bots</Text>
+    <View style={s.root}>
+      <LinearGradient colors={["#7C3AED", "#6D28D9"]} style={[s.header, { paddingTop: insets.top + 12 }]}>
+        <View style={s.headerRow}>
+          <View>
+            <Text style={s.headerTitle}>Meus Bots</Text>
+            <Text style={s.headerSub}>{botList.length} bots · {onlineCount} online</Text>
+          </View>
+          <Pressable
+            style={({ pressed }) => [s.addBtn, pressed && { opacity: 0.8 }]}
+            onPress={() => setShowCreate(true)}
+          >
+            <Feather name="plus" size={18} color="#7C3AED" />
+          </Pressable>
         </View>
-        <Pressable
-          style={({ pressed }) => [s.createBtn, { opacity: pressed ? 0.8 : 1 }]}
-          onPress={() => setShowCreate(true)}
-        >
-          <Feather name="plus" size={16} color="#FFF" />
-          <Text style={s.createBtnText}>Novo Bot</Text>
-        </Pressable>
-      </View>
-
-      <View style={s.statsRow}>
-        <View style={s.statChip}>
-          <View style={[s.statDot, { backgroundColor: "#7C3AED" }]} />
-          <Text style={s.statChipText}>{botList.length} total</Text>
-        </View>
-        <View style={s.statChip}>
-          <View style={[s.statDot, { backgroundColor: "#22C55E" }]} />
-          <Text style={s.statChipText}>{botList.filter(b => b.status === "connected").length} online</Text>
-        </View>
-        <View style={s.statChip}>
-          <View style={[s.statDot, { backgroundColor: "#4B4C6B" }]} />
-          <Text style={s.statChipText}>{botList.filter(b => b.status === "disconnected").length} offline</Text>
-        </View>
-      </View>
+      </LinearGradient>
 
       <FlatList
         data={botList}
         keyExtractor={(b) => b.id}
-        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom }}
+        contentContainerStyle={{ padding: 20, paddingBottom }}
         showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={s.sep} />}
+        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#7C3AED" />
         }
         ListEmptyComponent={
           isLoading ? (
-            <View style={s.loader}>
+            <View style={s.empty}>
               <ActivityIndicator color="#7C3AED" size="large" />
-              <Text style={s.loaderText}>Carregando bots...</Text>
+              <Text style={s.emptyText}>Carregando bots...</Text>
             </View>
           ) : (
-            <View style={s.emptyState}>
+            <View style={s.empty}>
               <View style={s.emptyIcon}>
-                <Feather name="cpu" size={32} color="#2A2B3E" />
+                <Feather name="cpu" size={32} color="#9CA3AF" />
               </View>
               <Text style={s.emptyTitle}>Nenhum bot criado</Text>
               <Text style={s.emptyDesc}>Crie seu primeiro bot e comece a automatizar grupos no WhatsApp</Text>
               <Pressable style={s.emptyBtn} onPress={() => setShowCreate(true)}>
-                <Feather name="plus" size={14} color="#7C3AED" />
+                <Feather name="plus" size={14} color="#FFF" />
                 <Text style={s.emptyBtnText}>Criar primeiro bot</Text>
               </Pressable>
             </View>
@@ -223,7 +211,7 @@ export default function BotsScreen() {
             <TextInput
               style={s.modalInput}
               placeholder="Ex: Bot Vendas"
-              placeholderTextColor="#4B4C6B"
+              placeholderTextColor="#9CA3AF"
               value={newBotName}
               onChangeText={setNewBotName}
               autoFocus
@@ -253,57 +241,62 @@ export default function BotsScreen() {
 
 const row = StyleSheet.create({
   card: {
-    backgroundColor: "#0D0E16",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#1A1B28",
-    borderLeftWidth: 3,
-    padding: 14,
-    gap: 10,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    padding: 16,
+    gap: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 2,
   },
   top: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
   },
-  dotWrap: {
+  iconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    width: 16,
-  },
-  dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
   },
   name: {
-    fontSize: 15,
-    fontWeight: "600" as const,
-    color: "#F1F2F6",
+    fontSize: 16,
+    fontWeight: "600",
+    color: "#1F2937",
     fontFamily: "Inter_600SemiBold",
   },
   phone: {
-    fontSize: 11,
-    color: "#4B4C6B",
+    fontSize: 12,
+    color: "#9CA3AF",
     fontFamily: "Inter_400Regular",
     marginTop: 2,
   },
   badge: {
-    borderRadius: 4,
-    borderWidth: 1,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    borderRadius: 12,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
   },
   badgeText: {
-    fontSize: 10,
-    fontWeight: "600" as const,
+    fontSize: 11,
+    fontWeight: "600",
     fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.3,
   },
   meta: {
     flexDirection: "row",
     gap: 16,
-    paddingLeft: 26,
+    paddingLeft: 54,
   },
   metaItem: {
     flexDirection: "row",
@@ -311,179 +304,154 @@ const row = StyleSheet.create({
     gap: 4,
   },
   metaText: {
-    fontSize: 11,
-    color: "#4B4C6B",
+    fontSize: 12,
+    color: "#9CA3AF",
     fontFamily: "Inter_400Regular",
   },
   actions: {
     flexDirection: "row",
-    gap: 6,
-    paddingLeft: 26,
+    gap: 8,
+    paddingTop: 4,
   },
   btn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 5,
-    borderWidth: 1,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 10,
   },
-  btnGhost: {
-    borderColor: "#1A1B28",
-    backgroundColor: "#131420",
+  btnOutline: {
+    backgroundColor: "#F3F4F6",
+  },
+  btnOutlineText: {
+    fontSize: 12,
+    fontWeight: "600",
+    color: "#6B7280",
+    fontFamily: "Inter_600SemiBold",
   },
   btnPrimary: {
-    borderColor: "#7C3AED",
     backgroundColor: "#7C3AED",
   },
-  btnDanger: {
-    borderColor: "#EF444430",
-    backgroundColor: "#EF444415",
-  },
-  btnText: {
+  btnPrimaryText: {
     fontSize: 12,
-    fontWeight: "600" as const,
+    fontWeight: "600",
+    color: "#FFF",
     fontFamily: "Inter_600SemiBold",
+  },
+  btnDanger: {
+    backgroundColor: "#FEF2F2",
   },
 });
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#090A0F" },
+  root: { flex: 1, backgroundColor: "#F5F5F5" },
 
   header: {
+    paddingHorizontal: 20,
+    paddingBottom: 20,
+  },
+  headerRow: {
     flexDirection: "row",
-    alignItems: "flex-end",
+    alignItems: "center",
     justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingBottom: 16,
   },
-  pageLabel: {
-    fontSize: 10,
-    color: "#4B4C6B",
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  pageTitle: {
-    fontSize: 22,
-    fontWeight: "800" as const,
-    color: "#F1F2F6",
-    fontFamily: "Inter_700Bold",
-    letterSpacing: -0.5,
-  },
-  createBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    backgroundColor: "#7C3AED",
-    borderRadius: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 9,
-  },
-  createBtnText: {
+  headerTitle: {
+    fontSize: 24,
+    fontWeight: "700",
     color: "#FFF",
-    fontSize: 13,
-    fontWeight: "700" as const,
     fontFamily: "Inter_700Bold",
   },
-
-  statsRow: {
-    flexDirection: "row",
-    gap: 8,
-    paddingHorizontal: 20,
-    marginBottom: 16,
+  headerSub: {
+    fontSize: 13,
+    color: "#FFFFFFBB",
+    fontFamily: "Inter_400Regular",
+    marginTop: 2,
   },
-  statChip: {
-    flexDirection: "row",
+  addBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#FFF",
     alignItems: "center",
-    gap: 5,
-    backgroundColor: "#0D0E16",
-    borderRadius: 5,
-    borderWidth: 1,
-    borderColor: "#1A1B28",
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  statDot: { width: 6, height: 6, borderRadius: 3 },
-  statChipText: { fontSize: 11, color: "#8B8EA0", fontFamily: "Inter_400Regular" },
 
-  sep: { height: 6 },
-  loader: { paddingVertical: 60, alignItems: "center", gap: 12 },
-  loaderText: { color: "#4B4C6B", fontSize: 13, fontFamily: "Inter_400Regular" },
-
-  emptyState: { alignItems: "center", paddingVertical: 60, gap: 12 },
+  empty: { alignItems: "center", paddingVertical: 60, gap: 12 },
   emptyIcon: {
-    width: 64,
-    height: 64,
-    borderRadius: 12,
-    backgroundColor: "#0D0E16",
-    borderWidth: 1,
-    borderColor: "#1A1B28",
+    width: 72,
+    height: 72,
+    borderRadius: 20,
+    backgroundColor: "#F3F4F6",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
   },
-  emptyTitle: { fontSize: 16, fontWeight: "700" as const, color: "#4B4C6B", fontFamily: "Inter_700Bold" },
-  emptyDesc: { fontSize: 13, color: "#2A2B3E", fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 260, lineHeight: 18 },
+  emptyTitle: { fontSize: 18, fontWeight: "700", color: "#374151", fontFamily: "Inter_700Bold" },
+  emptyDesc: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 280, lineHeight: 20 },
+  emptyText: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
   emptyBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    borderWidth: 1,
-    borderColor: "#7C3AED",
-    borderRadius: 6,
-    paddingHorizontal: 16,
-    paddingVertical: 9,
+    backgroundColor: "#7C3AED",
+    borderRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     marginTop: 4,
   },
-  emptyBtnText: { color: "#7C3AED", fontSize: 13, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
+  emptyBtnText: { color: "#FFF", fontSize: 14, fontWeight: "600", fontFamily: "Inter_600SemiBold" },
 
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.7)",
+    backgroundColor: "rgba(0,0,0,0.4)",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
   },
   modal: {
     width: "100%",
-    backgroundColor: "#0D0E16",
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: "#1A1B28",
+    backgroundColor: "#FFFFFF",
+    borderRadius: 20,
     padding: 24,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 8,
   },
-  modalTitle: { fontSize: 16, fontWeight: "700" as const, color: "#F1F2F6", fontFamily: "Inter_700Bold", marginBottom: 20 },
-  modalLabel: { fontSize: 10, color: "#4B4C6B", fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 6 },
+  modalTitle: { fontSize: 18, fontWeight: "700", color: "#1F2937", fontFamily: "Inter_700Bold", marginBottom: 20 },
+  modalLabel: { fontSize: 11, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 8 },
   modalInput: {
-    backgroundColor: "#131420",
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#1E1F2E",
-    color: "#F1F2F6",
-    fontSize: 14,
-    paddingHorizontal: 14,
-    paddingVertical: 13,
+    backgroundColor: "#F3F4F6",
+    borderRadius: 12,
+    color: "#1F2937",
+    fontSize: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
     fontFamily: "Inter_400Regular",
     marginBottom: 20,
   },
   modalActions: { flexDirection: "row", gap: 10 },
   cancelBtn: {
     flex: 1,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: "#1A1B28",
-    paddingVertical: 13,
+    borderRadius: 12,
+    backgroundColor: "#F3F4F6",
+    paddingVertical: 14,
     alignItems: "center",
   },
-  cancelText: { color: "#4B4C6B", fontSize: 14, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
+  cancelText: { color: "#6B7280", fontSize: 15, fontWeight: "600", fontFamily: "Inter_600SemiBold" },
   confirmBtn: {
     flex: 1,
-    borderRadius: 6,
+    borderRadius: 12,
     backgroundColor: "#7C3AED",
-    paddingVertical: 13,
+    paddingVertical: 14,
     alignItems: "center",
   },
-  confirmText: { color: "#FFF", fontSize: 14, fontWeight: "700" as const, fontFamily: "Inter_700Bold" },
+  confirmText: { color: "#FFF", fontSize: 15, fontWeight: "700", fontFamily: "Inter_700Bold" },
 });
