@@ -23,7 +23,6 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListBotsQueryKey } from "@workspace/api-client-react";
-import { LinearGradient } from "expo-linear-gradient";
 
 type Bot = {
   id: string;
@@ -36,26 +35,28 @@ type Bot = {
 };
 
 const STATUS_CFG = {
-  connected:    { color: "#22C55E", label: "Online", bg: "#0D2818" },
-  connecting:   { color: "#F59E0B", label: "Conectando", bg: "#2D2506" },
-  disconnected: { color: "#9CA3AF", label: "Offline", bg: "#1E1E28" },
-  error:        { color: "#EF4444", label: "Erro", bg: "#2D0A0A" },
+  connected:    { color: "#22C55E", label: "Online", bg: "#22C55E15" },
+  connecting:   { color: "#F59E0B", label: "Conectando", bg: "#F59E0B15" },
+  disconnected: { color: "#9CA3AF", label: "Offline", bg: "#9CA3AF15" },
+  error:        { color: "#EF4444", label: "Erro", bg: "#EF444415" },
 };
 
 function BotRow({ bot, onDelete }: { bot: Bot; onDelete: (id: string, name: string) => void }) {
   const cfg = STATUS_CFG[bot.status] ?? STATUS_CFG.disconnected;
+  const isOnline = bot.status === "connected";
 
   return (
     <View style={row.card}>
+      <View style={[row.topGlow, { backgroundColor: cfg.color }]} />
       <View style={row.top}>
         <View style={[row.iconWrap, { backgroundColor: cfg.bg }]}>
-          <Feather name="cpu" size={18} color={cfg.color} />
+          <Feather name="message-circle" size={18} color={cfg.color} />
         </View>
         <View style={{ flex: 1 }}>
           <Text style={row.name}>{bot.name}</Text>
           <Text style={row.phone}>{bot.phone ? `+${bot.phone}` : "Sem número"}</Text>
         </View>
-        <View style={[row.badge, { backgroundColor: cfg.bg }]}>
+        <View style={[row.badge, { backgroundColor: cfg.bg, borderColor: cfg.color + "30" }]}>
           <View style={[row.dot, { backgroundColor: cfg.color }]} />
           <Text style={[row.badgeText, { color: cfg.color }]}>{cfg.label}</Text>
         </View>
@@ -63,11 +64,11 @@ function BotRow({ bot, onDelete }: { bot: Bot; onDelete: (id: string, name: stri
 
       <View style={row.meta}>
         <View style={row.metaItem}>
-          <Feather name="users" size={12} color="#9CA3AF" />
+          <Feather name="users" size={12} color="#A0A0B0" />
           <Text style={row.metaText}>{bot.totalGroups} grupo{bot.totalGroups !== 1 ? "s" : ""}</Text>
         </View>
         <View style={row.metaItem}>
-          <Feather name="hash" size={12} color="#9CA3AF" />
+          <Feather name="hash" size={12} color="#A0A0B0" />
           <Text style={row.metaText}>prefix: {bot.prefix || "!"}</Text>
         </View>
       </View>
@@ -80,7 +81,7 @@ function BotRow({ bot, onDelete }: { bot: Bot; onDelete: (id: string, name: stri
             router.push(`/bot/${bot.id}` as any);
           }}
         >
-          <Feather name="settings" size={13} color="#6B7280" />
+          <Feather name="settings" size={13} color="#A0A0B0" />
           <Text style={row.btnOutlineText}>Gerenciar</Text>
         </Pressable>
 
@@ -91,8 +92,8 @@ function BotRow({ bot, onDelete }: { bot: Bot; onDelete: (id: string, name: stri
             router.push(`/builder/${bot.id}` as any);
           }}
         >
-          <Feather name="layout" size={13} color="#FFF" />
-          <Text style={row.btnPrimaryText}>Construtor</Text>
+          <Feather name="grid" size={13} color="#FFF" />
+          <Text style={row.btnPrimaryText}>Builder</Text>
         </Pressable>
 
         <Pressable
@@ -149,22 +150,22 @@ export default function BotsScreen() {
   const botList = (bots as Bot[] | undefined) ?? [];
   const onlineCount = botList.filter(b => b.status === "connected").length;
 
+  const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
+
   return (
     <View style={s.root}>
-      <LinearGradient colors={["#6D28D9", "#4C1D95"]} style={[s.header, { paddingTop: insets.top + 12 }]}>
-        <View style={s.headerRow}>
-          <View>
-            <Text style={s.headerTitle}>Meus Bots</Text>
-            <Text style={s.headerSub}>{botList.length} bots · {onlineCount} online</Text>
-          </View>
-          <Pressable
-            style={({ pressed }) => [s.addBtn, pressed && { opacity: 0.8 }]}
-            onPress={() => setShowCreate(true)}
-          >
-            <Feather name="plus" size={18} color="#6D28D9" />
-          </Pressable>
+      <View style={[s.header, { paddingTop }]}>
+        <View style={{ flex: 1 }}>
+          <Text style={s.headerTitle}>Meus Bots</Text>
+          <Text style={s.headerSub}>{botList.length} bots · {onlineCount} online</Text>
         </View>
-      </LinearGradient>
+        <Pressable
+          style={({ pressed }) => [s.addBtn, pressed && { opacity: 0.8 }]}
+          onPress={() => setShowCreate(true)}
+        >
+          <Feather name="plus" size={18} color="#F0F0F5" />
+        </Pressable>
+      </View>
 
       <FlatList
         data={botList}
@@ -184,7 +185,7 @@ export default function BotsScreen() {
           ) : (
             <View style={s.empty}>
               <View style={s.emptyIcon}>
-                <Feather name="cpu" size={32} color="#9CA3AF" />
+                <Feather name="cpu" size={32} color="#A0A0B0" />
               </View>
               <Text style={s.emptyTitle}>Nenhum bot criado</Text>
               <Text style={s.emptyDesc}>Crie seu primeiro bot e comece a automatizar grupos no WhatsApp</Text>
@@ -206,12 +207,17 @@ export default function BotsScreen() {
       >
         <Pressable style={s.overlay} onPress={() => setShowCreate(false)}>
           <Pressable style={s.modal} onPress={() => {}}>
-            <Text style={s.modalTitle}>Criar novo bot</Text>
+            <View style={s.modalHeader}>
+              <View style={s.modalIconWrap}>
+                <Feather name="plus" size={16} color="#A78BFA" />
+              </View>
+              <Text style={s.modalTitle}>Criar novo bot</Text>
+            </View>
             <Text style={s.modalLabel}>NOME DO BOT</Text>
             <TextInput
               style={s.modalInput}
               placeholder="Ex: Bot Vendas"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor="#6B7280"
               value={newBotName}
               onChangeText={setNewBotName}
               autoFocus
@@ -243,35 +249,36 @@ const row = StyleSheet.create({
   card: {
     backgroundColor: "#1A1A24",
     borderRadius: 16,
-    padding: 16,
-    gap: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+    overflow: "hidden",
+  },
+  topGlow: {
+    height: 1,
+    opacity: 0.4,
   },
   top: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+    padding: 16,
+    paddingBottom: 10,
   },
   iconWrap: {
-    width: 42,
-    height: 42,
+    width: 44,
+    height: 44,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
   name: {
     fontSize: 16,
-    fontWeight: "600",
     color: "#F0F0F5",
     fontFamily: "Inter_600SemiBold",
   },
   phone: {
     fontSize: 12,
-    color: "#9CA3AF",
+    color: "#A0A0B0",
     fontFamily: "Inter_400Regular",
     marginTop: 2,
   },
@@ -279,24 +286,27 @@ const row = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    borderRadius: 12,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
   },
   dot: {
-    width: 6,
-    height: 6,
+    width: 5,
+    height: 5,
     borderRadius: 3,
   },
   badgeText: {
-    fontSize: 11,
-    fontWeight: "600",
+    fontSize: 10,
     fontFamily: "Inter_600SemiBold",
+    letterSpacing: 0.3,
   },
   meta: {
     flexDirection: "row",
     gap: 16,
-    paddingLeft: 54,
+    paddingHorizontal: 16,
+    paddingBottom: 12,
+    paddingLeft: 72,
   },
   metaItem: {
     flexDirection: "row",
@@ -305,13 +315,16 @@ const row = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
-    color: "#9CA3AF",
+    color: "#A0A0B0",
     fontFamily: "Inter_400Regular",
   },
   actions: {
     flexDirection: "row",
     gap: 8,
-    paddingTop: 4,
+    padding: 16,
+    paddingTop: 12,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#2A2A3560",
   },
   btn: {
     flexDirection: "row",
@@ -323,11 +336,12 @@ const row = StyleSheet.create({
   },
   btnOutline: {
     backgroundColor: "#1E1E28",
+    borderWidth: 1,
+    borderColor: "#2A2A35",
   },
   btnOutlineText: {
     fontSize: 12,
-    fontWeight: "600",
-    color: "#6B7280",
+    color: "#A0A0B0",
     fontFamily: "Inter_600SemiBold",
   },
   btnPrimary: {
@@ -335,12 +349,13 @@ const row = StyleSheet.create({
   },
   btnPrimaryText: {
     fontSize: 12,
-    fontWeight: "600",
     color: "#FFF",
     fontFamily: "Inter_600SemiBold",
   },
   btnDanger: {
-    backgroundColor: "#2D0A0A",
+    backgroundColor: "#EF444415",
+    borderWidth: 1,
+    borderColor: "#EF444430",
   },
 });
 
@@ -349,37 +364,30 @@ const s = StyleSheet.create({
 
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
-  },
-  headerRow: {
+    paddingBottom: 16,
     flexDirection: "row",
     alignItems: "center",
-    justifyContent: "space-between",
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#2A2A3540",
   },
   headerTitle: {
-    fontSize: 24,
-    fontWeight: "700",
-    color: "#FFF",
+    fontSize: 22,
+    color: "#F0F0F5",
     fontFamily: "Inter_700Bold",
   },
   headerSub: {
     fontSize: 13,
-    color: "#FFFFFFBB",
+    color: "#A0A0B0",
     fontFamily: "Inter_400Regular",
     marginTop: 2,
   },
   addBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "#1A1A24",
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#6D28D9",
     alignItems: "center",
     justifyContent: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
   },
 
   empty: { alignItems: "center", paddingVertical: 60, gap: 12 },
@@ -387,14 +395,16 @@ const s = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 20,
-    backgroundColor: "#1E1E28",
+    backgroundColor: "#1A1A24",
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
   },
-  emptyTitle: { fontSize: 18, fontWeight: "700", color: "#D1D1DB", fontFamily: "Inter_700Bold" },
-  emptyDesc: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 280, lineHeight: 20 },
-  emptyText: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
+  emptyTitle: { fontSize: 18, color: "#D1D1DB", fontFamily: "Inter_700Bold" },
+  emptyDesc: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 280, lineHeight: 20 },
+  emptyText: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
   emptyBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -405,11 +415,11 @@ const s = StyleSheet.create({
     paddingVertical: 12,
     marginTop: 4,
   },
-  emptyBtnText: { color: "#FFF", fontSize: 14, fontWeight: "600", fontFamily: "Inter_600SemiBold" },
+  emptyBtnText: { color: "#FFF", fontSize: 14, fontFamily: "Inter_600SemiBold" },
 
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.6)",
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: 20,
@@ -418,34 +428,41 @@ const s = StyleSheet.create({
     width: "100%",
     backgroundColor: "#1A1A24",
     borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     padding: 24,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    gap: 14,
   },
-  modalTitle: { fontSize: 18, fontWeight: "700", color: "#F0F0F5", fontFamily: "Inter_700Bold", marginBottom: 20 },
-  modalLabel: { fontSize: 11, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 8 },
+  modalHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+  modalIconWrap: {
+    padding: 6,
+    backgroundColor: "#6D28D915",
+    borderRadius: 8,
+  },
+  modalTitle: { fontSize: 18, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  modalLabel: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
   modalInput: {
     backgroundColor: "#1E1E28",
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     color: "#F0F0F5",
     fontSize: 15,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontFamily: "Inter_400Regular",
-    marginBottom: 20,
   },
-  modalActions: { flexDirection: "row", gap: 10 },
+  modalActions: { flexDirection: "row", gap: 10, marginTop: 4 },
   cancelBtn: {
     flex: 1,
     borderRadius: 12,
     backgroundColor: "#1E1E28",
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     paddingVertical: 14,
     alignItems: "center",
   },
-  cancelText: { color: "#6B7280", fontSize: 15, fontWeight: "600", fontFamily: "Inter_600SemiBold" },
+  cancelText: { color: "#A0A0B0", fontSize: 15, fontFamily: "Inter_600SemiBold" },
   confirmBtn: {
     flex: 1,
     borderRadius: 12,
@@ -453,5 +470,5 @@ const s = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
   },
-  confirmText: { color: "#FFF", fontSize: 15, fontWeight: "700", fontFamily: "Inter_700Bold" },
+  confirmText: { color: "#FFF", fontSize: 15, fontFamily: "Inter_700Bold" },
 });

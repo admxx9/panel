@@ -1,5 +1,5 @@
 import React from "react";
-import { Platform, Pressable, StyleSheet, View } from "react-native";
+import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
 import { usePathname, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -14,10 +14,9 @@ interface Props {
   tabs: NavTab[];
 }
 
-const BAR_H = 64;
-const DOT = 56;
-const ACTIVE = "#6D28D9";
-const INACTIVE = "#6B7280";
+const ACTIVE_COLOR = "#F0F0F5";
+const INACTIVE_COLOR = "#6B7280";
+const ACCENT = "#6D28D9";
 
 export default function BottomNav({ tabs }: Props) {
   const pathname = usePathname();
@@ -26,10 +25,14 @@ export default function BottomNav({ tabs }: Props) {
   const active = (href: string) =>
     href === "/" ? pathname === "/" || pathname === "" : pathname.startsWith(href);
 
+  const midIndex = Math.floor(tabs.length / 2);
+  const leftTabs = tabs.slice(0, midIndex);
+  const rightTabs = tabs.slice(midIndex);
+
   return (
     <View style={[s.wrap, { paddingBottom: Math.max(insets.bottom, Platform.OS === "android" ? 6 : 0) }]}>
       <View style={s.bar}>
-        {tabs.map((tab) => {
+        {leftTabs.map((tab) => {
           const on = active(tab.href);
           return (
             <Pressable
@@ -38,13 +41,33 @@ export default function BottomNav({ tabs }: Props) {
               onPress={() => router.push(tab.href as any)}
               accessibilityLabel={tab.label}
             >
-              {on ? (
-                <View style={s.dot}>
-                  <Feather name={tab.icon as any} size={24} color="#fff" />
-                </View>
-              ) : (
-                <Feather name={tab.icon as any} size={22} color={INACTIVE} />
-              )}
+              <Feather name={tab.icon as any} size={20} color={on ? ACTIVE_COLOR : INACTIVE_COLOR} />
+              <Text style={[s.itemLabel, on && s.itemLabelActive]}>{tab.label}</Text>
+            </Pressable>
+          );
+        })}
+
+        <View style={s.fabSlot}>
+          <Pressable
+            style={({ pressed }) => [s.fab, pressed && { transform: [{ scale: 0.95 }] }]}
+            onPress={() => router.push("/(tabs)/bots")}
+            accessibilityLabel="Criar Bot"
+          >
+            <Feather name="plus" size={24} color="#FFF" />
+          </Pressable>
+        </View>
+
+        {rightTabs.map((tab) => {
+          const on = active(tab.href);
+          return (
+            <Pressable
+              key={tab.href}
+              style={s.item}
+              onPress={() => router.push(tab.href as any)}
+              accessibilityLabel={tab.label}
+            >
+              <Feather name={tab.icon as any} size={20} color={on ? ACTIVE_COLOR : INACTIVE_COLOR} />
+              <Text style={[s.itemLabel, on && s.itemLabelActive]}>{tab.label}</Text>
             </Pressable>
           );
         })}
@@ -55,36 +78,53 @@ export default function BottomNav({ tabs }: Props) {
 
 const s = StyleSheet.create({
   wrap: {
-    backgroundColor: "#1A1A24",
-    borderTopLeftRadius: 22,
-    borderTopRightRadius: 22,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 8,
+    backgroundColor: "#1A1A2490",
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#2A2A35",
     overflow: "visible",
   },
   bar: {
-    height: BAR_H,
+    height: 64,
     flexDirection: "row",
     alignItems: "center",
     overflow: "visible",
+    paddingHorizontal: 8,
   },
   item: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    height: BAR_H,
-    overflow: "visible",
+    gap: 3,
+    height: 64,
   },
-  dot: {
-    width: DOT,
-    height: DOT,
-    borderRadius: DOT / 2,
-    backgroundColor: ACTIVE,
+  itemLabel: {
+    fontSize: 10,
+    color: INACTIVE_COLOR,
+    fontFamily: "Inter_600SemiBold",
+  },
+  itemLabelActive: {
+    color: ACTIVE_COLOR,
+  },
+  fabSlot: {
+    width: 64,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: -20,
+    overflow: "visible",
+  },
+  fab: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: ACCENT,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: -28,
+    borderWidth: 4,
+    borderColor: "#0F0F14",
+    shadowColor: "#6D28D9",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.4,
+    shadowRadius: 12,
+    elevation: 10,
   },
 });

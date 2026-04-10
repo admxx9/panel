@@ -16,14 +16,13 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/context/AuthContext";
 
 const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }> = {
-  pending: { label: "Pendente", color: "#F59E0B", bg: "#2D2506" },
-  paid:    { label: "Pago",     color: "#22C55E", bg: "#0D2818" },
-  expired: { label: "Expirado", color: "#9CA3AF", bg: "#1E1E28" },
-  error:   { label: "Erro",     color: "#EF4444", bg: "#2D0A0A" },
+  pending: { label: "Pendente", color: "#F59E0B", bg: "#F59E0B15" },
+  paid:    { label: "Pago",     color: "#22C55E", bg: "#22C55E15" },
+  expired: { label: "Expirado", color: "#9CA3AF", bg: "#9CA3AF15" },
+  error:   { label: "Erro",     color: "#EF4444", bg: "#EF444415" },
 };
 
 type Tab = "users" | "payments";
@@ -47,6 +46,7 @@ export default function AdminScreen() {
   const { data: payments, isLoading: paymentsLoading, refetch: refetchPayments } = useAdminListPayments();
 
   const paddingBottom = Platform.OS === "web" ? 34 + 110 : insets.bottom + 110;
+  const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
 
   function refetchAll() { refetchStats(); refetchUsers(); refetchPayments(); }
 
@@ -54,7 +54,7 @@ export default function AdminScreen() {
     return (
       <View style={s.center}>
         <View style={s.noAccessIcon}>
-          <Feather name="shield-off" size={28} color="#9CA3AF" />
+          <Feather name="shield-off" size={28} color="#A0A0B0" />
         </View>
         <Text style={s.noAccessTitle}>Acesso restrito</Text>
         <Text style={s.noAccessSub}>Área exclusiva para administradores</Text>
@@ -67,10 +67,10 @@ export default function AdminScreen() {
 
   return (
     <View style={s.root}>
-      <LinearGradient colors={["#6D28D9", "#4C1D95"]} style={[s.header, { paddingTop: insets.top + 12 }]}>
+      <View style={[s.header, { paddingTop }]}>
         <Text style={s.headerTitle}>Painel Admin</Text>
         <Text style={s.headerSub}>Gerenciar plataforma</Text>
-      </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom }}
@@ -147,13 +147,13 @@ export default function AdminScreen() {
                 return (
                   <View key={p.id} style={[s.listRow, i < paymentList.length - 1 && s.listRowBorder]}>
                     <View style={s.payIcon}>
-                      <Feather name="dollar-sign" size={14} color="#6D28D9" />
+                      <Feather name="dollar-sign" size={14} color="#A78BFA" />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={s.rowTitle}>+{p.coins} moedas</Text>
                       <Text style={s.rowSub}>R$ {p.amount.toFixed(2)} · {date}</Text>
                     </View>
-                    <View style={[s.statusBadge, { backgroundColor: cfg.bg }]}>
+                    <View style={[s.statusBadge, { backgroundColor: cfg.bg, borderColor: cfg.color + "30" }]}>
                       <Text style={[s.statusText, { color: cfg.color }]}>{cfg.label}</Text>
                     </View>
                   </View>
@@ -172,15 +172,21 @@ const s = StyleSheet.create({
 
   center: { flex: 1, backgroundColor: "#0F0F14", alignItems: "center", justifyContent: "center", gap: 12, padding: 40 },
   noAccessIcon: {
-    width: 64, height: 64, borderRadius: 18, backgroundColor: "#1E1E28",
+    width: 64, height: 64, borderRadius: 18, backgroundColor: "#1A1A24",
+    borderWidth: 1, borderColor: "#2A2A35",
     alignItems: "center", justifyContent: "center", marginBottom: 4,
   },
-  noAccessTitle: { fontSize: 18, fontWeight: "700", color: "#D1D1DB", fontFamily: "Inter_700Bold" },
-  noAccessSub: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular", textAlign: "center" },
+  noAccessTitle: { fontSize: 18, color: "#D1D1DB", fontFamily: "Inter_700Bold" },
+  noAccessSub: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_400Regular", textAlign: "center" },
 
-  header: { paddingHorizontal: 20, paddingBottom: 20 },
-  headerTitle: { fontSize: 24, fontWeight: "700", color: "#FFF", fontFamily: "Inter_700Bold" },
-  headerSub: { fontSize: 13, color: "#FFFFFFBB", fontFamily: "Inter_400Regular", marginTop: 4 },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#2A2A3540",
+  },
+  headerTitle: { fontSize: 22, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  headerSub: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 4 },
 
   loader: { paddingVertical: 32, alignItems: "center" },
 
@@ -190,70 +196,70 @@ const s = StyleSheet.create({
     minWidth: "28%",
     backgroundColor: "#1A1A24",
     borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     padding: 14,
     gap: 6,
     alignItems: "flex-start",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
   },
   statIconWrap: {
     width: 32, height: 32, borderRadius: 10,
     alignItems: "center", justifyContent: "center",
   },
-  statValue: { fontSize: 18, fontWeight: "800", color: "#F0F0F5", fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 10, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
+  statValue: { fontSize: 18, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  statLabel: { fontSize: 10, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
 
   tabBar: {
     flexDirection: "row",
     backgroundColor: "#1A1A24",
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     padding: 4,
     gap: 4,
     marginBottom: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
   },
   tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: "center" },
   tabBtnActive: { backgroundColor: "#6D28D9" },
-  tabText: { fontSize: 14, fontWeight: "600", color: "#9CA3AF", fontFamily: "Inter_600SemiBold" },
+  tabText: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_600SemiBold" },
   tabTextActive: { color: "#FFF" },
 
   listCard: {
     backgroundColor: "#1A1A24",
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
   },
   listRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 16, paddingVertical: 14 },
-  listRowBorder: { borderBottomWidth: 1, borderBottomColor: "#1E1E28" },
+  listRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#2A2A3560" },
 
   userAvatar: {
     width: 36, height: 36, borderRadius: 12,
-    backgroundColor: "#150F2A",
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
     alignItems: "center", justifyContent: "center",
   },
-  userInitial: { fontSize: 15, fontWeight: "700", color: "#6D28D9", fontFamily: "Inter_700Bold" },
+  userInitial: { fontSize: 15, color: "#A78BFA", fontFamily: "Inter_700Bold" },
   payIcon: {
     width: 36, height: 36, borderRadius: 12,
-    backgroundColor: "#150F2A",
+    backgroundColor: "#6D28D915",
     alignItems: "center", justifyContent: "center",
   },
-  rowTitle: { fontSize: 14, fontWeight: "600", color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
-  rowSub: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
-  adminBadge: { backgroundColor: "#150F2A", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  adminBadgeText: { fontSize: 11, fontWeight: "700", color: "#6D28D9", fontFamily: "Inter_700Bold" },
-  statusBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
-  statusText: { fontSize: 12, fontWeight: "600", fontFamily: "Inter_600SemiBold" },
+  rowTitle: { fontSize: 14, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
+  rowSub: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 2 },
+  adminBadge: {
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+  },
+  adminBadgeText: { fontSize: 11, color: "#A78BFA", fontFamily: "Inter_700Bold" },
+  statusBadge: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
+  statusText: { fontSize: 11, fontFamily: "Inter_600SemiBold", letterSpacing: 0.3 },
   emptyBox: { paddingVertical: 30, alignItems: "center" },
-  emptyText: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
+  emptyText: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
 });

@@ -20,15 +20,14 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 
 const PRESETS = [5, 10, 25, 50, 100];
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
-  pending: { label: "Pendente",  color: "#F59E0B", bg: "#2D2506" },
-  paid:    { label: "Pago",      color: "#22C55E", bg: "#0D2818" },
-  expired: { label: "Expirado",  color: "#9CA3AF", bg: "#1E1E28" },
-  error:   { label: "Erro",      color: "#EF4444", bg: "#2D0A0A" },
+  pending: { label: "Pendente",  color: "#F59E0B", bg: "#F59E0B15" },
+  paid:    { label: "Pago",      color: "#22C55E", bg: "#22C55E15" },
+  expired: { label: "Expirado",  color: "#9CA3AF", bg: "#9CA3AF15" },
+  error:   { label: "Erro",      color: "#EF4444", bg: "#EF444415" },
 };
 
 export default function PaymentsScreen() {
@@ -70,14 +69,15 @@ export default function PaymentsScreen() {
   };
 
   const paddingBottom = Platform.OS === "web" ? 34 + 110 : insets.bottom + 110;
+  const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
   const historyList = (history as any[] | undefined) ?? [];
 
   return (
     <View style={s.root}>
-      <LinearGradient colors={["#6D28D9", "#4C1D95"]} style={[s.header, { paddingTop: insets.top + 12 }]}>
+      <View style={[s.header, { paddingTop }]}>
         <Text style={s.headerTitle}>Comprar Moedas</Text>
         <Text style={s.headerSub}>R$ 1,00 = 100 moedas</Text>
-      </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom }}
@@ -85,7 +85,12 @@ export default function PaymentsScreen() {
         refreshControl={<RefreshControl refreshing={historyLoading} onRefresh={refetch} tintColor="#6D28D9" />}
       >
         <View style={s.card}>
-          <Text style={s.cardTitle}>Gerar PIX</Text>
+          <View style={s.cardHeader}>
+            <View style={s.cardIconWrap}>
+              <Feather name="zap" size={16} color="#A78BFA" />
+            </View>
+            <Text style={s.cardTitle}>Gerar PIX</Text>
+          </View>
 
           <View style={s.presetsRow}>
             {PRESETS.map((p) => (
@@ -105,7 +110,7 @@ export default function PaymentsScreen() {
             <TextInput
               style={s.input}
               placeholder="0,00"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor="#6B7280"
               keyboardType="decimal-pad"
               value={amount}
               onChangeText={(v) => setAmount(v.replace(",", "."))}
@@ -160,7 +165,7 @@ export default function PaymentsScreen() {
                   <Text style={s.codeText} numberOfLines={3}>{pixData.copyPaste ?? "—"}</Text>
                 </View>
                 <Pressable style={[s.copyBtn, copied && s.copyBtnDone]} onPress={handleCopy}>
-                  <Feather name={copied ? "check" : "copy"} size={13} color={copied ? "#22C55E" : "#6D28D9"} />
+                  <Feather name={copied ? "check" : "copy"} size={13} color={copied ? "#22C55E" : "#A78BFA"} />
                   <Text style={[s.copyText, copied && { color: "#22C55E" }]}>
                     {copied ? "Copiado!" : "Copiar código PIX"}
                   </Text>
@@ -171,12 +176,14 @@ export default function PaymentsScreen() {
           </View>
         )}
 
-        <Text style={s.sectionTitle}>Histórico</Text>
+        <View style={s.sectionHeader}>
+          <Text style={s.sectionLabel}>HISTÓRICO</Text>
+        </View>
         {historyLoading ? (
           <View style={s.loader}><ActivityIndicator color="#6D28D9" /></View>
         ) : historyList.length === 0 ? (
           <View style={s.emptyHistory}>
-            <Feather name="inbox" size={28} color="#D1D5DB" />
+            <Feather name="inbox" size={28} color="#A0A0B0" />
             <Text style={s.emptyHistoryText}>Nenhum pagamento ainda</Text>
           </View>
         ) : (
@@ -186,7 +193,7 @@ export default function PaymentsScreen() {
               return (
                 <View key={item.id} style={[s.historyRow, i < historyList.length - 1 && s.historyRowBorder]}>
                   <View style={s.historyIconWrap}>
-                    <Feather name="dollar-sign" size={16} color="#6D28D9" />
+                    <Feather name="dollar-sign" size={16} color="#A78BFA" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={s.historyAmount}>R$ {parseFloat(item.amount ?? 0).toFixed(2)}</Text>
@@ -194,7 +201,7 @@ export default function PaymentsScreen() {
                       {new Date(item.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
                     </Text>
                   </View>
-                  <View style={[s.statusBadge, { backgroundColor: cfg.bg }]}>
+                  <View style={[s.statusBadge, { backgroundColor: cfg.bg, borderColor: cfg.color + "30" }]}>
                     <Text style={[s.statusText, { color: cfg.color }]}>{cfg.label}</Text>
                   </View>
                 </View>
@@ -212,49 +219,58 @@ const s = StyleSheet.create({
 
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#2A2A3540",
   },
-  headerTitle: { fontSize: 24, fontWeight: "700", color: "#FFF", fontFamily: "Inter_700Bold" },
-  headerSub: { fontSize: 13, color: "#FFFFFFBB", fontFamily: "Inter_400Regular", marginTop: 4 },
+  headerTitle: { fontSize: 22, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  headerSub: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 4 },
 
   card: {
     backgroundColor: "#1A1A24",
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     padding: 20,
     marginBottom: 16,
     gap: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
   },
-  cardTitle: { fontSize: 16, fontWeight: "700", color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
+  cardIconWrap: {
+    padding: 6,
+    backgroundColor: "#6D28D915",
+    borderRadius: 8,
+  },
+  cardTitle: { fontSize: 16, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
 
   presetsRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
   preset: {
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: 10,
     backgroundColor: "#1E1E28",
+    borderWidth: 1,
+    borderColor: "#2A2A35",
   },
-  presetActive: { backgroundColor: "#150F2A" },
-  presetText: { fontSize: 14, color: "#6B7280", fontFamily: "Inter_600SemiBold" },
-  presetTextActive: { color: "#6D28D9" },
+  presetActive: { backgroundColor: "#6D28D915", borderColor: "#6D28D930" },
+  presetText: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_600SemiBold" },
+  presetTextActive: { color: "#A78BFA" },
 
-  label: { fontSize: 11, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
+  label: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#1E1E28",
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     paddingHorizontal: 14,
   },
-  currency: { fontSize: 18, color: "#9CA3AF", fontFamily: "Inter_700Bold", marginRight: 4 },
-  input: { flex: 1, color: "#F0F0F5", fontSize: 20, fontWeight: "700", paddingVertical: 14, fontFamily: "Inter_700Bold" },
+  currency: { fontSize: 18, color: "#A0A0B0", fontFamily: "Inter_700Bold", marginRight: 4 },
+  input: { flex: 1, color: "#F0F0F5", fontSize: 20, paddingVertical: 14, fontFamily: "Inter_700Bold" },
 
   preview: { flexDirection: "row", alignItems: "center", gap: 6 },
-  previewText: { fontSize: 14, color: "#6B7280", fontFamily: "Inter_400Regular" },
+  previewText: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
 
   btn: {
     backgroundColor: "#6D28D9",
@@ -265,78 +281,83 @@ const s = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
   },
-  btnText: { color: "#FFF", fontSize: 15, fontWeight: "700", fontFamily: "Inter_700Bold" },
+  btnText: { color: "#FFF", fontSize: 15, fontFamily: "Inter_700Bold" },
 
   pixCard: {
     backgroundColor: "#1A1A24",
     borderRadius: 16,
-    borderLeftWidth: 4,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+    borderLeftWidth: 3,
     borderLeftColor: "#22C55E",
     padding: 20,
     marginBottom: 16,
     gap: 12,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
   },
   pixHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
   pixIconWrap: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#0D2818",
+    backgroundColor: "#22C55E15",
     alignItems: "center",
     justifyContent: "center",
   },
-  pixHeaderText: { fontSize: 15, fontWeight: "700", color: "#F0F0F5", fontFamily: "Inter_700Bold" },
-  pixSub: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
-  codeBox: { backgroundColor: "#1E1E28", borderRadius: 12, padding: 14 },
-  codeText: { fontSize: 12, color: "#6B7280", fontFamily: "Inter_400Regular", lineHeight: 18 },
+  pixHeaderText: { fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  pixSub: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 2 },
+  codeBox: { backgroundColor: "#1E1E28", borderRadius: 12, borderWidth: 1, borderColor: "#2A2A35", padding: 14 },
+  codeText: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", lineHeight: 18 },
   copyBtn: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
     borderRadius: 12,
-    backgroundColor: "#150F2A",
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
     paddingVertical: 12,
   },
-  copyBtnDone: { backgroundColor: "#0D2818" },
-  copyText: { fontSize: 14, fontWeight: "600", color: "#6D28D9", fontFamily: "Inter_600SemiBold" },
-  waitText: { textAlign: "center", fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
-  paidBadge: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#0D2818", borderRadius: 12, padding: 14 },
+  copyBtnDone: { backgroundColor: "#22C55E15", borderColor: "#22C55E30" },
+  copyText: { fontSize: 14, color: "#A78BFA", fontFamily: "Inter_600SemiBold" },
+  waitText: { textAlign: "center", fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  paidBadge: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#22C55E15", borderRadius: 12, padding: 14 },
   paidText: { fontSize: 14, color: "#22C55E", fontFamily: "Inter_600SemiBold" },
 
-  sectionTitle: { fontSize: 18, color: "#F0F0F5", fontFamily: "Inter_700Bold", marginBottom: 12 },
+  sectionHeader: { marginBottom: 12 },
+  sectionLabel: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_600SemiBold", letterSpacing: 1.5 },
 
   historyCard: {
     backgroundColor: "#1A1A24",
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
   },
   historyRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
-  historyRowBorder: { borderBottomWidth: 1, borderBottomColor: "#1E1E28" },
+  historyRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#2A2A3560" },
   historyIconWrap: {
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#150F2A",
+    backgroundColor: "#6D28D915",
     alignItems: "center",
     justifyContent: "center",
   },
-  historyAmount: { fontSize: 15, fontWeight: "600", color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
-  historyDate: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
-  statusBadge: { borderRadius: 10, paddingHorizontal: 10, paddingVertical: 5 },
-  statusText: { fontSize: 12, fontWeight: "600", fontFamily: "Inter_600SemiBold" },
+  historyAmount: { fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
+  historyDate: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 2 },
+  statusBadge: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
+  statusText: { fontSize: 11, fontFamily: "Inter_600SemiBold", letterSpacing: 0.3 },
 
   loader: { paddingVertical: 30, alignItems: "center" },
-  emptyHistory: { alignItems: "center", gap: 8, paddingVertical: 40, backgroundColor: "#1A1A24", borderRadius: 16 },
-  emptyHistoryText: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
+  emptyHistory: {
+    alignItems: "center",
+    gap: 8,
+    paddingVertical: 40,
+    backgroundColor: "#1A1A24",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+  },
+  emptyHistoryText: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
 });

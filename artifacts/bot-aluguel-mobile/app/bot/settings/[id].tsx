@@ -16,7 +16,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 
 const PREFIX_OPTIONS = [".", "!", "/", "#", "@", "$", "nenhum"];
 
@@ -63,15 +62,17 @@ export default function BotSettingsScreen() {
     }
   }
 
+  const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
+
   return (
     <View style={s.root}>
-      <LinearGradient colors={["#6D28D9", "#4C1D95"]} style={[s.nav, { paddingTop: insets.top + 8 }]}>
+      <View style={[s.nav, { paddingTop }]}>
         <Pressable style={s.backBtn} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={20} color="#FFF" />
+          <Feather name="arrow-left" size={20} color="#F0F0F5" />
         </Pressable>
         <Text style={s.navTitle}>Configurações do Bot</Text>
         <View style={{ width: 40 }} />
-      </LinearGradient>
+      </View>
 
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
         <ScrollView
@@ -89,13 +90,13 @@ export default function BotSettingsScreen() {
                 <View style={s.field}>
                   <Text style={s.label}>NOME DO BOT</Text>
                   <View style={s.inputRow}>
-                    <Feather name="cpu" size={14} color="#9CA3AF" />
+                    <Feather name="cpu" size={14} color="#A0A0B0" />
                     <TextInput
                       style={s.input}
                       value={settings.name}
                       onChangeText={(v) => setSettings((p) => ({ ...p, name: v }))}
                       placeholder="Ex: MeuBot"
-                      placeholderTextColor="#9CA3AF"
+                      placeholderTextColor="#6B7280"
                     />
                   </View>
                   <Text style={s.hint}>Nome de exibição do bot na plataforma</Text>
@@ -118,20 +119,20 @@ export default function BotSettingsScreen() {
                     })}
                   </View>
                   <Text style={s.hint}>
-                    Caractere que precede os comandos. Ex: <Text style={{ color: "#6B7280" }}>{settings.prefix !== "nenhum" ? settings.prefix : ""}sticker</Text>
+                    Caractere que precede os comandos. Ex: <Text style={{ color: "#A0A0B0" }}>{settings.prefix !== "nenhum" ? settings.prefix : ""}sticker</Text>
                   </Text>
                 </View>
 
                 <View style={s.field}>
                   <Text style={s.label}>NÚMERO DO DONO (COM DDI)</Text>
                   <View style={s.inputRow}>
-                    <Feather name="phone" size={14} color="#9CA3AF" />
+                    <Feather name="phone" size={14} color="#A0A0B0" />
                     <TextInput
                       style={s.input}
                       value={settings.ownerPhone}
                       onChangeText={(v) => setSettings((p) => ({ ...p, ownerPhone: v.replace(/\D/g, "") }))}
                       placeholder="Ex: 5511999990000"
-                      placeholderTextColor="#9CA3AF"
+                      placeholderTextColor="#6B7280"
                       keyboardType="phone-pad"
                       maxLength={15}
                     />
@@ -148,7 +149,7 @@ export default function BotSettingsScreen() {
                   { badge: "Live", badgeColor: "#22C55E", desc: "O bot precisa estar conectado ao WhatsApp para processar comandos." },
                 ].map((tip) => (
                   <View key={tip.badge} style={s.tipRow}>
-                    <View style={[s.tipBadge, { backgroundColor: tip.badgeColor + "15" }]}>
+                    <View style={[s.tipBadge, { backgroundColor: tip.badgeColor + "15", borderColor: tip.badgeColor + "30" }]}>
                       <Text style={[s.tipBadgeText, { color: tip.badgeColor }]}>{tip.badge}</Text>
                     </View>
                     <Text style={s.tipText}>{tip.desc}</Text>
@@ -184,46 +185,56 @@ const s = StyleSheet.create({
   nav: {
     flexDirection: "row", alignItems: "center", justifyContent: "space-between",
     paddingHorizontal: 16, paddingBottom: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#2A2A3540",
   },
-  backBtn: { width: 40, height: 40, alignItems: "center", justifyContent: "center" },
-  navTitle: { fontSize: 17, fontWeight: "700", color: "#FFF", fontFamily: "Inter_700Bold" },
+  backBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "#1A1A24",
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  navTitle: { fontSize: 17, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
 
   scroll: { padding: 20, gap: 16 },
   loader: { paddingVertical: 60, alignItems: "center" },
 
   card: {
-    backgroundColor: "#1A1A24", borderRadius: 16, padding: 20, gap: 18,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4, elevation: 2,
+    backgroundColor: "#1A1A24", borderRadius: 16, borderWidth: 1, borderColor: "#2A2A35",
+    padding: 20, gap: 18,
   },
-  cardSectionLabel: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
+  cardSectionLabel: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_600SemiBold", letterSpacing: 1.5 },
 
   field: { gap: 8 },
-  label: { fontSize: 11, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
+  label: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
   inputRow: {
     flexDirection: "row", alignItems: "center", gap: 10,
-    backgroundColor: "#1E1E28", borderRadius: 12, paddingHorizontal: 14,
+    backgroundColor: "#1E1E28", borderRadius: 12, borderWidth: 1, borderColor: "#2A2A35", paddingHorizontal: 14,
   },
   input: { flex: 1, color: "#F0F0F5", fontSize: 15, paddingVertical: 14, fontFamily: "Inter_400Regular" },
-  hint: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
+  hint: { fontSize: 12, color: "#6B7280", fontFamily: "Inter_400Regular" },
 
   prefixRow: { flexDirection: "row", flexWrap: "wrap", gap: 8 },
   prefixBtn: {
     paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10,
-    backgroundColor: "#1E1E28",
+    backgroundColor: "#1E1E28", borderWidth: 1, borderColor: "#2A2A35",
   },
-  prefixBtnActive: { backgroundColor: "#150F2A" },
-  prefixText: { fontSize: 14, fontWeight: "600", color: "#9CA3AF", fontFamily: "Inter_600SemiBold" },
-  prefixTextActive: { color: "#6D28D9" },
+  prefixBtnActive: { backgroundColor: "#6D28D915", borderColor: "#6D28D930" },
+  prefixText: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_600SemiBold" },
+  prefixTextActive: { color: "#A78BFA" },
 
   tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
-  tipBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, marginTop: 2 },
-  tipBadgeText: { fontSize: 12, fontWeight: "600", fontFamily: "Inter_600SemiBold" },
-  tipText: { flex: 1, fontSize: 13, color: "#6B7280", fontFamily: "Inter_400Regular", lineHeight: 20 },
+  tipBadge: { borderRadius: 6, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 4, marginTop: 2 },
+  tipBadgeText: { fontSize: 12, fontFamily: "Inter_600SemiBold" },
+  tipText: { flex: 1, fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular", lineHeight: 20 },
 
   saveBtn: {
     backgroundColor: "#6D28D9", borderRadius: 12, paddingVertical: 15,
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    shadowColor: "#6D28D9", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
   },
-  saveBtnText: { color: "#FFF", fontSize: 15, fontWeight: "700", fontFamily: "Inter_700Bold" },
+  saveBtnText: { color: "#FFF", fontSize: 15, fontFamily: "Inter_700Bold" },
 });

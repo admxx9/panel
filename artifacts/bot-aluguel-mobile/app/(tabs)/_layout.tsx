@@ -4,11 +4,11 @@ import { useAuth } from "@/context/AuthContext";
 import BottomNav, { type NavTab } from "@/components/BottomNav";
 
 const ALL_TABS: (NavTab & { name: string; adminOnly?: boolean })[] = [
-  { name: "index",    href: "/",        icon: "home",         label: "Início" },
+  { name: "index",    href: "/",        icon: "grid",         label: "Hub" },
   { name: "bots",     href: "/bots",    icon: "cpu",          label: "Bots" },
   { name: "payments", href: "/payments",icon: "credit-card",  label: "Moedas" },
-  { name: "plans",    href: "/plans",   icon: "shopping-bag", label: "Planos" },
-  { name: "settings", href: "/settings",icon: "menu",         label: "Menu" },
+  { name: "plans",    href: "/plans",   icon: "star",         label: "Planos" },
+  { name: "settings", href: "/settings",icon: "settings",     label: "Config" },
   { name: "admin",    href: "/admin",   icon: "shield",       label: "Admin", adminOnly: true },
 ];
 

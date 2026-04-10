@@ -18,7 +18,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 
 type Plan = {
   id: string;
@@ -65,7 +64,7 @@ function PlanCard({ plan, isActive, coins, onActivate, loading }: {
           </View>
         ))}
         <View style={c.feature}>
-          <Feather name="users" size={12} color="#9CA3AF" />
+          <Feather name="users" size={12} color="#A0A0B0" />
           <Text style={c.featureText}>Até {plan.maxGroups} grupos</Text>
         </View>
       </View>
@@ -103,6 +102,7 @@ export default function PlansScreen() {
   const [activatingId, setActivatingId] = useState<string | null>(null);
 
   const paddingBottom = Platform.OS === "web" ? 34 + 110 : insets.bottom + 110;
+  const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
 
   const handleActivate = (plan: Plan) => {
     Alert.alert("Ativar plano", `Ativar "${plan.name}" por ${plan.coins} moedas?`, [
@@ -130,10 +130,10 @@ export default function PlansScreen() {
 
   return (
     <View style={s.root}>
-      <LinearGradient colors={["#6D28D9", "#4C1D95"]} style={[s.header, { paddingTop: insets.top + 12 }]}>
+      <View style={[s.header, { paddingTop }]}>
         <Text style={s.headerTitle}>Planos</Text>
         <Text style={s.headerSub}>Escolha o melhor plano para seus bots</Text>
-      </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom }}
@@ -142,7 +142,7 @@ export default function PlansScreen() {
       >
         <View style={s.coinsCard}>
           <View style={s.coinsIconWrap}>
-            <Feather name="dollar-sign" size={20} color="#6D28D9" />
+            <Feather name="dollar-sign" size={18} color="#A78BFA" />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={s.coinsValue}>{coins} moedas</Text>
@@ -182,13 +182,10 @@ const c = StyleSheet.create({
   card: {
     backgroundColor: "#1A1A24",
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     padding: 20,
     gap: 14,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
   },
   cardActive: {
     borderWidth: 2,
@@ -207,34 +204,34 @@ const c = StyleSheet.create({
   },
   name: {
     fontSize: 18,
-    fontWeight: "700",
     color: "#F0F0F5",
     fontFamily: "Inter_700Bold",
   },
   activeBadge: {
-    backgroundColor: "#150F2A",
-    borderRadius: 8,
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
+    borderRadius: 6,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
   activeBadgeText: {
     fontSize: 10,
-    fontWeight: "700",
-    color: "#6D28D9",
+    color: "#A78BFA",
     fontFamily: "Inter_700Bold",
     letterSpacing: 0.5,
   },
-  desc: { fontSize: 13, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
-  price: { fontSize: 24, fontWeight: "800", color: "#6D28D9", fontFamily: "Inter_700Bold" },
-  priceUnit: { fontSize: 11, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
-  divider: { height: 1, backgroundColor: "#1E1E28" },
+  desc: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  price: { fontSize: 24, color: "#6D28D9", fontFamily: "Inter_700Bold" },
+  priceUnit: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 2 },
+  divider: { height: StyleSheet.hairlineWidth, backgroundColor: "#2A2A3560" },
   features: { gap: 8 },
   feature: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
   },
-  featureText: { fontSize: 13, color: "#6B7280", fontFamily: "Inter_400Regular" },
+  featureText: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
   btn: {
     borderRadius: 12,
     paddingVertical: 13,
@@ -245,14 +242,18 @@ const c = StyleSheet.create({
     backgroundColor: "#6D28D9",
   },
   btnActive: {
-    backgroundColor: "#150F2A",
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
   },
   btnDisabled: {
     backgroundColor: "#1E1E28",
+    borderWidth: 1,
+    borderColor: "#2A2A35",
   },
-  btnText: { fontSize: 14, fontWeight: "700", color: "#FFF", fontFamily: "Inter_700Bold" },
-  btnActiveText: { color: "#6D28D9" },
-  btnDisabledText: { color: "#9CA3AF" },
+  btnText: { fontSize: 14, color: "#FFF", fontFamily: "Inter_700Bold" },
+  btnActiveText: { color: "#A78BFA" },
+  btnDisabledText: { color: "#A0A0B0" },
 });
 
 const s = StyleSheet.create({
@@ -260,10 +261,12 @@ const s = StyleSheet.create({
 
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#2A2A3540",
   },
-  headerTitle: { fontSize: 24, fontWeight: "700", color: "#FFF", fontFamily: "Inter_700Bold" },
-  headerSub: { fontSize: 13, color: "#FFFFFFBB", fontFamily: "Inter_400Regular", marginTop: 4 },
+  headerTitle: { fontSize: 22, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  headerSub: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 4 },
 
   coinsCard: {
     flexDirection: "row",
@@ -271,31 +274,32 @@ const s = StyleSheet.create({
     gap: 12,
     backgroundColor: "#1A1A24",
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     padding: 18,
     marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
   },
   coinsIconWrap: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: "#150F2A",
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
     alignItems: "center",
     justifyContent: "center",
   },
-  coinsValue: { fontSize: 18, fontWeight: "700", color: "#F0F0F5", fontFamily: "Inter_700Bold" },
-  coinsLabel: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 1 },
+  coinsValue: { fontSize: 18, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  coinsLabel: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 1 },
   activePlanBadge: {
-    backgroundColor: "#150F2A",
-    borderRadius: 10,
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
+    borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
-  activePlanText: { fontSize: 12, fontWeight: "700", color: "#6D28D9", fontFamily: "Inter_700Bold" },
+  activePlanText: { fontSize: 12, color: "#A78BFA", fontFamily: "Inter_700Bold" },
 
   plansList: { gap: 14 },
   loader: { paddingVertical: 60, alignItems: "center" },

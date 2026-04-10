@@ -12,7 +12,6 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/context/AuthContext";
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
@@ -37,14 +36,14 @@ function Row({
       onPress={onPress}
       disabled={!onPress}
     >
-      <View style={[s.rowIcon, { backgroundColor: destructive ? "#2D0A0A" : "#150F2A" }]}>
+      <View style={[s.rowIcon, { backgroundColor: destructive ? "#EF444415" : "#6D28D915" }]}>
         <Feather name={icon as any} size={16} color={destructive ? "#EF4444" : "#6D28D9"} />
       </View>
       <Text style={[s.rowLabel, destructive && { color: "#EF4444" }]}>{label}</Text>
       {value ? (
         <Text style={s.rowValue}>{value}</Text>
       ) : onPress ? (
-        <Feather name="chevron-right" size={16} color="#D1D5DB" />
+        <Feather name="chevron-right" size={16} color="#A0A0B0" />
       ) : null}
     </Pressable>
   );
@@ -55,6 +54,7 @@ export default function SettingsScreen() {
   const { user, signOut } = useAuth();
 
   const paddingBottom = Platform.OS === "web" ? 34 + 110 : insets.bottom + 110;
+  const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
   const initial = user?.name?.charAt(0).toUpperCase() ?? "U";
 
   function handleLogout() {
@@ -74,7 +74,7 @@ export default function SettingsScreen() {
 
   return (
     <View style={s.root}>
-      <LinearGradient colors={["#6D28D9", "#4C1D95"]} style={[s.header, { paddingTop: insets.top + 16 }]}>
+      <View style={[s.header, { paddingTop }]}>
         <View style={s.profileRow}>
           <View style={s.avatar}>
             <Text style={s.avatarText}>{initial}</Text>
@@ -89,7 +89,7 @@ export default function SettingsScreen() {
             </Text>
           </View>
         </View>
-      </LinearGradient>
+      </View>
 
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom }}
@@ -121,7 +121,9 @@ const s = StyleSheet.create({
 
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingBottom: 20,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#2A2A3540",
   },
   profileRow: {
     flexDirection: "row",
@@ -131,33 +133,34 @@ const s = StyleSheet.create({
   avatar: {
     width: 52,
     height: 52,
-    borderRadius: 26,
-    backgroundColor: "rgba(255,255,255,0.25)",
+    borderRadius: 16,
+    backgroundColor: "#1A1A24",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText: { fontSize: 22, fontWeight: "800", color: "#FFF", fontFamily: "Inter_700Bold" },
-  profileName: { fontSize: 18, fontWeight: "700", color: "#FFF", fontFamily: "Inter_700Bold" },
-  profilePhone: { fontSize: 13, color: "#FFFFFFBB", fontFamily: "Inter_400Regular", marginTop: 2 },
+  avatarText: { fontSize: 22, color: "#A78BFA", fontFamily: "Inter_700Bold" },
+  profileName: { fontSize: 18, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  profilePhone: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 2 },
   planTag: {
-    backgroundColor: "rgba(255,255,255,0.2)",
-    borderRadius: 10,
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
+    borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 5,
   },
-  planTagText: { fontSize: 11, fontWeight: "700", color: "#FFF", fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+  planTagText: { fontSize: 10, color: "#A78BFA", fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
 
   section: { marginBottom: 20 },
-  sectionTitle: { fontSize: 12, fontWeight: "600", color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 8, paddingLeft: 4 },
+  sectionTitle: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_600SemiBold", letterSpacing: 1.5, marginBottom: 8, paddingLeft: 4 },
   sectionCard: {
     backgroundColor: "#1A1A24",
     borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.04,
-    shadowRadius: 4,
-    elevation: 2,
   },
 
   row: {
@@ -167,7 +170,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 14,
   },
-  rowBorder: { borderBottomWidth: 1, borderBottomColor: "#1E1E28" },
+  rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#2A2A3560" },
   rowIcon: {
     width: 34,
     height: 34,
@@ -176,7 +179,7 @@ const s = StyleSheet.create({
     justifyContent: "center",
   },
   rowLabel: { flex: 1, fontSize: 15, color: "#D1D1DB", fontFamily: "Inter_500Medium" },
-  rowValue: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
+  rowValue: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
 
-  version: { textAlign: "center", fontSize: 12, color: "#D1D5DB", fontFamily: "Inter_400Regular", marginTop: 12 },
+  version: { textAlign: "center", fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 12 },
 });

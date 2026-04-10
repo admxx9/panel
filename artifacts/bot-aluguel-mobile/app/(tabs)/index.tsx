@@ -16,30 +16,11 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 
-const WEEK_LABELS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-
-function MiniBarChart({ data }: { data: number[] }) {
-  const max = Math.max(...data, 1);
-  return (
-    <View style={ch.wrap}>
-      <View style={ch.bars}>
-        {data.map((v, i) => (
-          <View key={i} style={ch.col}>
-            <View style={ch.barBg}>
-              <View
-                style={[
-                  ch.barFill,
-                  { height: `${Math.max((v / max) * 100, 4)}%` as any },
-                ]}
-              />
-            </View>
-            <Text style={ch.label}>{WEEK_LABELS[i]}</Text>
-          </View>
-        ))}
-      </View>
-    </View>
-  );
-}
+const PLATFORM_CONFIG: Record<string, { color: string; bg: string; icon: string; label: string }> = {
+  whatsapp:     { color: "#25D366", bg: "#25D36615", icon: "message-circle", label: "WhatsApp" },
+  discord:      { color: "#5865F2", bg: "#5865F215", icon: "hash",           label: "Discord" },
+  telegram:     { color: "#0088CC", bg: "#0088CC15", icon: "send",           label: "Telegram" },
+};
 
 function formatNum(n: number): string {
   if (n >= 1000) return (n / 1000).toFixed(1).replace(".0", "") + "K";
@@ -56,26 +37,19 @@ export default function DashboardScreen() {
 
   const totalBots = data?.totalBots ?? 0;
   const activeBots = data?.activeBots ?? 0;
-  const offlineBots = totalBots - activeBots;
-  const coins = data?.coins ?? user?.coins ?? 0;
   const msgs = data?.totalMessages ?? 0;
 
-  const weekData = [12, 28, 19, 35, 22, 8, activeBots * 10 || 5];
-
-  const greeting = () => {
-    const h = new Date().getHours();
-    if (h < 12) return "Bom dia";
-    if (h < 18) return "Boa tarde";
-    return "Boa noite";
-  };
+  const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
 
   const getStatusInfo = (status: string) => {
-    if (status === "connected") return { label: "Online", color: "#22C55E", icon: "wifi" as const, bg: "#22C55E" };
-    if (status === "connecting") return { label: "Conectando", color: "#F59E0B", icon: "loader" as const, bg: "#F59E0B" };
-    return { label: "Offline", color: "#9CA3AF", icon: "power" as const, bg: "#9CA3AF" };
+    if (status === "connected") return { label: "Online", color: "#22C55E", icon: "wifi" as const };
+    if (status === "connecting") return { label: "Conectando", color: "#F59E0B", icon: "loader" as const };
+    return { label: "Offline", color: "#9CA3AF", icon: "power" as const };
   };
 
-  const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
+  const getPlatform = (_bot: any) => {
+    return PLATFORM_CONFIG["whatsapp"];
+  };
 
   return (
     <View style={s.root}>
@@ -87,16 +61,21 @@ export default function DashboardScreen() {
         }
       >
         <View style={[s.header, { paddingTop }]}>
-          <View style={{ flex: 1 }}>
-            <Text style={s.greeting}>{greeting()},</Text>
-            <Text style={s.userName}>{user?.name ?? "Usuário"}</Text>
+          <View style={s.headerIcon}>
+            <Feather name="terminal" size={16} color="#F0F0F5" />
+            <View style={s.headerOnline} />
           </View>
-          <View style={s.planRow}>
-            <Text style={s.planLabel}>{data?.activePlan ?? "Sem plano"}</Text>
-            <View style={s.planDot} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.headerTitle}>BotAluguel</Text>
+            <View style={s.headerMeta}>
+              <View style={s.proBadge}>
+                <Text style={s.proBadgeText}>PRO</Text>
+              </View>
+              <Text style={s.headerSub}>{user?.name ?? "Usuário"}</Text>
+            </View>
           </View>
           <Pressable
-            style={s.avatarWrap}
+            style={s.avatarBtn}
             onPress={() => router.push("/(tabs)/settings")}
           >
             <Text style={s.avatarText}>{user?.name?.charAt(0).toUpperCase() ?? "U"}</Text>
@@ -109,99 +88,123 @@ export default function DashboardScreen() {
           </View>
         ) : (
           <>
-            <View style={s.statsRow}>
-              <View style={s.statItem}>
-                <Text style={s.statLabel}>BOTS</Text>
-                <Text style={s.statValue}>{totalBots}</Text>
+            <View style={s.createCard}>
+              <View style={s.createHeader}>
+                <View style={s.createIconWrap}>
+                  <Feather name="plus" size={16} color="#A78BFA" />
+                </View>
+                <Text style={s.createTitle}>Criar Novo Bot</Text>
               </View>
-              <View style={s.statDivider} />
-              <View style={s.statItem}>
-                <Text style={s.statLabel}>ONLINE</Text>
-                <Text style={[s.statValue, { color: "#22C55E" }]}>{activeBots}</Text>
-              </View>
-              <View style={s.statDivider} />
-              <View style={s.statItem}>
-                <Text style={s.statLabel}>OFFLINE</Text>
-                <Text style={[s.statValue, { color: "#9CA3AF" }]}>{offlineBots}</Text>
-              </View>
-              <View style={s.statDivider} />
-              <View style={s.statItem}>
-                <Text style={s.statLabel}>MSGS</Text>
-                <Text style={s.statValue}>{formatNum(msgs)}</Text>
+              <Text style={s.createDesc}>Selecione a plataforma para começar a construir sua experiência conversacional.</Text>
+              <View style={s.platformRow}>
+                {(["whatsapp", "discord", "telegram"] as const).map((platform) => {
+                  const cfg = PLATFORM_CONFIG[platform];
+                  return (
+                    <Pressable
+                      key={platform}
+                      style={({ pressed }) => [s.platformBtn, pressed && { opacity: 0.7 }]}
+                      onPress={() => router.push("/(tabs)/bots")}
+                    >
+                      <View style={[s.platformIconWrap, { backgroundColor: cfg.bg }]}>
+                        <Feather name={cfg.icon as any} size={20} color={cfg.color} />
+                      </View>
+                      <Text style={s.platformLabel}>{cfg.label}</Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             </View>
 
-            <View style={s.actionsBar}>
-              <Pressable
-                style={({ pressed }) => [s.actionBtn, pressed && { opacity: 0.7 }]}
-                onPress={() => router.push("/(tabs)/bots")}
-              >
-                <Feather name="plus" size={20} color="#F0F0F5" />
-                <Text style={s.actionText}>Novo</Text>
+            <View style={s.sectionHeader}>
+              <Text style={s.sectionLabel}>VISÃO GERAL</Text>
+              <Pressable onPress={() => router.push("/(tabs)/bots")}>
+                <Text style={s.sectionLink}>Analytics <Feather name="chevron-right" size={12} color="#6D28D9" /></Text>
               </Pressable>
-              <Pressable
-                style={({ pressed }) => [s.actionBtn, pressed && { opacity: 0.7 }]}
-                onPress={() => router.push("/(tabs)/bots")}
-              >
-                <Feather name="tool" size={20} color="#F0F0F5" />
-                <Text style={s.actionText}>Builder</Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [s.actionBtn, pressed && { opacity: 0.7 }]}
-                onPress={() => router.push("/(tabs)/payments")}
-              >
-                <Feather name="credit-card" size={20} color="#F0F0F5" />
-                <Text style={s.actionText}>Recarga</Text>
-              </Pressable>
-              <Pressable
-                style={({ pressed }) => [s.actionBtn, pressed && { opacity: 0.7 }]}
-                onPress={() => router.push("/(tabs)/plans")}
-              >
-                <Feather name="layout" size={20} color="#F0F0F5" />
-                <Text style={s.actionText}>Planos</Text>
-              </Pressable>
+            </View>
+            <View style={s.statsRow}>
+              <View style={s.statCard}>
+                <View style={s.statIconRow}>
+                  <View style={s.statIconWrap}>
+                    <Feather name="activity" size={14} color="#F0F0F5" />
+                  </View>
+                  <Text style={s.statCardLabel}>Bots Ativos</Text>
+                </View>
+                <View style={s.statValueRow}>
+                  <Text style={s.statBigNum}>{activeBots}</Text>
+                  <Text style={s.statSmallNum}>/ {totalBots} total</Text>
+                </View>
+              </View>
+              <View style={s.statCard}>
+                <View style={s.statIconRow}>
+                  <View style={s.statIconWrap}>
+                    <Feather name="zap" size={14} color="#F0F0F5" />
+                  </View>
+                  <Text style={s.statCardLabel}>Msgs Hoje</Text>
+                </View>
+                <View style={s.statValueRow}>
+                  <Text style={s.statBigNum}>{formatNum(msgs)}</Text>
+                  <Text style={s.statGreen}>+12%</Text>
+                </View>
+              </View>
             </View>
 
             {bots && bots.length > 0 && (
               <>
-                <View style={s.sectionRow}>
-                  <Text style={s.sectionTitle}>SEUS BOTS</Text>
-                  <Pressable onPress={() => router.push("/(tabs)/bots")}>
-                    <Text style={s.seeAll}>Ver todos</Text>
-                  </Pressable>
+                <View style={s.sectionHeader}>
+                  <Text style={s.sectionLabel}>SEUS BOTS</Text>
+                  <View style={s.totalBadge}>
+                    <Text style={s.totalBadgeText}>{bots.length} Total</Text>
+                  </View>
                 </View>
 
                 {bots.slice(0, 4).map((bot: any) => {
                   const st = getStatusInfo(bot.status);
+                  const plat = getPlatform(bot);
+                  const isOnline = bot.status === "connected";
                   return (
                     <Pressable
                       key={bot.id}
                       style={({ pressed }) => [s.botCard, pressed && { opacity: 0.85 }]}
                       onPress={() => router.push(`/bot/${bot.id}` as any)}
                     >
-                      <View style={[s.botStripe, { backgroundColor: st.bg }]} />
-                      <View style={s.botContent}>
-                        <View style={s.botTop}>
-                          <View style={s.botInfo}>
-                            <View style={[s.botIcon, { backgroundColor: st.color + "15" }]}>
-                              <Feather name={st.icon} size={18} color={st.color} />
-                            </View>
-                            <View style={{ flex: 1 }}>
-                              <Text style={s.botName}>{bot.name}</Text>
-                              <Text style={s.botPhone}>{bot.phone || "Sem número"}</Text>
-                            </View>
+                      <View style={[s.botTopGlow, { backgroundColor: plat.color }]} />
+                      <View style={s.botTop}>
+                        <View style={s.botInfo}>
+                          <View style={[s.botIconWrap, { backgroundColor: plat.bg }]}>
+                            <Feather name={plat.icon as any} size={18} color={plat.color} />
                           </View>
-                          <View style={[s.statusPill, { backgroundColor: st.color + "15", borderColor: st.color + "30" }]}>
-                            <View style={[s.statusDot, { backgroundColor: st.color }]} />
-                            <Text style={[s.statusText, { color: st.color }]}>{st.label}</Text>
+                          <View style={{ flex: 1 }}>
+                            <Text style={s.botName}>{bot.name}</Text>
+                            <View style={s.botBadgeRow}>
+                              <View style={[s.platBadge, { backgroundColor: plat.bg, borderColor: plat.color + "30" }]}>
+                                <Text style={[s.platBadgeText, { color: plat.color }]}>{plat.label}</Text>
+                              </View>
+                              <View style={s.statusPill}>
+                                <View style={[s.statusDot, { backgroundColor: st.color }]} />
+                                <Text style={s.statusText}>{isOnline ? "ONLINE" : "OFFLINE"}</Text>
+                              </View>
+                            </View>
                           </View>
                         </View>
-                        <View style={s.botBottom}>
-                          <View style={s.botMsgRow}>
-                            <Feather name="message-square" size={13} color="#A0A0B0" />
-                            <Text style={s.botMsgText}>{bot.messageCount ?? 0} msgs hoje</Text>
-                          </View>
+                        <Pressable
+                          style={s.botMenuBtn}
+                          onPress={() => router.push(`/bot/settings/${bot.id}` as any)}
+                        >
+                          <Feather name="more-vertical" size={16} color="#A0A0B0" />
+                        </Pressable>
+                      </View>
+                      <View style={s.botBottom}>
+                        <View>
+                          <Text style={s.botVolumeLabel}>24H VOLUME</Text>
+                          <Text style={s.botVolumeValue}>{bot.messageCount ?? 0} <Text style={s.botVolumeSuffix}>msgs</Text></Text>
                         </View>
+                        <Pressable
+                          style={({ pressed }) => [s.builderBtn, pressed && { opacity: 0.8 }]}
+                          onPress={() => router.push(`/builder/${bot.id}` as any)}
+                        >
+                          <Feather name="grid" size={14} color="#F0F0F5" />
+                          <Text style={s.builderBtnText}>Builder</Text>
+                        </Pressable>
                       </View>
                     </Pressable>
                   );
@@ -209,51 +212,39 @@ export default function DashboardScreen() {
               </>
             )}
 
-            <View style={s.sectionRow}>
-              <Text style={s.sectionTitle}>VOLUME DA SEMANA</Text>
-              <Text style={s.chartBadge}>+12%</Text>
-            </View>
-            <View style={s.chartWrap}>
-              <MiniBarChart data={weekData} />
-            </View>
-
-            {data?.recentActivity && data.recentActivity.length > 0 && (
-              <>
-                <View style={s.sectionRow}>
-                  <Text style={s.sectionTitle}>ATIVIDADE RECENTE</Text>
+            <View style={s.planCard}>
+              <View style={s.planTop}>
+                <View style={s.planIconWrap}>
+                  <Feather name="credit-card" size={18} color="#A78BFA" />
                 </View>
-                <View style={s.activityCard}>
-                  {data.recentActivity.slice(0, 4).map((item: any, i: number) => {
-                    const iconName = item.type === "topup" ? "trending-up" : item.type === "bot_start" ? "cpu" : "zap";
-                    const iconColor = item.type === "topup" ? "#22C55E" : item.type === "bot_start" ? "#22C55E" : "#6D28D9";
-                    const iconBg = item.type === "topup" ? "#22C55E15" : item.type === "bot_start" ? "#22C55E15" : "#6D28D915";
-                    return (
-                      <View key={item.id}>
-                        <View style={s.actRow}>
-                          <View style={[s.actIcon, { backgroundColor: iconBg }]}>
-                            <Feather name={iconName as any} size={13} color={iconColor} />
-                          </View>
-                          <View style={{ flex: 1 }}>
-                            <Text style={s.actDesc}>{item.description}</Text>
-                            <Text style={s.actTime}>
-                              {new Date(item.createdAt).toLocaleDateString("pt-BR", {
-                                day: "2-digit",
-                                month: "short",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </Text>
-                          </View>
-                        </View>
-                        {i < Math.min(data.recentActivity.length, 4) - 1 && (
-                          <View style={s.actDivider} />
-                        )}
-                      </View>
-                    );
-                  })}
+                <View style={{ flex: 1 }}>
+                  <Text style={s.planTitle}>Pro Workspace</Text>
+                  <Text style={s.planSub}>Renova em 14 dias</Text>
                 </View>
-              </>
-            )}
+                <View style={s.planActiveBadge}>
+                  <Feather name="check-circle" size={12} color="#22C55E" />
+                  <Text style={s.planActiveText}>ATIVO</Text>
+                </View>
+              </View>
+              <View style={s.meterSection}>
+                <View style={s.meterHeader}>
+                  <Text style={s.meterLabel}>Mensagens (Mensal)</Text>
+                  <Text style={s.meterValue}>{formatNum(msgs)} <Text style={s.meterMax}>/ 100K</Text></Text>
+                </View>
+                <View style={s.meterTrack}>
+                  <View style={[s.meterFill, { width: `${Math.min((msgs / 100000) * 100, 100)}%` as any }]} />
+                </View>
+              </View>
+              <View style={s.meterSection}>
+                <View style={s.meterHeader}>
+                  <Text style={s.meterLabel}>Bots Ativos</Text>
+                  <Text style={s.meterValue}>{activeBots} <Text style={s.meterMax}>/ 5</Text></Text>
+                </View>
+                <View style={s.meterTrack}>
+                  <View style={[s.meterFillGreen, { width: `${Math.min((activeBots / 5) * 100, 100)}%` as any }]} />
+                </View>
+              </View>
+            </View>
           </>
         )}
       </ScrollView>
@@ -261,43 +252,55 @@ export default function DashboardScreen() {
   );
 }
 
-const ch = StyleSheet.create({
-  wrap: { marginTop: 4 },
-  bars: { flexDirection: "row", alignItems: "flex-end", gap: 6, height: 64 },
-  col: { flex: 1, alignItems: "center", gap: 6 },
-  barBg: {
-    width: "100%",
-    height: 64,
-    backgroundColor: "transparent",
-    borderRadius: 3,
-    overflow: "hidden",
-    justifyContent: "flex-end",
-  },
-  barFill: { width: "100%", borderRadius: 3, backgroundColor: "#6D28D9", opacity: 0.8 },
-  label: { fontSize: 10, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
-});
-
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#0F0F14" },
 
   header: {
     paddingHorizontal: 20,
-    paddingBottom: 24,
+    paddingBottom: 20,
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: "#2A2A3540",
   },
-  greeting: { color: "#A0A0B0", fontSize: 13, fontFamily: "Inter_400Regular" },
-  userName: { color: "#F0F0F5", fontSize: 22, fontFamily: "Inter_600SemiBold", marginTop: 2 },
-  planRow: { flexDirection: "row", alignItems: "center", gap: 6 },
-  planLabel: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_500Medium" },
-  planDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: "#6D28D9" },
-  avatarWrap: {
+  headerIcon: {
     width: 40,
     height: 40,
-    borderRadius: 20,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#6D28D930",
+    backgroundColor: "#0F0F14",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  headerOnline: {
+    position: "absolute",
+    bottom: -1,
+    right: -1,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "#22C55E",
+    borderWidth: 2,
+    borderColor: "#0F0F14",
+  },
+  headerTitle: { fontSize: 16, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
+  headerMeta: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+  proBadge: {
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
+    borderRadius: 5,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  proBadgeText: { fontSize: 10, color: "#A78BFA", fontFamily: "Inter_600SemiBold", letterSpacing: 0.5 },
+  headerSub: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  avatarBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
     backgroundColor: "#1A1A24",
     borderWidth: 1,
     borderColor: "#2A2A35",
@@ -308,133 +311,229 @@ const s = StyleSheet.create({
 
   loader: { paddingVertical: 80, alignItems: "center" },
 
-  statsRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 24,
-    paddingVertical: 24,
-  },
-  statItem: { gap: 4 },
-  statLabel: { fontSize: 10, color: "#A0A0B0", fontFamily: "Inter_500Medium", letterSpacing: 1 },
-  statValue: { fontSize: 18, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
-  statDivider: { width: 1, height: 32, backgroundColor: "#2A2A35" },
-
-  actionsBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  createCard: {
     marginHorizontal: 20,
-    marginBottom: 28,
-    backgroundColor: "#1A1A2480",
+    marginTop: 20,
+    marginBottom: 24,
+    backgroundColor: "#1A1A24",
     borderWidth: 1,
-    borderColor: "#2A2A3550",
-    borderRadius: 16,
-    padding: 6,
+    borderColor: "#2A2A35",
+    borderRadius: 20,
+    padding: 20,
+    gap: 12,
   },
-  actionBtn: {
+  createHeader: { flexDirection: "row", alignItems: "center", gap: 8 },
+  createIconWrap: {
+    padding: 6,
+    backgroundColor: "#6D28D915",
+    borderRadius: 8,
+  },
+  createTitle: { fontSize: 17, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
+  createDesc: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular", lineHeight: 19 },
+  platformRow: { flexDirection: "row", gap: 10, marginTop: 4 },
+  platformBtn: {
     flex: 1,
     alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 12,
-    borderRadius: 12,
+    gap: 10,
+    paddingVertical: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+    backgroundColor: "#0F0F14",
   },
-  actionText: { fontSize: 10, color: "#A0A0B0", fontFamily: "Inter_500Medium" },
+  platformIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  platformLabel: { fontSize: 11, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
 
-  sectionRow: {
+  sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
     marginBottom: 12,
   },
-  sectionTitle: {
+  sectionLabel: {
     fontSize: 11,
     color: "#A0A0B0",
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 1.5,
   },
-  seeAll: { fontSize: 12, color: "#6D28D9", fontFamily: "Inter_500Medium" },
-  chartBadge: { fontSize: 11, color: "#22C55E", fontFamily: "Inter_600SemiBold" },
+  sectionLink: { fontSize: 12, color: "#6D28D9", fontFamily: "Inter_500Medium" },
+  totalBadge: {
+    backgroundColor: "#1A1A24",
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  totalBadgeText: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_500Medium" },
+
+  statsRow: {
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    gap: 12,
+    marginBottom: 24,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: "#1A1A24",
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+    borderRadius: 16,
+    padding: 16,
+    gap: 10,
+  },
+  statIconRow: { flexDirection: "row", alignItems: "center", gap: 8 },
+  statIconWrap: {
+    padding: 4,
+    backgroundColor: "#2A2A35",
+    borderRadius: 6,
+  },
+  statCardLabel: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_500Medium" },
+  statValueRow: { flexDirection: "row", alignItems: "baseline", gap: 6 },
+  statBigNum: { fontSize: 28, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  statSmallNum: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_500Medium" },
+  statGreen: { fontSize: 12, color: "#22C55E", fontFamily: "Inter_600SemiBold" },
 
   botCard: {
     marginHorizontal: 20,
-    marginBottom: 10,
+    marginBottom: 12,
     backgroundColor: "#1A1A24",
-    borderRadius: 16,
     borderWidth: 1,
     borderColor: "#2A2A35",
+    borderRadius: 16,
     overflow: "hidden",
   },
-  botStripe: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    width: 3,
-    height: "100%",
+  botTopGlow: {
+    height: 1,
+    opacity: 0.4,
   },
-  botContent: { padding: 14, paddingLeft: 16 },
   botTop: {
     flexDirection: "row",
     alignItems: "flex-start",
     justifyContent: "space-between",
+    padding: 16,
+    paddingBottom: 0,
   },
-  botInfo: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
-  botIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+  botInfo: { flexDirection: "row", alignItems: "flex-start", gap: 12, flex: 1 },
+  botIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
   botName: { fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
-  botPhone: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 2 },
+  botBadgeRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6 },
+  platBadge: {
+    borderWidth: 1,
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  platBadgeText: { fontSize: 10, fontFamily: "Inter_600SemiBold" },
   statusPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 20,
+    backgroundColor: "#0F0F14",
     borderWidth: 1,
+    borderColor: "#2A2A35",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
   },
   statusDot: { width: 5, height: 5, borderRadius: 3 },
-  statusText: { fontSize: 10, fontFamily: "Inter_600SemiBold", textTransform: "uppercase", letterSpacing: 0.5 },
+  statusText: { fontSize: 9, color: "#A0A0B0", fontFamily: "Inter_600SemiBold", letterSpacing: 0.5 },
+  botMenuBtn: { padding: 4 },
   botBottom: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 10,
-    paddingTop: 10,
+    justifyContent: "space-between",
+    padding: 16,
+    paddingTop: 14,
+    marginTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#2A2A3550",
+    borderTopColor: "#2A2A3560",
   },
-  botMsgRow: { flexDirection: "row", alignItems: "center", gap: 5 },
-  botMsgText: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
-
-  chartWrap: {
-    marginHorizontal: 20,
-    marginBottom: 28,
-  },
-
-  activityCard: {
-    marginHorizontal: 20,
-    backgroundColor: "#1A1A2430",
+  botVolumeLabel: { fontSize: 9, color: "#A0A0B0", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
+  botVolumeValue: { fontSize: 14, color: "#F0F0F5", fontFamily: "Inter_700Bold", marginTop: 2 },
+  botVolumeSuffix: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_500Medium" },
+  builderBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    backgroundColor: "#1E1E28",
     borderWidth: 1,
-    borderColor: "#2A2A3550",
-    borderRadius: 16,
-    padding: 14,
+    borderColor: "#2A2A35",
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
   },
-  actRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, paddingVertical: 8 },
-  actIcon: {
-    width: 24,
-    height: 24,
-    borderRadius: 12,
+  builderBtnText: { fontSize: 12, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
+
+  planCard: {
+    marginHorizontal: 20,
+    marginTop: 12,
+    backgroundColor: "#0F0F14",
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+    borderRadius: 16,
+    padding: 20,
+    gap: 16,
+  },
+  planTop: { flexDirection: "row", alignItems: "center", gap: 12 },
+  planIconWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#1A1A24",
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: 1,
   },
-  actDesc: { fontSize: 13, color: "#F0F0F5", fontFamily: "Inter_500Medium", lineHeight: 18 },
-  actTime: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 2 },
-  actDivider: { height: StyleSheet.hairlineWidth, backgroundColor: "#2A2A3540", marginLeft: 34 },
+  planTitle: { fontSize: 14, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  planSub: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_500Medium", marginTop: 2 },
+  planActiveBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "#22C55E15",
+    borderWidth: 1,
+    borderColor: "#22C55E30",
+    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  planActiveText: { fontSize: 9, color: "#22C55E", fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+  meterSection: { gap: 8 },
+  meterHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  meterLabel: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_500Medium" },
+  meterValue: { fontSize: 12, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  meterMax: { color: "#A0A0B0", fontFamily: "Inter_500Medium" },
+  meterTrack: {
+    height: 5,
+    backgroundColor: "#1A1A24",
+    borderRadius: 3,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: "#2A2A3550",
+  },
+  meterFill: {
+    height: "100%",
+    borderRadius: 3,
+    backgroundColor: "#6D28D9",
+  },
+  meterFillGreen: {
+    height: "100%",
+    borderRadius: 3,
+    backgroundColor: "#22C55E",
+  },
 });
