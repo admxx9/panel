@@ -14,11 +14,9 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/context/AuthContext";
 
 const WEEK_LABELS = ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"];
-const CHART_MAX = 100;
 
 function MiniBarChart({ data }: { data: number[] }) {
   const max = Math.max(...data, 1);
@@ -28,9 +26,11 @@ function MiniBarChart({ data }: { data: number[] }) {
         {data.map((v, i) => (
           <View key={i} style={ch.col}>
             <View style={ch.barBg}>
-              <LinearGradient
-                colors={["#6D28D9", "#4C1D95"]}
-                style={[ch.barFill, { height: `${Math.max((v / max) * 100, 4)}%` }]}
+              <View
+                style={[
+                  ch.barFill,
+                  { height: `${Math.max((v / max) * 100, 4)}%` as any },
+                ]}
               />
             </View>
             <Text style={ch.label}>{WEEK_LABELS[i]}</Text>
@@ -39,6 +39,11 @@ function MiniBarChart({ data }: { data: number[] }) {
       </View>
     </View>
   );
+}
+
+function formatNum(n: number): string {
+  if (n >= 1000) return (n / 1000).toFixed(1).replace(".0", "") + "K";
+  return String(n);
 }
 
 export default function DashboardScreen() {
@@ -64,6 +69,14 @@ export default function DashboardScreen() {
     return "Boa noite";
   };
 
+  const getStatusInfo = (status: string) => {
+    if (status === "connected") return { label: "Online", color: "#22C55E", icon: "wifi" as const, bg: "#22C55E" };
+    if (status === "connecting") return { label: "Conectando", color: "#F59E0B", icon: "loader" as const, bg: "#F59E0B" };
+    return { label: "Offline", color: "#9CA3AF", icon: "power" as const, bg: "#9CA3AF" };
+  };
+
+  const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
+
   return (
     <View style={s.root}>
       <ScrollView
@@ -73,36 +86,22 @@ export default function DashboardScreen() {
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#6D28D9" />
         }
       >
-        <LinearGradient
-          colors={["#6D28D9", "#4C1D95", "#3B0764"]}
-          style={[s.header, { paddingTop: insets.top + 16 }]}
-        >
-          <View style={s.headerRow}>
-            <View style={s.avatarWrap}>
-              <Text style={s.avatarText}>{user?.name?.charAt(0).toUpperCase() ?? "U"}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.greetText}>{greeting()},</Text>
-              <Text style={s.userName}>{user?.name ?? "Usuário"}</Text>
-            </View>
-            <Pressable
-              style={s.headerBtn}
-              onPress={() => router.push("/(tabs)/settings")}
-            >
-              <Feather name="settings" size={20} color="#FFFFFFCC" />
-            </Pressable>
-            <Pressable style={s.headerBtn}>
-              <Feather name="bell" size={20} color="#FFFFFFCC" />
-            </Pressable>
+        <View style={[s.header, { paddingTop }]}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.greeting}>{greeting()},</Text>
+            <Text style={s.userName}>{user?.name ?? "Usuário"}</Text>
           </View>
-
-          <View style={s.planBadge}>
-            <Feather name="zap" size={14} color="#FBBF24" />
-            <Text style={s.planBadgeText}>
-              {data?.activePlan ?? "Sem plano"} · {coins.toLocaleString("pt-BR")} moedas
-            </Text>
+          <View style={s.planRow}>
+            <Text style={s.planLabel}>{data?.activePlan ?? "Sem plano"}</Text>
+            <View style={s.planDot} />
           </View>
-        </LinearGradient>
+          <Pressable
+            style={s.avatarWrap}
+            onPress={() => router.push("/(tabs)/settings")}
+          >
+            <Text style={s.avatarText}>{user?.name?.charAt(0).toUpperCase() ?? "U"}</Text>
+          </Pressable>
+        </View>
 
         {isLoading ? (
           <View style={s.loader}>
@@ -110,162 +109,148 @@ export default function DashboardScreen() {
           </View>
         ) : (
           <>
-            <View style={s.statsGrid}>
-              <View style={s.statCard}>
-                <View style={[s.statIcon, { backgroundColor: "#150F2A" }]}>
-                  <Feather name="cpu" size={18} color="#8B5CF6" />
-                </View>
+            <View style={s.statsRow}>
+              <View style={s.statItem}>
+                <Text style={s.statLabel}>BOTS</Text>
                 <Text style={s.statValue}>{totalBots}</Text>
-                <Text style={s.statLabel}>Total Bots</Text>
               </View>
-              <View style={s.statCard}>
-                <View style={[s.statIcon, { backgroundColor: "#0D2818" }]}>
-                  <Feather name="wifi" size={18} color="#22C55E" />
-                </View>
-                <Text style={s.statValue}>{activeBots}</Text>
-                <Text style={s.statLabel}>Online</Text>
+              <View style={s.statDivider} />
+              <View style={s.statItem}>
+                <Text style={s.statLabel}>ONLINE</Text>
+                <Text style={[s.statValue, { color: "#22C55E" }]}>{activeBots}</Text>
               </View>
-              <View style={s.statCard}>
-                <View style={[s.statIcon, { backgroundColor: "#2D0A0A" }]}>
-                  <Feather name="wifi-off" size={18} color="#EF4444" />
-                </View>
-                <Text style={s.statValue}>{offlineBots}</Text>
-                <Text style={s.statLabel}>Offline</Text>
+              <View style={s.statDivider} />
+              <View style={s.statItem}>
+                <Text style={s.statLabel}>OFFLINE</Text>
+                <Text style={[s.statValue, { color: "#9CA3AF" }]}>{offlineBots}</Text>
               </View>
-              <View style={s.statCard}>
-                <View style={[s.statIcon, { backgroundColor: "#2D2506" }]}>
-                  <Feather name="message-circle" size={18} color="#F59E0B" />
-                </View>
-                <Text style={s.statValue}>{msgs}</Text>
-                <Text style={s.statLabel}>Mensagens</Text>
+              <View style={s.statDivider} />
+              <View style={s.statItem}>
+                <Text style={s.statLabel}>MSGS</Text>
+                <Text style={s.statValue}>{formatNum(msgs)}</Text>
               </View>
             </View>
 
-            <View style={s.chartCard}>
-              <View style={s.chartHeader}>
-                <Text style={s.chartTitle}>Atividade Semanal</Text>
-                <View style={s.chartBadge}>
-                  <Feather name="trending-up" size={12} color="#22C55E" />
-                  <Text style={s.chartBadgeText}>Ativo</Text>
-                </View>
-              </View>
-              <MiniBarChart data={weekData} />
-            </View>
-
-            <View style={s.sectionRow}>
-              <Text style={s.sectionTitle}>Ações Rápidas</Text>
-            </View>
-
-            <View style={s.actionsGrid}>
+            <View style={s.actionsBar}>
               <Pressable
-                style={({ pressed }) => [s.actionCard, pressed && { opacity: 0.8 }]}
+                style={({ pressed }) => [s.actionBtn, pressed && { opacity: 0.7 }]}
                 onPress={() => router.push("/(tabs)/bots")}
               >
-                <LinearGradient colors={["#6D28D9", "#4C1D95"]} style={s.actionIconGrad}>
-                  <Feather name="plus" size={20} color="#FFF" />
-                </LinearGradient>
-                <Text style={s.actionLabel}>Criar Bot</Text>
-                <Text style={s.actionSub}>Novo bot WhatsApp</Text>
+                <Feather name="plus" size={20} color="#F0F0F5" />
+                <Text style={s.actionText}>Novo</Text>
               </Pressable>
-
               <Pressable
-                style={({ pressed }) => [s.actionCard, pressed && { opacity: 0.8 }]}
+                style={({ pressed }) => [s.actionBtn, pressed && { opacity: 0.7 }]}
                 onPress={() => router.push("/(tabs)/bots")}
               >
-                <View style={[s.actionIconWrap, { backgroundColor: "#0D2818" }]}>
-                  <Feather name="grid" size={20} color="#22C55E" />
-                </View>
-                <Text style={s.actionLabel}>Builder</Text>
-                <Text style={s.actionSub}>Editor visual</Text>
+                <Feather name="tool" size={20} color="#F0F0F5" />
+                <Text style={s.actionText}>Builder</Text>
               </Pressable>
-
               <Pressable
-                style={({ pressed }) => [s.actionCard, pressed && { opacity: 0.8 }]}
+                style={({ pressed }) => [s.actionBtn, pressed && { opacity: 0.7 }]}
                 onPress={() => router.push("/(tabs)/payments")}
               >
-                <View style={[s.actionIconWrap, { backgroundColor: "#2D2506" }]}>
-                  <Feather name="credit-card" size={20} color="#F59E0B" />
-                </View>
-                <Text style={s.actionLabel}>Recarregar</Text>
-                <Text style={s.actionSub}>Comprar moedas</Text>
+                <Feather name="credit-card" size={20} color="#F0F0F5" />
+                <Text style={s.actionText}>Recarga</Text>
               </Pressable>
-
               <Pressable
-                style={({ pressed }) => [s.actionCard, pressed && { opacity: 0.8 }]}
+                style={({ pressed }) => [s.actionBtn, pressed && { opacity: 0.7 }]}
                 onPress={() => router.push("/(tabs)/plans")}
               >
-                <View style={[s.actionIconWrap, { backgroundColor: "#150F2A" }]}>
-                  <Feather name="star" size={20} color="#8B5CF6" />
-                </View>
-                <Text style={s.actionLabel}>Planos</Text>
-                <Text style={s.actionSub}>Upgrade</Text>
+                <Feather name="layout" size={20} color="#F0F0F5" />
+                <Text style={s.actionText}>Planos</Text>
               </Pressable>
             </View>
 
             {bots && bots.length > 0 && (
               <>
                 <View style={s.sectionRow}>
-                  <Text style={s.sectionTitle}>Seus Bots</Text>
+                  <Text style={s.sectionTitle}>SEUS BOTS</Text>
                   <Pressable onPress={() => router.push("/(tabs)/bots")}>
                     <Text style={s.seeAll}>Ver todos</Text>
                   </Pressable>
                 </View>
 
-                {bots.slice(0, 3).map((bot: any) => (
-                  <Pressable
-                    key={bot.id}
-                    style={({ pressed }) => [s.botRow, pressed && { opacity: 0.85 }]}
-                    onPress={() => router.push(`/bot/${bot.id}` as any)}
-                  >
-                    <View style={[s.botDot, bot.status === "connected" && s.botDotOn]} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={s.botName}>{bot.name}</Text>
-                      <Text style={s.botPhone}>{bot.phone || "Não conectado"}</Text>
-                    </View>
-                    <View style={[s.statusPill, bot.status === "connected" ? s.pillOn : s.pillOff]}>
-                      <Text style={[s.statusText, bot.status === "connected" ? s.textOn : s.textOff]}>
-                        {bot.status === "connected" ? "Online" : "Offline"}
-                      </Text>
-                    </View>
-                    <Feather name="chevron-right" size={18} color="#6B7280" />
-                  </Pressable>
-                ))}
+                {bots.slice(0, 4).map((bot: any) => {
+                  const st = getStatusInfo(bot.status);
+                  return (
+                    <Pressable
+                      key={bot.id}
+                      style={({ pressed }) => [s.botCard, pressed && { opacity: 0.85 }]}
+                      onPress={() => router.push(`/bot/${bot.id}` as any)}
+                    >
+                      <View style={[s.botStripe, { backgroundColor: st.bg }]} />
+                      <View style={s.botContent}>
+                        <View style={s.botTop}>
+                          <View style={s.botInfo}>
+                            <View style={[s.botIcon, { backgroundColor: st.color + "15" }]}>
+                              <Feather name={st.icon} size={18} color={st.color} />
+                            </View>
+                            <View style={{ flex: 1 }}>
+                              <Text style={s.botName}>{bot.name}</Text>
+                              <Text style={s.botPhone}>{bot.phone || "Sem número"}</Text>
+                            </View>
+                          </View>
+                          <View style={[s.statusPill, { backgroundColor: st.color + "15", borderColor: st.color + "30" }]}>
+                            <View style={[s.statusDot, { backgroundColor: st.color }]} />
+                            <Text style={[s.statusText, { color: st.color }]}>{st.label}</Text>
+                          </View>
+                        </View>
+                        <View style={s.botBottom}>
+                          <View style={s.botMsgRow}>
+                            <Feather name="message-square" size={13} color="#A0A0B0" />
+                            <Text style={s.botMsgText}>{bot.messageCount ?? 0} msgs hoje</Text>
+                          </View>
+                        </View>
+                      </View>
+                    </Pressable>
+                  );
+                })}
               </>
             )}
 
+            <View style={s.sectionRow}>
+              <Text style={s.sectionTitle}>VOLUME DA SEMANA</Text>
+              <Text style={s.chartBadge}>+12%</Text>
+            </View>
+            <View style={s.chartWrap}>
+              <MiniBarChart data={weekData} />
+            </View>
+
             {data?.recentActivity && data.recentActivity.length > 0 && (
               <>
-                <View style={[s.sectionRow, { marginTop: 8 }]}>
-                  <Text style={s.sectionTitle}>Atividade Recente</Text>
+                <View style={s.sectionRow}>
+                  <Text style={s.sectionTitle}>ATIVIDADE RECENTE</Text>
                 </View>
                 <View style={s.activityCard}>
-                  {data.recentActivity.slice(0, 4).map((item: any, i: number) => (
-                    <View key={item.id}>
-                      <View style={s.actRow}>
-                        <View style={s.actDot}>
-                          <Feather
-                            name={item.type === "topup" ? "arrow-up-circle" : "zap"}
-                            size={16}
-                            color={item.type === "topup" ? "#22C55E" : "#6D28D9"}
-                          />
+                  {data.recentActivity.slice(0, 4).map((item: any, i: number) => {
+                    const iconName = item.type === "topup" ? "trending-up" : item.type === "bot_start" ? "cpu" : "zap";
+                    const iconColor = item.type === "topup" ? "#22C55E" : item.type === "bot_start" ? "#22C55E" : "#6D28D9";
+                    const iconBg = item.type === "topup" ? "#22C55E15" : item.type === "bot_start" ? "#22C55E15" : "#6D28D915";
+                    return (
+                      <View key={item.id}>
+                        <View style={s.actRow}>
+                          <View style={[s.actIcon, { backgroundColor: iconBg }]}>
+                            <Feather name={iconName as any} size={13} color={iconColor} />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={s.actDesc}>{item.description}</Text>
+                            <Text style={s.actTime}>
+                              {new Date(item.createdAt).toLocaleDateString("pt-BR", {
+                                day: "2-digit",
+                                month: "short",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </Text>
+                          </View>
                         </View>
-                        <View style={{ flex: 1 }}>
-                          <Text style={s.actDesc}>{item.description}</Text>
-                          <Text style={s.actTime}>
-                            {new Date(item.createdAt).toLocaleDateString("pt-BR", {
-                              day: "2-digit",
-                              month: "short",
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            })}
-                          </Text>
-                        </View>
+                        {i < Math.min(data.recentActivity.length, 4) - 1 && (
+                          <View style={s.actDivider} />
+                        )}
                       </View>
-                      {i < Math.min(data.recentActivity.length, 4) - 1 && (
-                        <View style={s.actLine} />
-                      )}
-                    </View>
-                  ))}
+                    );
+                  })}
                 </View>
               </>
             )}
@@ -277,191 +262,179 @@ export default function DashboardScreen() {
 }
 
 const ch = StyleSheet.create({
-  wrap: { marginTop: 12 },
-  bars: { flexDirection: "row", alignItems: "flex-end", gap: 8, height: 80 },
+  wrap: { marginTop: 4 },
+  bars: { flexDirection: "row", alignItems: "flex-end", gap: 6, height: 64 },
   col: { flex: 1, alignItems: "center", gap: 6 },
   barBg: {
     width: "100%",
-    height: 80,
-    backgroundColor: "#252530",
-    borderRadius: 6,
+    height: 64,
+    backgroundColor: "transparent",
+    borderRadius: 3,
     overflow: "hidden",
     justifyContent: "flex-end",
   },
-  barFill: { width: "100%", borderRadius: 6 },
-  label: { fontSize: 10, color: "#6B7280", fontFamily: "Inter_500Medium" },
+  barFill: { width: "100%", borderRadius: 3, backgroundColor: "#6D28D9", opacity: 0.8 },
+  label: { fontSize: 10, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
 });
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#0F0F14" },
 
-  header: { paddingHorizontal: 20, paddingBottom: 20 },
-  headerRow: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 14 },
-  avatarWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: "rgba(255,255,255,0.2)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: { color: "#FFF", fontSize: 17, fontFamily: "Inter_700Bold" },
-  greetText: { color: "#FFFFFF99", fontSize: 13, fontFamily: "Inter_400Regular" },
-  userName: { color: "#FFF", fontSize: 18, fontFamily: "Inter_700Bold", marginTop: 1 },
-  headerBtn: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: "rgba(255,255,255,0.12)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-
-  planBadge: {
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 24,
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
-    backgroundColor: "rgba(0,0,0,0.25)",
-    alignSelf: "flex-start",
-    borderRadius: 20,
-    paddingHorizontal: 14,
-    paddingVertical: 7,
+    gap: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "#2A2A3540",
   },
-  planBadgeText: { color: "#FFFFFFCC", fontSize: 13, fontFamily: "Inter_500Medium" },
+  greeting: { color: "#A0A0B0", fontSize: 13, fontFamily: "Inter_400Regular" },
+  userName: { color: "#F0F0F5", fontSize: 22, fontFamily: "Inter_600SemiBold", marginTop: 2 },
+  planRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  planLabel: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_500Medium" },
+  planDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: "#6D28D9" },
+  avatarWrap: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "#1A1A24",
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: { color: "#A0A0B0", fontSize: 14, fontFamily: "Inter_600SemiBold" },
 
   loader: { paddingVertical: 80, alignItems: "center" },
 
-  statsGrid: {
+  statsRow: {
     flexDirection: "row",
-    flexWrap: "wrap",
-    paddingHorizontal: 16,
-    marginTop: 20,
-    gap: 10,
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 24,
+    paddingVertical: 24,
   },
-  statCard: {
-    width: "48%",
-    flexGrow: 1,
-    flexBasis: "46%",
-    backgroundColor: "#1A1A24",
-    borderRadius: 14,
-    padding: 16,
-    gap: 8,
+  statItem: { gap: 4 },
+  statLabel: { fontSize: 10, color: "#A0A0B0", fontFamily: "Inter_500Medium", letterSpacing: 1 },
+  statValue: { fontSize: 18, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
+  statDivider: { width: 1, height: 32, backgroundColor: "#2A2A35" },
+
+  actionsBar: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginHorizontal: 20,
+    marginBottom: 28,
+    backgroundColor: "#1A1A2480",
+    borderWidth: 1,
+    borderColor: "#2A2A3550",
+    borderRadius: 16,
+    padding: 6,
   },
-  statIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 10,
+  actionBtn: {
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 12,
   },
-  statValue: { fontSize: 26, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
-  statLabel: { fontSize: 12, color: "#6B7280", fontFamily: "Inter_500Medium" },
-
-  chartCard: {
-    marginHorizontal: 16,
-    marginTop: 16,
-    backgroundColor: "#1A1A24",
-    borderRadius: 14,
-    padding: 18,
-  },
-  chartHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  chartTitle: { fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
-  chartBadge: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-    backgroundColor: "#0D2818",
-    borderRadius: 10,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  chartBadgeText: { fontSize: 11, color: "#22C55E", fontFamily: "Inter_600SemiBold" },
+  actionText: { fontSize: 10, color: "#A0A0B0", fontFamily: "Inter_500Medium" },
 
   sectionRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingHorizontal: 20,
-    marginTop: 24,
     marginBottom: 12,
   },
-  sectionTitle: { fontSize: 16, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
-  seeAll: { fontSize: 13, color: "#6D28D9", fontFamily: "Inter_600SemiBold" },
+  sectionTitle: {
+    fontSize: 11,
+    color: "#A0A0B0",
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 1.5,
+  },
+  seeAll: { fontSize: 12, color: "#6D28D9", fontFamily: "Inter_500Medium" },
+  chartBadge: { fontSize: 11, color: "#22C55E", fontFamily: "Inter_600SemiBold" },
 
-  actionsGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    paddingHorizontal: 16,
-    gap: 10,
-  },
-  actionCard: {
-    width: "48%",
-    flexGrow: 1,
-    flexBasis: "46%",
+  botCard: {
+    marginHorizontal: 20,
+    marginBottom: 10,
     backgroundColor: "#1A1A24",
-    borderRadius: 14,
-    padding: 16,
-    gap: 6,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+    overflow: "hidden",
   },
-  actionIconGrad: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
+  botStripe: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    width: 3,
+    height: "100%",
+  },
+  botContent: { padding: 14, paddingLeft: 16 },
+  botTop: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    justifyContent: "space-between",
+  },
+  botInfo: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
+  botIcon: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
     alignItems: "center",
     justifyContent: "center",
   },
-  actionIconWrap: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  actionLabel: { fontSize: 14, color: "#F0F0F5", fontFamily: "Inter_700Bold", marginTop: 4 },
-  actionSub: { fontSize: 11, color: "#6B7280", fontFamily: "Inter_400Regular" },
-
-  botRow: {
+  botName: { fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
+  botPhone: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 2 },
+  statusPill: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    marginHorizontal: 16,
-    backgroundColor: "#1A1A24",
-    borderRadius: 12,
-    padding: 14,
-    marginBottom: 8,
+    gap: 5,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 20,
+    borderWidth: 1,
   },
-  botDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#EF4444",
+  statusDot: { width: 5, height: 5, borderRadius: 3 },
+  statusText: { fontSize: 10, fontFamily: "Inter_600SemiBold", textTransform: "uppercase", letterSpacing: 0.5 },
+  botBottom: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: "#2A2A3550",
   },
-  botDotOn: { backgroundColor: "#22C55E" },
-  botName: { fontSize: 14, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
-  botPhone: { fontSize: 12, color: "#6B7280", fontFamily: "Inter_400Regular", marginTop: 2 },
-  statusPill: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  pillOn: { backgroundColor: "#0D2818" },
-  pillOff: { backgroundColor: "#2D0A0A" },
-  statusText: { fontSize: 11, fontFamily: "Inter_600SemiBold" },
-  textOn: { color: "#22C55E" },
-  textOff: { color: "#EF4444" },
+  botMsgRow: { flexDirection: "row", alignItems: "center", gap: 5 },
+  botMsgText: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+
+  chartWrap: {
+    marginHorizontal: 20,
+    marginBottom: 28,
+  },
 
   activityCard: {
-    marginHorizontal: 16,
-    backgroundColor: "#1A1A24",
-    borderRadius: 14,
+    marginHorizontal: 20,
+    backgroundColor: "#1A1A2430",
+    borderWidth: 1,
+    borderColor: "#2A2A3550",
+    borderRadius: 16,
     padding: 14,
   },
-  actRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, paddingVertical: 10 },
-  actDot: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
-    backgroundColor: "#1E1E28",
+  actRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, paddingVertical: 8 },
+  actIcon: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
+    marginTop: 1,
   },
-  actDesc: { fontSize: 13, color: "#D1D1DB", fontFamily: "Inter_500Medium", lineHeight: 18 },
-  actTime: { fontSize: 11, color: "#6B7280", fontFamily: "Inter_400Regular", marginTop: 2 },
-  actLine: { height: 1, backgroundColor: "#252530", marginLeft: 46 },
+  actDesc: { fontSize: 13, color: "#F0F0F5", fontFamily: "Inter_500Medium", lineHeight: 18 },
+  actTime: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 2 },
+  actDivider: { height: StyleSheet.hairlineWidth, backgroundColor: "#2A2A3540", marginLeft: 34 },
 });
