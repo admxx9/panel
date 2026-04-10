@@ -1,0 +1,27 @@
+kind = "mobile"
+previewPath = "/mobile/"
+title = "BotAluguel Pro Mobile"
+version = "1.0.0"
+id = "artifacts/bot-aluguel-mobile"
+router = "expo-domain"
+
+[[integratedSkills]]
+name = "expo"
+version = "1.0.0"
+
+[[services]]
+ensurePreviewReachable = "/status"
+name = "expo"
+paths = [ "/mobile/" ]
+localPort = 23031
+
+[services.development]
+run = "pnpm --filter @workspace/bot-aluguel-mobile run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/bot-aluguel-mobile", "run", "build" ]
+run = [ "pnpm", "--filter", "@workspace/bot-aluguel-mobile", "run", "serve" ]
+
+[services.env]
+PORT = "23031"
+BASE_PATH = "/mobile/"
