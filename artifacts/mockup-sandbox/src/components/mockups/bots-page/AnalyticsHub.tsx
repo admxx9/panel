@@ -322,7 +322,7 @@ export function AnalyticsHub() {
          ].map((item, i) => (
            <div key={i} className="flex flex-col items-center gap-1 cursor-pointer">
              <div className={item.active ? "text-[#6D28D9]" : "text-[#6B7280]"}>{item.icon}</div>
-             <span className={\`text-[10px] \${item.active ? "text-[#6D28D9] font-medium" : "text-[#6B7280]"}\`}>{item.label}</span>
+             <span className={`text-[10px] ${item.active ? "text-[#6D28D9] font-medium" : "text-[#6B7280]"}`}>{item.label}</span>
            </div>
          ))}
       </div>

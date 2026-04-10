@@ -113,7 +113,7 @@ export function SmartHome() {
 
   return (
     <div className="min-h-screen bg-[#0F0F14] text-[#F0F0F5] font-sans selection:bg-[#6D28D9] selection:text-white flex justify-center">
-      <style dangerouslySetInnerHTML={{ __html: \`
+      <style dangerouslySetInnerHTML={{ __html: `
         @keyframes pulse-glow {
           0%, 100% { box-shadow: 0 0 0 0px rgba(34, 197, 94, 0.4); }
           50% { box-shadow: 0 0 0 10px rgba(34, 197, 94, 0); }
@@ -125,7 +125,7 @@ export function SmartHome() {
           50% { opacity: 0.7; transform: scale(0.95); }
         }
         .animate-connecting { animation: pulse-connecting 1.5s ease-in-out infinite; }
-      \`}} />
+      `}} />
       <div className="w-full max-w-[390px] min-h-[844px] bg-[#0F0F14] relative overflow-hidden flex flex-col shadow-2xl ring-1 ring-white/5">
         
         {/* Header - Apple Home style */}
