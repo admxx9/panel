@@ -7,7 +7,7 @@ import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue, useAnimatedStyle, runOnJS, type SharedValue,
 } from "react-native-reanimated";
-import Svg, { Path, Circle, Defs, Pattern, Rect } from "react-native-svg";
+import Svg, { Path } from "react-native-svg";
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useGetBotCommands, useSaveBotCommands } from "@workspace/api-client-react";
@@ -28,7 +28,7 @@ const { width: SW, height: SH } = Dimensions.get("window");
 const NODE_W = 180;
 const NODE_H = 82;
 const GRID = 28;
-const CANVAS_SIZE = 6000;
+const CANVAS_SIZE = 3000;
 
 type NodeType = "command" | "action" | "condition" | "response" | "buttons";
 interface FlowNode { id: string; type: NodeType; label: string; config: Record<string, unknown>; x: number; y: number; }
@@ -262,8 +262,8 @@ function NodeCard({ node, canvasScale, selected, connectingFrom, isConnectable, 
   const savedY = useSharedValue(0);
 
   useEffect(() => {
-    sharedX.value = node.x;
-    sharedY.value = node.y;
+    if (sharedX.value !== node.x) sharedX.value = node.x;
+    if (sharedY.value !== node.y) sharedY.value = node.y;
   }, [node.x, node.y]);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -401,17 +401,7 @@ export default function BuilderScreen() {
       canvasY.value = savedCY.value + e.translationY;
     });
 
-  const pinchGesture = Gesture.Pinch()
-    .onStart(() => {
-      "worklet";
-      savedScale.value = canvasScale.value;
-    })
-    .onUpdate((e) => {
-      "worklet";
-      canvasScale.value = Math.max(0.25, Math.min(2.5, savedScale.value * e.scale));
-    });
-
-  const canvasGesture = Gesture.Simultaneous(panGesture, pinchGesture);
+  const canvasGesture = panGesture;
 
   const handleDragEnd = useCallback((id: string, x: number, y: number) => {
     setNodes(prev => prev.map(n => n.id === id ? { ...n, x, y } : n));
@@ -534,18 +524,12 @@ export default function BuilderScreen() {
       <GestureDetector gesture={canvasGesture}>
         <View style={s.canvasContainer}>
           <Animated.View style={[s.canvas, canvasStyle]}>
+            <View style={s.canvasBg} />
             <Svg
-              style={{ position: "absolute", top: -2000, left: -2000 }}
-              width={CANVAS_SIZE + SW}
-              height={CANVAS_SIZE + SH}
+              style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}
+              width={CANVAS_SIZE}
+              height={CANVAS_SIZE}
             >
-              <Defs>
-                <Pattern id="dots" x="0" y="0" width={GRID} height={GRID} patternUnits="userSpaceOnUse">
-                  <Circle cx="0.5" cy="0.5" r="0.9" fill="#1E2040" opacity="1" />
-                </Pattern>
-              </Defs>
-              <Rect x="0" y="0" width={CANVAS_SIZE + SW} height={CANVAS_SIZE + SH} fill="url(#dots)" />
-
               {edges.map(edge => {
                 const src = getNodeById(edge.source);
                 const tgt = getNodeById(edge.target);
@@ -828,8 +812,9 @@ const s = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1,
   },
   connectingText: { flex: 1, fontSize: 13, fontFamily: "Inter_500Medium" },
-  canvasContainer: { flex: 1, overflow: "hidden" },
-  canvas: { width: SW, flex: 1 },
+  canvasContainer: { flex: 1, overflow: "hidden", backgroundColor: C.bg },
+  canvas: { width: CANVAS_SIZE, height: CANVAS_SIZE },
+  canvasBg: { position: "absolute" as const, top: 0, left: 0, width: CANVAS_SIZE, height: CANVAS_SIZE, backgroundColor: C.bg },
   node: {
     width: NODE_W,
     borderRadius: 12, borderWidth: 1.5,
