@@ -51,7 +51,7 @@
   - **Drag from palette**: arrastar blocos da paleta direto pro canvas (mobile e desktop), ghost element durante drag
   - **Pinch-to-zoom fix**: 2 dedos detectados via touchCount global — cancela drag de bloco automaticamente
   - **Performance**: RAF throttle no handleMoveNode, will-change no container de transform e nodes
-  - **Gestos mobile**: 1 dedo = pan, pinça = zoom, long-press 200ms + arrastar = mover bloco, feedback visual (outline roxo + scale) e vibração
+  - **Gestos mobile**: 1 dedo = pan, pinça = zoom, long-press 200ms + arrastar = mover bloco, feedback visual (outline laranja + scale) e vibração
   - **Bloco Resposta**: 6 tipos (texto, lista interativa, imagem, audio, localizacao, contato), variaveis ({nome}, {moedas}, etc.), botoes (max 3, reply/call), preview ao vivo no formulario, tags no card (tipo, botoes, preview)
   - **Bloco Botoes**: bloco separado para botoes interativos (3 tipos: normal max 3, lista interativa/menu, ligar). Conecta-se na saida de um bloco Resposta para decorar a mensagem. Preview ao vivo no formulario. Backend mescla botoes na mensagem da resposta. Cliques de botoes/listas parseados via buttonsResponseMessage/listResponseMessage.
   - Formato secoes lista: linhas sem pipe = titulo secao, linhas com pipe = id | titulo_row | descricao
@@ -59,7 +59,9 @@
 - Planos: Basico (100), Pro (250), Premium (500) moedas/30 dias
 - Pagamentos: recarga PIX com codigo copia-e-cola, historico
 - Admin: stats da plataforma, tabela de usuarios e pagamentos
-- Tema dark neon: preto/cinza com roxo electrico (primary) e azul electrico (accent)
+- Tema Pterodactyl: fundo muito escuro (#090A0F), laranja primário (#F97316), gradiente laranja→rosa (#F97316→#C850C0), accent magenta (#C850C0)
+- Mobile app (Expo): `constants/colors.ts` define paleta. Gradientes `LinearGradient` usam `["#F97316", "#C850C0"]`
+- Web app: CSS variables em `index.css` — `--primary: 24 95% 53%`, `--accent: 303 52% 55%`
 
 ## Admin Credentials
 

@@ -87,8 +87,8 @@
   --popover-foreground: 0 0% 97%;
   --popover-border: 240 8% 14%;
 
-  /* Electric Violet — primary brand color */
-  --primary: 262 100% 65%;
+  /* Pterodactyl Orange — primary brand color */
+  --primary: 24 95% 53%;
   --primary-foreground: 0 0% 100%;
 
   --secondary: 240 8% 14%;
@@ -97,8 +97,8 @@
   --muted: 240 8% 11%;
   --muted-foreground: 240 5% 60%;
 
-  /* Electric Blue — accent */
-  --accent: 217 100% 58%;
+  /* Magenta/Pink — accent */
+  --accent: 303 52% 55%;
   --accent-foreground: 0 0% 100%;
 
   --destructive: 0 72% 51%;
@@ -106,10 +106,10 @@
 
   --border: 240 8% 14%;
   --input: 240 8% 16%;
-  --ring: 262 100% 65%;
+  --ring: 24 95% 53%;
 
-  --chart-1: 262 100% 65%;
-  --chart-2: 217 100% 58%;
+  --chart-1: 24 95% 53%;
+  --chart-2: 303 52% 55%;
   --chart-3: 142 71% 45%;
   --chart-4: 38 92% 50%;
   --chart-5: 0 72% 51%;
@@ -117,11 +117,11 @@
   --sidebar: 240 10% 5%;
   --sidebar-foreground: 0 0% 97%;
   --sidebar-border: 240 8% 11%;
-  --sidebar-primary: 262 100% 65%;
+  --sidebar-primary: 24 95% 53%;
   --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 217 100% 58%;
+  --sidebar-accent: 303 52% 55%;
   --sidebar-accent-foreground: 0 0% 100%;
-  --sidebar-ring: 262 100% 65%;
+  --sidebar-ring: 24 95% 53%;
 
   --app-font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --app-font-serif: Georgia, serif;
@@ -207,11 +207,11 @@
   }
 
   .glow-primary {
-    box-shadow: 0 0 20px hsl(262 100% 65% / 0.4), 0 0 40px hsl(262 100% 65% / 0.2);
+    box-shadow: 0 0 20px hsl(24 95% 53% / 0.4), 0 0 40px hsl(24 95% 53% / 0.2);
   }
 
   .glow-accent {
-    box-shadow: 0 0 20px hsl(217 100% 58% / 0.4), 0 0 40px hsl(217 100% 58% / 0.2);
+    box-shadow: 0 0 20px hsl(303 52% 55% / 0.4), 0 0 40px hsl(303 52% 55% / 0.2);
   }
 
   .no-default-hover-elevate {}

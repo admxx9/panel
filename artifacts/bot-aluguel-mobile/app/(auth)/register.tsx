@@ -231,7 +231,7 @@ export default function RegisterScreen() {
               disabled={registerMutation.isPending}
             >
               <LinearGradient
-                colors={["#8B3FFF", "#6B1FDF"]}
+                colors={["#F97316", "#C850C0"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={s.btnGradient}

@@ -115,7 +115,7 @@ export default function DashboardScreen() {
       ) : (
         <>
           <LinearGradient
-            colors={["#8B3FFF20", "#2979FF10"]}
+            colors={["#F9731620", "#C850C010"]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={[styles.planBanner, { borderColor: colors.border }]}

@@ -90,7 +90,7 @@ export default function SettingsScreen() {
 
       <View style={styles.profileCard}>
         <LinearGradient
-          colors={["#8B3FFF", "#2979FF"]}
+          colors={["#F97316", "#C850C0"]}
           style={styles.avatar}
         >
           <Text style={styles.avatarText}>{initial}</Text>

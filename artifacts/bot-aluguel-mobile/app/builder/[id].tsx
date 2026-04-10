@@ -25,7 +25,7 @@ interface FlowNode { id: string; type: NodeType; label: string; config: Record<s
 interface FlowEdge { id: string; source: string; target: string; sourceHandle?: "true" | "false"; }
 
 const NODE_CFG: Record<NodeType, { color: string; dim: string; label: string; icon: string }> = {
-  command:   { color: "#8B3FFF", dim: "#8B3FFF30", label: "Comando",  icon: "message-square" },
+  command:   { color: "#F97316", dim: "#F9731630", label: "Comando",  icon: "message-square" },
   action:    { color: "#A855F7", dim: "#A855F730", label: "Ação",     icon: "zap" },
   condition: { color: "#F59E0B", dim: "#F59E0B30", label: "Condição", icon: "git-branch" },
   response:  { color: "#22C55E", dim: "#22C55E30", label: "Resposta", icon: "message-circle" },
@@ -506,7 +506,7 @@ export default function BuilderScreen() {
           {hasUnsaved && (
             <View style={s.unsavedDot} />
           )}
-          <Pressable style={[s.saveBtn, { backgroundColor: "#8B3FFF" }]} onPress={handleSave} disabled={saveMutation.isPending}>
+          <Pressable style={[s.saveBtn, { backgroundColor: "#F97316" }]} onPress={handleSave} disabled={saveMutation.isPending}>
             <Feather name="save" size={14} color="#FFF" />
             <Text style={s.saveBtnText}>{saveMutation.isPending ? "Salvando…" : "Salvar"}</Text>
           </Pressable>
@@ -548,7 +548,7 @@ export default function BuilderScreen() {
                 const sx = src.x + NODE_W;
                 const tx = tgt.x;
                 const ty = tgt.y + NODE_H / 2;
-                const edgeColor = edge.sourceHandle === "true" ? "#22C55E" : edge.sourceHandle === "false" ? "#EF4444" : "#8B3FFF";
+                const edgeColor = edge.sourceHandle === "true" ? "#22C55E" : edge.sourceHandle === "false" ? "#EF4444" : "#F97316";
                 return (
                   <Path
                     key={edge.id}
@@ -789,11 +789,11 @@ function TemplatesModal({ visible, colors, onSelect, onClose }: { visible: boole
         {TEMPLATES.map(tpl => (
           <Pressable
             key={tpl.name}
-            style={({ pressed }) => [s.typeRow, { backgroundColor: pressed ? "#8B3FFF18" : "transparent", borderColor: colors.border }]}
+            style={({ pressed }) => [s.typeRow, { backgroundColor: pressed ? "#F9731618" : "transparent", borderColor: colors.border }]}
             onPress={() => onSelect(tpl)}
           >
-            <View style={[s.typeIcon, { backgroundColor: "#8B3FFF18" }]}>
-              <Feather name={tpl.icon as any} size={20} color="#8B3FFF" />
+            <View style={[s.typeIcon, { backgroundColor: "#F9731618" }]}>
+              <Feather name={tpl.icon as any} size={20} color="#F97316" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[s.typeName, { color: colors.foreground }]}>{tpl.name}</Text>

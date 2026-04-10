@@ -67,7 +67,7 @@ export default function AdminScreen() {
         { label: "Bots Ativos", value: stats.activeBots, icon: "wifi", accent: colors.success },
         { label: "Receita", value: `R$ ${stats.totalRevenue.toFixed(2)}`, icon: "dollar-sign", accent: colors.warning },
         { label: "Pend. PIX", value: stats.pendingPayments, icon: "clock", accent: "#F59E0B" },
-        { label: "Planos", value: stats.totalPlans, icon: "star", accent: "#8B3FFF" },
+        { label: "Planos", value: stats.totalPlans, icon: "star", accent: "#F97316" },
       ]
     : [];
 

@@ -33,8 +33,8 @@ type Plan = {
 };
 
 const PLAN_ACCENTS: Record<string, [string, string]> = {
-  Basico: ["#8B3FFF", "#6B1FDF"],
-  Pro: ["#2979FF", "#1559CF"],
+  Basico: ["#F97316", "#C850C0"],
+  Pro: ["#C850C0", "#9D174D"],
   Premium: ["#F59E0B", "#D97706"],
 };
 
@@ -52,7 +52,7 @@ function PlanCard({
   loading: boolean;
 }) {
   const colors = useColors();
-  const accent = PLAN_ACCENTS[plan.name] ?? ["#8B3FFF", "#6B1FDF"];
+  const accent = PLAN_ACCENTS[plan.name] ?? ["#F97316", "#C850C0"];
   const canAfford = coins >= plan.coins;
 
   return (

@@ -23,7 +23,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: "#8B3FFF",
+        tabBarActiveTintColor: "#F97316",
         tabBarInactiveTintColor: "#6B7280",
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.label,
@@ -45,8 +45,8 @@ export default function TabLayout() {
               "adminOnly" in route && route.adminOnly && !user?.isAdmin
                 ? { display: "none" }
                 : undefined,
-            tabBarIcon: ({ color, size }) => (
-              <Feather name={route.icon as any} size={size} color={color} />
+            tabBarIcon: ({ color }) => (
+              <Feather name={route.icon as any} size={22} color={color} />
             ),
           }}
         />

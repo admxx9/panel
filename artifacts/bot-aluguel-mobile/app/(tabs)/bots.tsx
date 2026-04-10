@@ -44,12 +44,12 @@ const STATUS_CONFIG = {
 };
 
 const AVATAR_GRADIENTS: [string, string][] = [
-  ["#8B3FFF", "#5B21B6"],
-  ["#3B82F6", "#1D4ED8"],
+  ["#F97316", "#B45309"],
+  ["#C850C0", "#9D174D"],
   ["#10B981", "#065F46"],
-  ["#F59E0B", "#92400E"],
+  ["#3B82F6", "#1D4ED8"],
   ["#EF4444", "#991B1B"],
-  ["#EC4899", "#9D174D"],
+  ["#F59E0B", "#92400E"],
 ];
 
 function getAvatarGradient(name: string): [string, string] {
@@ -176,7 +176,7 @@ function BotCard({ bot, onDelete }: { bot: Bot; onDelete: (id: string) => void }
               }}
             >
               <LinearGradient
-                colors={["#3D1FA8", "#8B3FFF"]}
+                colors={["#B45309", "#F97316"]}
                 style={styles.actionBtnInner}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -256,12 +256,12 @@ export default function BotsScreen() {
         ListEmptyComponent={
           isLoading ? (
             <View style={styles.loader}>
-              <ActivityIndicator color="#8B3FFF" size="large" />
+              <ActivityIndicator color="#F97316" size="large" />
             </View>
           ) : (
             <View style={styles.emptyState}>
               <LinearGradient
-                colors={["#3D1FA8", "#8B3FFF"]}
+                colors={["#B45309", "#F97316"]}
                 style={styles.emptyIcon}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
@@ -277,7 +277,7 @@ export default function BotsScreen() {
                 onPress={() => setShowCreateModal(true)}
               >
                 <LinearGradient
-                  colors={["#3D1FA8", "#8B3FFF"]}
+                  colors={["#B45309", "#F97316"]}
                   style={styles.emptyBtnInner}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -290,7 +290,7 @@ export default function BotsScreen() {
           )
         }
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#8B3FFF" />
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#F97316" />
         }
       />
 
@@ -310,7 +310,7 @@ export default function BotsScreen() {
             }}
           >
             <LinearGradient
-              colors={["#3D1FA8", "#8B3FFF"]}
+              colors={["#B45309", "#F97316"]}
               style={styles.fabInner}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
@@ -352,7 +352,7 @@ export default function BotsScreen() {
                 disabled={createBot.isPending}
               >
                 <LinearGradient
-                  colors={["#3D1FA8", "#8B3FFF"]}
+                  colors={["#B45309", "#F97316"]}
                   style={styles.createBtn}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 1 }}
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     overflow: "hidden" as const,
     elevation: 8,
-    shadowColor: "#8B3FFF",
+    shadowColor: "#F97316",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 12,

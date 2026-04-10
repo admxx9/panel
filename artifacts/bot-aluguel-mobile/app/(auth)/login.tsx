@@ -177,7 +177,7 @@ export default function LoginScreen() {
         >
           <View style={s.logo}>
             <LinearGradient
-              colors={["#8B3FFF", "#2979FF"]}
+              colors={["#F97316", "#C850C0"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={s.logoGradient}
@@ -243,7 +243,7 @@ export default function LoginScreen() {
               disabled={loginMutation.isPending}
             >
               <LinearGradient
-                colors={["#8B3FFF", "#6B1FDF"]}
+                colors={["#F97316", "#C850C0"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={s.loginBtnGradient}
