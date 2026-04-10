@@ -41,11 +41,11 @@ export function Sidebar() {
     <aside className="w-56 border-r border-[#1a1b28] bg-[#0a0b12] flex flex-col h-full hidden md:flex shrink-0">
       <div className="px-5 py-5 border-b border-[#1a1b28]">
         <Link href="/dashboard" className="flex items-center gap-2.5">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#F97316] shadow-[0_0_12px_rgba(249,115,22,0.4)]">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#7C3AED] shadow-[0_0_12px_rgba(124,58,237,0.4)]">
             <Cpu className="h-4 w-4 text-white" />
           </div>
           <span className="font-bold text-[15px] tracking-tight text-white leading-none">
-            BotAluguel<span className="text-[#F97316]">.Pro</span>
+            BotAluguel<span className="text-[#7C3AED]">.Pro</span>
           </span>
         </Link>
       </div>
@@ -78,7 +78,7 @@ export function Sidebar() {
 
       <div className="border-t border-[#1a1b28] p-4">
         <div className="flex items-center gap-2.5 mb-3">
-          <div className="h-7 w-7 rounded-md bg-[#131420] border border-[#1a1b28] flex items-center justify-center text-xs font-bold text-[#F97316]">
+          <div className="h-7 w-7 rounded-md bg-[#131420] border border-[#1a1b28] flex items-center justify-center text-xs font-bold text-[#7C3AED]">
             {user?.name?.charAt(0).toUpperCase()}
           </div>
           <div className="flex flex-col min-w-0">

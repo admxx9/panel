@@ -64,7 +64,7 @@ export default function LoginScreen() {
           <View style={s.brand}>
             <View style={s.logoWrap}>
               <LinearGradient
-                colors={["#F97316", "#C850C0"]}
+                colors={["#7C3AED", "#7C3AED"]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 1 }}
                 style={s.logoBox}
@@ -82,7 +82,7 @@ export default function LoginScreen() {
             <View style={s.field}>
               <Text style={s.label}>TELEFONE</Text>
               <View style={[s.inputRow, focusPhone && s.inputFocused]}>
-                <Feather name="phone" size={15} color={focusPhone ? "#F97316" : "#4B4C6B"} style={s.inputIcon} />
+                <Feather name="phone" size={15} color={focusPhone ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
                 <TextInput
                   style={s.input}
                   placeholder="55 11 99999-9999"
@@ -100,7 +100,7 @@ export default function LoginScreen() {
             <View style={s.field}>
               <Text style={s.label}>SENHA</Text>
               <View style={[s.inputRow, focusPass && s.inputFocused]}>
-                <Feather name="lock" size={15} color={focusPass ? "#F97316" : "#4B4C6B"} style={s.inputIcon} />
+                <Feather name="lock" size={15} color={focusPass ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
                 <TextInput
                   style={s.input}
                   placeholder="Sua senha"
@@ -170,7 +170,7 @@ const s = StyleSheet.create({
   },
   logoWrap: {
     marginBottom: 16,
-    shadowColor: "#F97316",
+    shadowColor: "#7C3AED",
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 0.5,
     shadowRadius: 20,
@@ -191,7 +191,7 @@ const s = StyleSheet.create({
     letterSpacing: -0.5,
   },
   brandDot: {
-    color: "#F97316",
+    color: "#7C3AED",
   },
   brandSub: {
     fontSize: 12,
@@ -235,7 +235,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
   },
   inputFocused: {
-    borderColor: "#F97316",
+    borderColor: "#7C3AED",
   },
   inputIcon: {
     marginRight: 8,
@@ -269,7 +269,7 @@ const s = StyleSheet.create({
     fontFamily: "Inter_400Regular",
   },
   btn: {
-    backgroundColor: "#F97316",
+    backgroundColor: "#7C3AED",
     borderRadius: 6,
     paddingVertical: 14,
     alignItems: "center",
@@ -303,7 +303,7 @@ const s = StyleSheet.create({
     fontFamily: "Inter_400Regular",
   },
   registerLink: {
-    color: "#F97316",
+    color: "#7C3AED",
     fontSize: 13,
     fontWeight: "600" as const,
     fontFamily: "Inter_600SemiBold",

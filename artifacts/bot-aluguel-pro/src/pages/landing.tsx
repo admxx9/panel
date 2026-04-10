@@ -90,10 +90,10 @@ export default function LandingPage() {
       <header className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? "bg-[#090A0F]/95 backdrop-blur-lg border-b border-[#1a1b28] shadow-lg" : "bg-transparent"}`}>
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-md bg-[#F97316] flex items-center justify-center">
+            <div className="h-8 w-8 rounded-md bg-[#7C3AED] flex items-center justify-center">
               <Bot className="h-4 w-4 text-white" />
             </div>
-            <span className="font-bold text-lg text-white">BotAluguel<span className="text-[#F97316]">.Pro</span></span>
+            <span className="font-bold text-lg text-white">BotAluguel<span className="text-[#7C3AED]">.Pro</span></span>
           </div>
           <nav className="hidden md:flex items-center gap-6">
             <a href="#recursos" className="text-sm text-[#4b4c6b] hover:text-white transition-colors">Recursos</a>
@@ -103,7 +103,7 @@ export default function LandingPage() {
           </nav>
           <div className="flex items-center gap-3">
             <Link href="/login" className="px-3 py-1.5 text-sm text-[#4b4c6b] hover:text-white transition-colors">Entrar</Link>
-            <Link href="/register" className="px-4 py-1.5 bg-[#F97316] hover:bg-[#ea6a00] text-white text-sm font-semibold rounded-md transition-colors">
+            <Link href="/register" className="px-4 py-1.5 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-sm font-semibold rounded-md transition-colors">
               Comecar Gratis
             </Link>
           </div>
@@ -112,12 +112,12 @@ export default function LandingPage() {
 
       <section className="relative pt-32 pb-24 px-4 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#F97316]/10 rounded-full blur-[120px]" />
-          <div className="absolute top-1/2 left-1/4 w-[400px] h-[300px] bg-[#C850C0]/10 rounded-full blur-[100px]" />
+          <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[#7C3AED]/10 rounded-full blur-[120px]" />
+          <div className="absolute top-1/2 left-1/4 w-[400px] h-[300px] bg-[#7C3AED]/10 rounded-full blur-[100px]" />
         </div>
         <div className="relative max-w-5xl mx-auto text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <div className="inline-flex items-center px-4 py-1.5 rounded-full border border-[#F97316]/30 bg-[#F97316]/10 text-[#F97316] text-sm font-semibold mb-6">
+            <div className="inline-flex items-center px-4 py-1.5 rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/10 text-[#7C3AED] text-sm font-semibold mb-6">
               Plataforma SaaS de Bots WhatsApp
             </div>
           </motion.div>
@@ -126,7 +126,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.1 }}
           >
             Seu Bot WhatsApp{" "}
-            <span className="bg-gradient-to-r from-[#F97316] to-[#C850C0] bg-clip-text text-transparent">Profissional</span>
+            <span className="bg-gradient-to-r from-[#7C3AED] to-[#A78BFA] bg-clip-text text-transparent">Profissional</span>
             <br />sem Programar
           </motion.h1>
           <motion.p
@@ -139,7 +139,7 @@ export default function LandingPage() {
             className="flex flex-col sm:flex-row gap-4 justify-center"
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5, delay: 0.3 }}
           >
-            <Link href="/register" className="group inline-flex items-center justify-center bg-[#F97316] hover:bg-[#ea6a00] text-white px-8 py-4 text-base font-semibold rounded-md shadow-xl shadow-[#F97316]/20 transition-colors">
+            <Link href="/register" className="group inline-flex items-center justify-center bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-8 py-4 text-base font-semibold rounded-md shadow-xl shadow-[#7C3AED]/20 transition-colors">
               Criar conta gratis
               <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
             </Link>
@@ -173,17 +173,17 @@ export default function LandingPage() {
       <section id="recursos" className="py-24 px-4 bg-[#0d0e16]/30">
         <div className="max-w-6xl mx-auto">
           <motion.div className="text-center mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <div className="inline-flex items-center px-3 py-1 rounded-full border border-[#F97316]/30 bg-[#F97316]/10 text-[#F97316] text-xs font-semibold mb-4">Recursos</div>
+            <div className="inline-flex items-center px-3 py-1 rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/10 text-[#7C3AED] text-xs font-semibold mb-4">Recursos</div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Tudo que voce precisa para automatizar</h2>
             <p className="text-[#4b4c6b] max-w-xl mx-auto">Uma plataforma completa para criar e gerenciar seus bots de WhatsApp sem precisar de um tecnico.</p>
           </motion.div>
           <motion.div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6" variants={staggerContainer} initial="hidden" whileInView="show" viewport={{ once: true }}>
             {features.map((feature) => (
               <motion.div key={feature.title} variants={fadeInUp}
-                className="p-6 rounded-lg border border-[#1a1b28] bg-[#0d0e16] hover:border-[#F97316]/20 transition-all duration-300 group"
+                className="p-6 rounded-lg border border-[#1a1b28] bg-[#0d0e16] hover:border-[#7C3AED]/20 transition-all duration-300 group"
               >
-                <div className="h-12 w-12 rounded-lg bg-[#F97316]/10 flex items-center justify-center mb-4 group-hover:bg-[#F97316]/20 group-hover:scale-110 transition-all duration-300">
-                  <feature.icon className="h-6 w-6 text-[#F97316]" />
+                <div className="h-12 w-12 rounded-lg bg-[#7C3AED]/10 flex items-center justify-center mb-4 group-hover:bg-[#7C3AED]/20 group-hover:scale-110 transition-all duration-300">
+                  <feature.icon className="h-6 w-6 text-[#7C3AED]" />
                 </div>
                 <h3 className="text-white font-semibold mb-2 text-lg">{feature.title}</h3>
                 <p className="text-[#4b4c6b] text-sm leading-relaxed">{feature.description}</p>
@@ -196,7 +196,7 @@ export default function LandingPage() {
       <section id="como-funciona" className="py-24 px-4">
         <div className="max-w-5xl mx-auto">
           <motion.div className="text-center mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <div className="inline-flex items-center px-3 py-1 rounded-full border border-[#C850C0]/30 bg-[#C850C0]/10 text-[#C850C0] text-xs font-semibold mb-4">Como Funciona</div>
+            <div className="inline-flex items-center px-3 py-1 rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/10 text-[#7C3AED] text-xs font-semibold mb-4">Como Funciona</div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">3 passos simples</h2>
             <p className="text-[#4b4c6b] max-w-xl mx-auto">Do cadastro ao bot funcionando em menos de 10 minutos.</p>
           </motion.div>
@@ -204,12 +204,12 @@ export default function LandingPage() {
             {steps.map((step, i) => (
               <motion.div key={step.num} variants={fadeInUp} className="relative text-center group">
                 {i < steps.length - 1 && (
-                  <div className="hidden md:block absolute top-12 left-[60%] w-[80%] h-px bg-gradient-to-r from-[#F97316]/30 to-transparent" />
+                  <div className="hidden md:block absolute top-12 left-[60%] w-[80%] h-px bg-gradient-to-r from-[#7C3AED]/30 to-transparent" />
                 )}
-                <div className="h-24 w-24 rounded-2xl bg-[#F97316]/10 border border-[#F97316]/20 flex items-center justify-center mx-auto mb-6 group-hover:bg-[#F97316]/20 group-hover:scale-110 transition-all duration-300">
-                  <step.icon className="h-10 w-10 text-[#F97316]" />
+                <div className="h-24 w-24 rounded-2xl bg-[#7C3AED]/10 border border-[#7C3AED]/20 flex items-center justify-center mx-auto mb-6 group-hover:bg-[#7C3AED]/20 group-hover:scale-110 transition-all duration-300">
+                  <step.icon className="h-10 w-10 text-[#7C3AED]" />
                 </div>
-                <span className="text-[#F97316] font-bold text-sm">{step.num}</span>
+                <span className="text-[#7C3AED] font-bold text-sm">{step.num}</span>
                 <h3 className="text-white font-semibold text-lg mt-2 mb-2">{step.title}</h3>
                 <p className="text-[#4b4c6b] text-sm leading-relaxed">{step.description}</p>
               </motion.div>
@@ -221,7 +221,7 @@ export default function LandingPage() {
       <section id="planos" className="py-24 px-4 bg-[#0d0e16]/30">
         <div className="max-w-5xl mx-auto">
           <motion.div className="text-center mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <div className="inline-flex items-center px-3 py-1 rounded-full border border-[#F97316]/30 bg-[#F97316]/10 text-[#F97316] text-xs font-semibold mb-4">Planos</div>
+            <div className="inline-flex items-center px-3 py-1 rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/10 text-[#7C3AED] text-xs font-semibold mb-4">Planos</div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Planos e Precos</h2>
             <p className="text-[#4b4c6b]">1 BRL = 100 moedas. Recarregue via PIX e ative quando quiser.</p>
           </motion.div>
@@ -229,11 +229,11 @@ export default function LandingPage() {
             {plans.map((plan) => (
               <motion.div key={plan.id} variants={fadeInUp}
                 className={`relative p-6 rounded-lg border transition-all duration-300 hover:scale-[1.02] ${
-                  plan.popular ? "border-[#F97316]/50 bg-[#F97316]/5 shadow-xl shadow-[#F97316]/10 border-l-[3px] border-l-[#F97316]" : "border-[#1a1b28] bg-[#0d0e16] hover:border-[#2a2b3e]"
+                  plan.popular ? "border-[#7C3AED]/50 bg-[#7C3AED]/5 shadow-xl shadow-[#7C3AED]/10 border-l-[3px] border-l-[#7C3AED]" : "border-[#1a1b28] bg-[#0d0e16] hover:border-[#2a2b3e]"
                 }`}
               >
                 {plan.popular && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#F97316] text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-lg">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[#7C3AED] text-white text-[11px] font-bold px-3 py-1 rounded-full shadow-lg">
                     Mais Popular
                   </div>
                 )}
@@ -248,14 +248,14 @@ export default function LandingPage() {
                 <ul className="space-y-3 mb-6">
                   {plan.features.map((feature) => (
                     <li key={feature} className="flex items-center gap-2 text-sm text-[#4b4c6b]">
-                      <CheckCircle className="h-4 w-4 text-[#F97316] flex-shrink-0" />
+                      <CheckCircle className="h-4 w-4 text-[#7C3AED] flex-shrink-0" />
                       {feature}
                     </li>
                   ))}
                 </ul>
                 <Link href="/register"
                   className={`block text-center w-full py-2.5 rounded-md text-sm font-semibold transition-colors ${
-                    plan.popular ? "bg-[#F97316] hover:bg-[#ea6a00] text-white shadow-lg shadow-[#F97316]/20" : "border border-[#1a1b28] bg-[#131420] hover:bg-[#1a1b28] text-white"
+                    plan.popular ? "bg-[#7C3AED] hover:bg-[#6D28D9] text-white shadow-lg shadow-[#7C3AED]/20" : "border border-[#1a1b28] bg-[#131420] hover:bg-[#1a1b28] text-white"
                   }`}
                 >
                   Comecar Agora
@@ -285,7 +285,7 @@ export default function LandingPage() {
                 </div>
                 <p className="text-white/80 text-sm leading-relaxed mb-4 italic">"{t.text}"</p>
                 <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-[#F97316]/20 flex items-center justify-center text-[#F97316] font-bold text-sm">{t.avatar}</div>
+                  <div className="h-10 w-10 rounded-full bg-[#7C3AED]/20 flex items-center justify-center text-[#7C3AED] font-bold text-sm">{t.avatar}</div>
                   <div>
                     <p className="text-white font-medium text-sm">{t.name}</p>
                     <p className="text-[#4b4c6b] text-xs">{t.role}</p>
@@ -300,7 +300,7 @@ export default function LandingPage() {
       <section id="faq" className="py-24 px-4 bg-[#0d0e16]/30">
         <div className="max-w-3xl mx-auto">
           <motion.div className="text-center mb-16" initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-            <div className="inline-flex items-center px-3 py-1 rounded-full border border-[#F97316]/30 bg-[#F97316]/10 text-[#F97316] text-xs font-semibold mb-4">FAQ</div>
+            <div className="inline-flex items-center px-3 py-1 rounded-full border border-[#7C3AED]/30 bg-[#7C3AED]/10 text-[#7C3AED] text-xs font-semibold mb-4">FAQ</div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Perguntas Frequentes</h2>
             <p className="text-[#4b4c6b]">Tudo que voce precisa saber sobre o BotAluguel Pro.</p>
           </motion.div>
@@ -313,18 +313,18 @@ export default function LandingPage() {
       <section className="py-24 px-4">
         <div className="max-w-4xl mx-auto">
           <motion.div
-            className="relative rounded-xl border border-[#F97316]/20 bg-gradient-to-br from-[#F97316]/10 via-[#0d0e16] to-[#C850C0]/10 p-10 sm:p-16 text-center overflow-hidden"
+            className="relative rounded-xl border border-[#7C3AED]/20 bg-gradient-to-br from-[#7C3AED]/10 via-[#0d0e16] to-[#7C3AED]/10 p-10 sm:p-16 text-center overflow-hidden"
             initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
           >
             <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#F97316]/10 rounded-full blur-[80px]" />
-              <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-[#C850C0]/10 rounded-full blur-[60px]" />
+              <div className="absolute top-0 right-0 w-[300px] h-[300px] bg-[#7C3AED]/10 rounded-full blur-[80px]" />
+              <div className="absolute bottom-0 left-0 w-[200px] h-[200px] bg-[#7C3AED]/10 rounded-full blur-[60px]" />
             </div>
             <div className="relative">
               <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">Pronto para automatizar seu WhatsApp?</h2>
               <p className="text-[#4b4c6b] mb-8 max-w-lg mx-auto">Junte-se a centenas de usuarios que ja usam o BotAluguel Pro para automatizar atendimentos e grupos.</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/register" className="group inline-flex items-center justify-center bg-[#F97316] hover:bg-[#ea6a00] text-white px-10 py-4 text-base font-semibold rounded-md shadow-xl shadow-[#F97316]/20 transition-colors">
+                <Link href="/register" className="group inline-flex items-center justify-center bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-10 py-4 text-base font-semibold rounded-md shadow-xl shadow-[#7C3AED]/20 transition-colors">
                   <Smartphone className="mr-2 h-5 w-5" />
                   Criar meu bot agora
                   <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -340,10 +340,10 @@ export default function LandingPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div className="col-span-2 md:col-span-1">
               <div className="flex items-center gap-2 mb-4">
-                <div className="h-8 w-8 rounded-md bg-[#F97316] flex items-center justify-center">
+                <div className="h-8 w-8 rounded-md bg-[#7C3AED] flex items-center justify-center">
                   <Bot className="h-4 w-4 text-white" />
                 </div>
-                <span className="font-bold text-lg text-white">BotAluguel<span className="text-[#F97316]">.Pro</span></span>
+                <span className="font-bold text-lg text-white">BotAluguel<span className="text-[#7C3AED]">.Pro</span></span>
               </div>
               <p className="text-[#4b4c6b] text-sm leading-relaxed">Plataforma SaaS de bots WhatsApp para automatizar seus atendimentos e grupos.</p>
             </div>

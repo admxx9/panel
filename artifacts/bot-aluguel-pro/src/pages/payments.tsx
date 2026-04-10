@@ -88,7 +88,7 @@ export default function PaymentsPage() {
                       onClick={() => setAmount(preset.toString())}
                       className={`px-3 py-2 rounded-md text-[12px] border transition-colors ${
                         amount === preset.toString()
-                          ? "bg-[#F97316]/15 border-[#F97316]/40 text-[#F97316]"
+                          ? "bg-[#7C3AED]/15 border-[#7C3AED]/40 text-[#7C3AED]"
                           : "bg-[#131420] border-[#1e1f2e] text-[#4b4c6b] hover:text-[#8b8ea0]"
                       }`}
                     >
@@ -101,7 +101,7 @@ export default function PaymentsPage() {
 
               <div>
                 <p className="text-[10px] font-semibold text-[#4b4c6b] tracking-[0.5px] uppercase mb-2">Valor personalizado</p>
-                <div className="flex items-center bg-[#131420] border border-[#1e1f2e] rounded-md px-3 focus-within:border-[#F97316] transition-colors">
+                <div className="flex items-center bg-[#131420] border border-[#1e1f2e] rounded-md px-3 focus-within:border-[#7C3AED] transition-colors">
                   <span className="text-[#4b4c6b] text-[14px] font-bold mr-2">R$</span>
                   <input
                     type="number"
@@ -115,7 +115,7 @@ export default function PaymentsPage() {
                 </div>
                 {amount && parseFloat(amount) > 0 && (
                   <p className="text-[11px] text-[#4b4c6b] mt-1 flex items-center gap-1">
-                    <Coins className="h-3 w-3 text-[#F97316]" />
+                    <Coins className="h-3 w-3 text-[#7C3AED]" />
                     {Math.floor(parseFloat(amount) * 100)} moedas
                   </p>
                 )}
@@ -124,7 +124,7 @@ export default function PaymentsPage() {
               <button
                 onClick={handleCreatePix}
                 disabled={createPix.isPending || !amount}
-                className="w-full bg-[#F97316] hover:bg-[#ea6a00] disabled:opacity-60 text-white py-2.5 rounded-md text-[13px] font-bold transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-[#7C3AED] hover:bg-[#6D28D9] disabled:opacity-60 text-white py-2.5 rounded-md text-[13px] font-bold transition-colors flex items-center justify-center gap-2"
               >
                 {createPix.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                 Gerar PIX
@@ -132,8 +132,8 @@ export default function PaymentsPage() {
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="bg-[#131420] border border-[#1a1b28] border-l-[3px] border-l-[#F97316] rounded-md p-4 text-center">
-                <p className="text-[28px] font-extrabold text-[#F97316]">{pixData.coins}</p>
+              <div className="bg-[#131420] border border-[#1a1b28] border-l-[3px] border-l-[#7C3AED] rounded-md p-4 text-center">
+                <p className="text-[28px] font-extrabold text-[#7C3AED]">{pixData.coins}</p>
                 <p className="text-[12px] text-[#4b4c6b]">moedas por R$ {pixData.amount.toFixed(2)}</p>
               </div>
 
@@ -156,7 +156,7 @@ export default function PaymentsPage() {
                     className={`w-full py-2.5 rounded-md text-[13px] font-bold border flex items-center justify-center gap-2 transition-colors ${
                       copied
                         ? "border-[#22C55E]/40 text-[#22C55E] bg-[#22C55E]/10"
-                        : "border-[#F97316] text-[#F97316] hover:bg-[#F97316]/10"
+                        : "border-[#7C3AED] text-[#7C3AED] hover:bg-[#7C3AED]/10"
                     }`}
                   >
                     {copied ? <CheckCircle className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}

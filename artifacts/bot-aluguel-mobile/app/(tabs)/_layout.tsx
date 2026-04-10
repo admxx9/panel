@@ -20,7 +20,7 @@ function TabBarIcon({ name, label, focused }: { name: string; label: string; foc
     <View style={tbStyles.item}>
       {focused && <View style={tbStyles.indicator} />}
       <View style={[tbStyles.iconWrap, focused && tbStyles.iconActive]}>
-        <Feather name={name as any} size={18} color={focused ? "#F97316" : "#4B4C6B"} />
+        <Feather name={name as any} size={18} color={focused ? "#7C3AED" : "#4B4C6B"} />
       </View>
       <Text style={[tbStyles.label, focused && tbStyles.labelActive]}>{label}</Text>
     </View>
@@ -85,7 +85,7 @@ const tbStyles = StyleSheet.create({
     top: 0,
     width: 24,
     height: 2,
-    backgroundColor: "#F97316",
+    backgroundColor: "#7C3AED",
     borderRadius: 2,
   },
   iconWrap: {
@@ -96,7 +96,7 @@ const tbStyles = StyleSheet.create({
     borderRadius: 6,
   },
   iconActive: {
-    backgroundColor: "#F9731618",
+    backgroundColor: "#7C3AED18",
   },
   label: {
     fontSize: 9,
@@ -105,6 +105,6 @@ const tbStyles = StyleSheet.create({
     letterSpacing: 0.3,
   },
   labelActive: {
-    color: "#F97316",
+    color: "#7C3AED",
   },
 });

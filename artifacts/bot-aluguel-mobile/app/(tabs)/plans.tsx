@@ -30,15 +30,15 @@ type Plan = {
 };
 
 const PLAN_COLORS: Record<string, string> = {
-  Basico:  "#F97316",
-  Pro:     "#C850C0",
+  Basico:  "#7C3AED",
+  Pro:     "#7C3AED",
   Premium: "#F59E0B",
 };
 
 function PlanRow({ plan, isActive, coins, onActivate, loading }: {
   plan: Plan; isActive: boolean; coins: number; onActivate: () => void; loading: boolean;
 }) {
-  const color = PLAN_COLORS[plan.name] ?? "#F97316";
+  const color = PLAN_COLORS[plan.name] ?? "#7C3AED";
   const canAfford = coins >= plan.coins;
 
   return (
@@ -138,7 +138,7 @@ export default function PlansScreen() {
       style={s.root}
       contentContainerStyle={{ paddingTop, paddingBottom, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#F97316" />}
+      refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#7C3AED" />}
     >
       <View style={s.topBar}>
         <Text style={s.pageLabel}>ASSINATURA</Text>
@@ -147,7 +147,7 @@ export default function PlansScreen() {
 
       <View style={s.coinsCard}>
         <View style={s.coinsLeft}>
-          <Feather name="dollar-sign" size={18} color="#F97316" />
+          <Feather name="dollar-sign" size={18} color="#7C3AED" />
           <View>
             <Text style={s.coinsValue}>{coins}</Text>
             <Text style={s.coinsLabel}>moedas disponíveis</Text>
@@ -162,7 +162,7 @@ export default function PlansScreen() {
 
       {plansLoading ? (
         <View style={s.loader}>
-          <ActivityIndicator color="#F97316" />
+          <ActivityIndicator color="#7C3AED" />
         </View>
       ) : (
         <View style={s.plansList}>
@@ -259,22 +259,22 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1A1B28",
     borderLeftWidth: 3,
-    borderLeftColor: "#F97316",
+    borderLeftColor: "#7C3AED",
     padding: 16,
     marginBottom: 20,
   },
   coinsLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
-  coinsValue: { fontSize: 22, fontWeight: "800" as const, color: "#F97316", fontFamily: "Inter_700Bold" },
+  coinsValue: { fontSize: 22, fontWeight: "800" as const, color: "#7C3AED", fontFamily: "Inter_700Bold" },
   coinsLabel: { fontSize: 11, color: "#4B4C6B", fontFamily: "Inter_400Regular" },
   activePlanBadge: {
-    backgroundColor: "#F9731615",
+    backgroundColor: "#7C3AED15",
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: "#F9731430",
+    borderColor: "#7C3AED30",
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  activePlanText: { fontSize: 11, fontWeight: "700" as const, color: "#F97316", fontFamily: "Inter_700Bold" },
+  activePlanText: { fontSize: 11, fontWeight: "700" as const, color: "#7C3AED", fontFamily: "Inter_700Bold" },
 
   plansList: { gap: 10 },
   loader: { paddingVertical: 40, alignItems: "center" },

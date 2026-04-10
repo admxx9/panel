@@ -78,7 +78,7 @@ export default function PaymentsScreen() {
       style={s.root}
       contentContainerStyle={{ paddingTop, paddingBottom, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={historyLoading} onRefresh={refetch} tintColor="#F97316" />}
+      refreshControl={<RefreshControl refreshing={historyLoading} onRefresh={refetch} tintColor="#7C3AED" />}
     >
       <View style={s.topBar}>
         <Text style={s.pageLabel}>RECARGA</Text>
@@ -118,9 +118,9 @@ export default function PaymentsScreen() {
 
         {amount && parseFloat(amount) > 0 && (
           <View style={s.preview}>
-            <Feather name="dollar-sign" size={14} color="#F97316" />
+            <Feather name="dollar-sign" size={14} color="#7C3AED" />
             <Text style={s.previewText}>
-              Você receberá <Text style={{ color: "#F97316", fontWeight: "700" }}>{Math.round(parseFloat(amount) * 100)} moedas</Text>
+              Você receberá <Text style={{ color: "#7C3AED", fontWeight: "700" }}>{Math.round(parseFloat(amount) * 100)} moedas</Text>
             </Text>
           </View>
         )}
@@ -160,7 +160,7 @@ export default function PaymentsScreen() {
                 <Text style={s.codeText} numberOfLines={3}>{pixData.copyPaste ?? "—"}</Text>
               </View>
               <Pressable style={[s.copyBtn, copied && s.copyBtnDone]} onPress={handleCopy}>
-                <Feather name={copied ? "check" : "copy"} size={13} color={copied ? "#22C55E" : "#F97316"} />
+                <Feather name={copied ? "check" : "copy"} size={13} color={copied ? "#22C55E" : "#7C3AED"} />
                 <Text style={[s.copyText, copied && { color: "#22C55E" }]}>
                   {copied ? "Copiado!" : "Copiar código PIX"}
                 </Text>
@@ -174,7 +174,7 @@ export default function PaymentsScreen() {
       <View style={s.historySection}>
         <Text style={s.historySectionTitle}>HISTÓRICO</Text>
         {historyLoading ? (
-          <View style={s.loader}><ActivityIndicator color="#F97316" /></View>
+          <View style={s.loader}><ActivityIndicator color="#7C3AED" /></View>
         ) : historyList.length === 0 ? (
           <View style={s.emptyHistory}>
             <Feather name="inbox" size={24} color="#2A2B3E" />
@@ -225,9 +225,9 @@ const s = StyleSheet.create({
     borderColor: "#1A1B28",
     backgroundColor: "#131420",
   },
-  presetActive: { borderColor: "#F97316", backgroundColor: "#F9731618" },
+  presetActive: { borderColor: "#7C3AED", backgroundColor: "#7C3AED18" },
   presetText: { fontSize: 13, color: "#4B4C6B", fontFamily: "Inter_600SemiBold" },
-  presetTextActive: { color: "#F97316" },
+  presetTextActive: { color: "#7C3AED" },
 
   inputLabel: {},
   label: { fontSize: 9, color: "#4B4C6B", fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 6 },
@@ -247,7 +247,7 @@ const s = StyleSheet.create({
   previewText: { fontSize: 13, color: "#8B8EA0", fontFamily: "Inter_400Regular" },
 
   btn: {
-    backgroundColor: "#F97316",
+    backgroundColor: "#7C3AED",
     borderRadius: 6,
     paddingVertical: 13,
     alignItems: "center",
@@ -270,11 +270,11 @@ const s = StyleSheet.create({
     gap: 6,
     borderRadius: 6,
     borderWidth: 1,
-    borderColor: "#F97316",
+    borderColor: "#7C3AED",
     paddingVertical: 10,
   },
   copyBtnDone: { borderColor: "#22C55E" },
-  copyText: { fontSize: 13, fontWeight: "600" as const, color: "#F97316", fontFamily: "Inter_600SemiBold" },
+  copyText: { fontSize: 13, fontWeight: "600" as const, color: "#7C3AED", fontFamily: "Inter_600SemiBold" },
   waitText: { textAlign: "center", fontSize: 11, color: "#4B4C6B", fontFamily: "Inter_400Regular" },
   paidBadge: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#22C55E15", borderRadius: 6, borderWidth: 1, borderColor: "#22C55E30", padding: 12 },
   paidText: { fontSize: 13, color: "#22C55E", fontFamily: "Inter_600SemiBold" },

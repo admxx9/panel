@@ -58,7 +58,7 @@ export default function BotsPage() {
         </div>
         <button
           onClick={() => setShowCreate(true)}
-          className="bg-[#F97316] hover:bg-[#ea6a00] text-white text-[13px] font-bold px-4 py-2 rounded-md transition-colors flex items-center gap-2"
+          className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-[13px] font-bold px-4 py-2 rounded-md transition-colors flex items-center gap-2"
         >
           <Plus className="h-3.5 w-3.5" />
           Novo Bot
@@ -67,7 +67,7 @@ export default function BotsPage() {
 
       <div className="flex gap-4 mb-5">
         {[
-          { label: "Total", value: botList.length, color: "#F97316" },
+          { label: "Total", value: botList.length, color: "#7C3AED" },
           { label: "Online", value: botList.filter(b => b.status === "connected").length, color: "#22C55E" },
           { label: "Offline", value: botList.filter(b => b.status === "disconnected").length, color: "#4b4c6b" },
         ].map(stat => (
@@ -114,12 +114,12 @@ export default function BotsPage() {
                 </div>
                 <div className="flex items-center gap-1.5">
                   <Link href={`/dashboard/bots/${bot.id}`}>
-                    <button className="h-7 w-7 flex items-center justify-center rounded-md bg-[#131420] border border-[#1a1b28] text-[#8b8ea0] hover:text-white hover:border-[#F97316]/40 transition-colors" title="Gerenciar">
+                    <button className="h-7 w-7 flex items-center justify-center rounded-md bg-[#131420] border border-[#1a1b28] text-[#8b8ea0] hover:text-white hover:border-[#7C3AED]/40 transition-colors" title="Gerenciar">
                       <Settings className="h-3 w-3" />
                     </button>
                   </Link>
                   <Link href={`/dashboard/builder?botId=${bot.id}`}>
-                    <button className="h-7 w-7 flex items-center justify-center rounded-md bg-[#F97316]/15 border border-[#F97316]/30 text-[#F97316] hover:bg-[#F97316]/25 transition-colors" title="Construtor">
+                    <button className="h-7 w-7 flex items-center justify-center rounded-md bg-[#7C3AED]/15 border border-[#7C3AED]/30 text-[#7C3AED] hover:bg-[#7C3AED]/25 transition-colors" title="Construtor">
                       <Wrench className="h-3 w-3" />
                     </button>
                   </Link>
@@ -146,7 +146,7 @@ export default function BotsPage() {
           </div>
           <button
             onClick={() => setShowCreate(true)}
-            className="border border-[#F97316] text-[#F97316] text-[12px] font-semibold px-4 py-2 rounded-md hover:bg-[#F97316]/10 transition-colors flex items-center gap-2 mt-2"
+            className="border border-[#7C3AED] text-[#7C3AED] text-[12px] font-semibold px-4 py-2 rounded-md hover:bg-[#7C3AED]/10 transition-colors flex items-center gap-2 mt-2"
           >
             <Plus className="h-3.5 w-3.5" />
             Criar primeiro bot
@@ -166,7 +166,7 @@ export default function BotsPage() {
               onChange={(e) => setNewBotName(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleCreate()}
               autoFocus
-              className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md px-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors mb-5"
+              className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md px-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#7C3AED] transition-colors mb-5"
             />
             <div className="flex gap-3">
               <button
@@ -178,7 +178,7 @@ export default function BotsPage() {
               <button
                 onClick={handleCreate}
                 disabled={createBot.isPending}
-                className="flex-1 bg-[#F97316] hover:bg-[#ea6a00] text-white text-[13px] font-bold py-2.5 rounded-md transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
+                className="flex-1 bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-[13px] font-bold py-2.5 rounded-md transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
               >
                 {createBot.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                 Criar Bot

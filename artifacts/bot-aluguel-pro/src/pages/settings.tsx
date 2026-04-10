@@ -69,7 +69,7 @@ export default function SettingsPage() {
             <select
               value={selectedBotId}
               onChange={(e) => setSelectedBotId(e.target.value)}
-              className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white outline-none focus:border-[#F97316] transition-colors appearance-none"
+              className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white outline-none focus:border-[#7C3AED] transition-colors appearance-none"
             >
               <option value="">Escolha um bot para configurar</option>
               {botsLoading && <option disabled>Carregando...</option>}
@@ -86,7 +86,7 @@ export default function SettingsPage() {
         {selectedBotId && (
           <div className="bg-[#0d0e16] border border-[#1a1b28] rounded-lg p-5 space-y-4">
             <div className="flex items-center gap-2 pb-3 border-b border-[#1a1b28]">
-              <Settings className="h-3.5 w-3.5 text-[#F97316]" />
+              <Settings className="h-3.5 w-3.5 text-[#7C3AED]" />
               <p className="text-[13px] font-semibold text-[#c9cadb]">Configurações Gerais</p>
             </div>
 
@@ -99,7 +99,7 @@ export default function SettingsPage() {
                   value={settings.name}
                   onChange={(e) => setSettings((s) => ({ ...s, name: e.target.value }))}
                   placeholder="Ex: MeuBot"
-                  className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors"
+                  className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#7C3AED] transition-colors"
                 />
               </div>
               <p className="text-[11px] text-[#4b4c6b] mt-1">Nome de exibição do bot na plataforma</p>
@@ -115,7 +115,7 @@ export default function SettingsPage() {
                   onChange={(e) => setSettings((s) => ({ ...s, prefix: e.target.value }))}
                   placeholder=". ou ! ou /"
                   maxLength={3}
-                  className="w-full max-w-28 bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors"
+                  className="w-full max-w-28 bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#7C3AED] transition-colors"
                 />
               </div>
               <p className="text-[11px] text-[#4b4c6b] mt-1">
@@ -133,7 +133,7 @@ export default function SettingsPage() {
                   onChange={(e) => setSettings((s) => ({ ...s, ownerPhone: e.target.value.replace(/\D/g, "") }))}
                   placeholder="5511999990000"
                   maxLength={15}
-                  className="w-full max-w-xs bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors"
+                  className="w-full max-w-xs bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#7C3AED] transition-colors"
                 />
               </div>
               <p className="text-[11px] text-[#4b4c6b] mt-1">Número com DDI (55 para Brasil) — usado para comandos de admin</p>
@@ -143,7 +143,7 @@ export default function SettingsPage() {
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-[#F97316] hover:bg-[#ea6a00] disabled:opacity-60 text-white text-[13px] font-bold px-5 py-2.5 rounded-md transition-colors flex items-center gap-2"
+                className="bg-[#7C3AED] hover:bg-[#6D28D9] disabled:opacity-60 text-white text-[13px] font-bold px-5 py-2.5 rounded-md transition-colors flex items-center gap-2"
               >
                 {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                 Salvar Configurações
@@ -161,12 +161,12 @@ export default function SettingsPage() {
             {[
               {
                 tag: ".sticker",
-                color: "#F97316",
+                color: "#7C3AED",
                 desc: <>Com o prefixo <span className="text-[#8b8ea0]">.</span> e gatilho <span className="text-[#8b8ea0]">sticker</span>, o bot responde ao comando <span className="text-[#8b8ea0] font-mono">.sticker</span> enviado em grupos.</>,
               },
               {
                 tag: "Builder",
-                color: "#C850C0",
+                color: "#7C3AED",
                 desc: <>Use o <span className="text-[#8b8ea0]">Construtor Visual</span> para montar o fluxo: Comando → Ação → Resposta.</>,
               },
               {

@@ -8,8 +8,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 const PLAN_COLORS: Record<string, string> = {
-  basico: "#F97316",
-  pro:    "#C850C0",
+  basico: "#7C3AED",
+  pro:    "#7C3AED",
   premium: "#F59E0B",
 };
 
@@ -56,8 +56,8 @@ export default function PlansPage() {
           <h1 className="text-[20px] font-bold text-white mt-0.5">Planos</h1>
         </div>
         <div className="flex items-center gap-2 bg-[#0d0e16] border border-[#1a1b28] rounded-lg px-3 py-2">
-          <Coins className="h-3.5 w-3.5 text-[#F97316]" />
-          <span className="text-[13px] font-bold text-[#F97316]">{user?.coins ?? 0}</span>
+          <Coins className="h-3.5 w-3.5 text-[#7C3AED]" />
+          <span className="text-[13px] font-bold text-[#7C3AED]">{user?.coins ?? 0}</span>
           <span className="text-[11px] text-[#4b4c6b]">moedas</span>
         </div>
       </div>
@@ -85,7 +85,7 @@ export default function PlansPage() {
       ) : (
         <div className="grid md:grid-cols-3 gap-4">
           {plans?.map((plan) => {
-            const color = PLAN_COLORS[plan.id] ?? "#F97316";
+            const color = PLAN_COLORS[plan.id] ?? "#7C3AED";
             const active = isActivePlan(plan.id);
             const PlanIcon = PLAN_ICONS[plan.id] ?? Star;
             return (

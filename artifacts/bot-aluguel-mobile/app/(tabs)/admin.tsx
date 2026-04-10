@@ -29,8 +29,8 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 type Tab = "users" | "payments";
 
 const STAT_ITEMS = (stats: any) => [
-  { label: "Usuários",   value: stats.totalUsers,                      icon: "users",       color: "#F97316" },
-  { label: "Total Bots", value: stats.totalBots,                       icon: "cpu",         color: "#C850C0" },
+  { label: "Usuários",   value: stats.totalUsers,                      icon: "users",       color: "#7C3AED" },
+  { label: "Total Bots", value: stats.totalBots,                       icon: "cpu",         color: "#7C3AED" },
   { label: "Bots Ativ.", value: stats.activeBots,                      icon: "zap",         color: "#22C55E" },
   { label: "Receita",    value: `R$${stats.totalRevenue.toFixed(0)}`,  icon: "dollar-sign", color: "#3B82F6" },
   { label: "PIX Pend.",  value: stats.pendingPayments,                 icon: "clock",       color: "#F59E0B" },
@@ -71,7 +71,7 @@ export default function AdminScreen() {
       style={s.root}
       contentContainerStyle={{ paddingTop, paddingBottom, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
-      refreshControl={<RefreshControl refreshing={false} onRefresh={refetchAll} tintColor="#F97316" />}
+      refreshControl={<RefreshControl refreshing={false} onRefresh={refetchAll} tintColor="#7C3AED" />}
     >
       <View style={s.topBar}>
         <Text style={s.pageLabel}>PLATAFORMA</Text>
@@ -79,7 +79,7 @@ export default function AdminScreen() {
       </View>
 
       {statsLoading ? (
-        <View style={s.loader}><ActivityIndicator color="#F97316" /></View>
+        <View style={s.loader}><ActivityIndicator color="#7C3AED" /></View>
       ) : stats && (
         <View style={s.statsGrid}>
           {STAT_ITEMS(stats).map((item) => (
@@ -108,7 +108,7 @@ export default function AdminScreen() {
 
       {tab === "users" && (
         usersLoading ? (
-          <View style={s.loader}><ActivityIndicator color="#F97316" /></View>
+          <View style={s.loader}><ActivityIndicator color="#7C3AED" /></View>
         ) : (
           <View style={s.listCard}>
             {userList.length === 0 ? (
@@ -135,7 +135,7 @@ export default function AdminScreen() {
 
       {tab === "payments" && (
         paymentsLoading ? (
-          <View style={s.loader}><ActivityIndicator color="#F97316" /></View>
+          <View style={s.loader}><ActivityIndicator color="#7C3AED" /></View>
         ) : (
           <View style={s.listCard}>
             {paymentList.length === 0 ? (
@@ -206,7 +206,7 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
   tabBtn: { flex: 1, paddingVertical: 8, borderRadius: 4, alignItems: "center" },
-  tabBtnActive: { backgroundColor: "#F97316" },
+  tabBtnActive: { backgroundColor: "#7C3AED" },
   tabText: { fontSize: 13, fontWeight: "600" as const, color: "#4B4C6B", fontFamily: "Inter_600SemiBold" },
   tabTextActive: { color: "#FFF" },
 
@@ -216,14 +216,14 @@ const s = StyleSheet.create({
 
   userAvatar: {
     width: 32, height: 32, borderRadius: 6,
-    backgroundColor: "#F9731620", borderWidth: 1, borderColor: "#F9731630",
+    backgroundColor: "#7C3AED20", borderWidth: 1, borderColor: "#7C3AED30",
     alignItems: "center", justifyContent: "center",
   },
-  userInitial: { fontSize: 14, fontWeight: "700" as const, color: "#F97316", fontFamily: "Inter_700Bold" },
+  userInitial: { fontSize: 14, fontWeight: "700" as const, color: "#7C3AED", fontFamily: "Inter_700Bold" },
   rowTitle: { fontSize: 13, fontWeight: "600" as const, color: "#C9CADB", fontFamily: "Inter_600SemiBold" },
   rowSub: { fontSize: 11, color: "#4B4C6B", fontFamily: "Inter_400Regular", marginTop: 2 },
-  adminBadge: { backgroundColor: "#C850C015", borderRadius: 4, borderWidth: 1, borderColor: "#C850C030", paddingHorizontal: 8, paddingVertical: 3 },
-  adminBadgeText: { fontSize: 10, fontWeight: "700" as const, color: "#C850C0", fontFamily: "Inter_700Bold" },
+  adminBadge: { backgroundColor: "#7C3AED15", borderRadius: 4, borderWidth: 1, borderColor: "#7C3AED30", paddingHorizontal: 8, paddingVertical: 3 },
+  adminBadgeText: { fontSize: 10, fontWeight: "700" as const, color: "#7C3AED", fontFamily: "Inter_700Bold" },
   statusBadge: { borderRadius: 4, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 3 },
   statusText: { fontSize: 11, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
   emptyBox: { paddingVertical: 24, alignItems: "center" },

@@ -165,7 +165,7 @@ export default function BotsScreen() {
 
       <View style={s.statsRow}>
         <View style={s.statChip}>
-          <View style={[s.statDot, { backgroundColor: "#F97316" }]} />
+          <View style={[s.statDot, { backgroundColor: "#7C3AED" }]} />
           <Text style={s.statChipText}>{botList.length} total</Text>
         </View>
         <View style={s.statChip}>
@@ -185,12 +185,12 @@ export default function BotsScreen() {
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={s.sep} />}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#F97316" />
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#7C3AED" />
         }
         ListEmptyComponent={
           isLoading ? (
             <View style={s.loader}>
-              <ActivityIndicator color="#F97316" size="large" />
+              <ActivityIndicator color="#7C3AED" size="large" />
               <Text style={s.loaderText}>Carregando bots...</Text>
             </View>
           ) : (
@@ -201,7 +201,7 @@ export default function BotsScreen() {
               <Text style={s.emptyTitle}>Nenhum bot criado</Text>
               <Text style={s.emptyDesc}>Crie seu primeiro bot e comece a automatizar grupos no WhatsApp</Text>
               <Pressable style={s.emptyBtn} onPress={() => setShowCreate(true)}>
-                <Feather name="plus" size={14} color="#F97316" />
+                <Feather name="plus" size={14} color="#7C3AED" />
                 <Text style={s.emptyBtnText}>Criar primeiro bot</Text>
               </Pressable>
             </View>
@@ -334,8 +334,8 @@ const row = StyleSheet.create({
     backgroundColor: "#131420",
   },
   btnPrimary: {
-    borderColor: "#F97316",
-    backgroundColor: "#F97316",
+    borderColor: "#7C3AED",
+    backgroundColor: "#7C3AED",
   },
   btnDanger: {
     borderColor: "#EF444430",
@@ -376,7 +376,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#F97316",
+    backgroundColor: "#7C3AED",
     borderRadius: 6,
     paddingHorizontal: 14,
     paddingVertical: 9,
@@ -431,13 +431,13 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 6,
     borderWidth: 1,
-    borderColor: "#F97316",
+    borderColor: "#7C3AED",
     borderRadius: 6,
     paddingHorizontal: 16,
     paddingVertical: 9,
     marginTop: 4,
   },
-  emptyBtnText: { color: "#F97316", fontSize: 13, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
+  emptyBtnText: { color: "#7C3AED", fontSize: 13, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
 
   overlay: {
     flex: 1,
@@ -481,7 +481,7 @@ const s = StyleSheet.create({
   confirmBtn: {
     flex: 1,
     borderRadius: 6,
-    backgroundColor: "#F97316",
+    backgroundColor: "#7C3AED",
     paddingVertical: 13,
     alignItems: "center",
   },

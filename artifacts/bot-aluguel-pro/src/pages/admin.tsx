@@ -25,8 +25,8 @@ export default function AdminPage() {
   const paymentList = (payments as any[] | undefined) ?? [];
 
   const statItems = stats ? [
-    { label: "Usuários",    value: stats.totalUsers,                   icon: Users,   color: "#F97316" },
-    { label: "Total Bots",  value: stats.totalBots,                    icon: Bot,     color: "#C850C0" },
+    { label: "Usuários",    value: stats.totalUsers,                   icon: Users,   color: "#7C3AED" },
+    { label: "Total Bots",  value: stats.totalBots,                    icon: Bot,     color: "#7C3AED" },
     { label: "Bots Ativos", value: stats.activeBots,                   icon: Zap,     color: "#22C55E" },
     { label: "Receita",     value: `R$${stats.totalRevenue.toFixed(2)}`, icon: DollarSign, color: "#3B82F6" },
     { label: "PIX Pend.",   value: stats.pendingPayments,              icon: Clock,   color: "#F59E0B" },
@@ -36,8 +36,8 @@ export default function AdminPage() {
   return (
     <DashboardLayout>
       <div className="mb-6 pb-4 border-b border-[#1a1b28] flex items-center gap-3">
-        <div className="h-9 w-9 rounded-md bg-[#C850C0]/15 flex items-center justify-center">
-          <Shield className="h-4 w-4 text-[#C850C0]" />
+        <div className="h-9 w-9 rounded-md bg-[#7C3AED]/15 flex items-center justify-center">
+          <Shield className="h-4 w-4 text-[#7C3AED]" />
         </div>
         <div>
           <p className="text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase">Plataforma</p>
@@ -72,7 +72,7 @@ export default function AdminPage() {
             onClick={() => setTab(t)}
             className={cn(
               "px-4 py-1.5 rounded text-[12px] font-semibold transition-colors",
-              tab === t ? "bg-[#F97316] text-white" : "text-[#4b4c6b] hover:text-[#8b8ea0]"
+              tab === t ? "bg-[#7C3AED] text-white" : "text-[#4b4c6b] hover:text-[#8b8ea0]"
             )}
           >
             {t === "users" ? "Usuários" : "Pagamentos"}
@@ -101,16 +101,16 @@ export default function AdminPage() {
                 key={user.id}
                 className={`grid grid-cols-[auto_1fr_auto_auto_auto] gap-4 px-4 py-3 items-center hover:bg-[#090A0F] transition-colors ${i < userList.length - 1 ? "border-b border-[#1a1b28]" : ""}`}
               >
-                <div className="h-4 w-4 rounded bg-[#F97316]/20 flex items-center justify-center">
-                  <span className="text-[8px] font-bold text-[#F97316]">{user.name?.[0]?.toUpperCase()}</span>
+                <div className="h-4 w-4 rounded bg-[#7C3AED]/20 flex items-center justify-center">
+                  <span className="text-[8px] font-bold text-[#7C3AED]">{user.name?.[0]?.toUpperCase()}</span>
                 </div>
                 <p className="text-[13px] font-semibold text-[#c9cadb]">{user.name}</p>
                 <p className="text-[12px] text-[#4b4c6b]">{user.phone}</p>
-                <p className="text-[13px] font-bold text-[#F97316]">{user.coins}</p>
+                <p className="text-[13px] font-bold text-[#7C3AED]">{user.coins}</p>
                 <div
                   className="px-2 py-0.5 rounded text-[10px] font-bold border"
                   style={user.isAdmin
-                    ? { color: "#C850C0", backgroundColor: "#C850C015", borderColor: "#C850C030" }
+                    ? { color: "#7C3AED", backgroundColor: "#7C3AED15", borderColor: "#7C3AED30" }
                     : { color: "#4b4c6b", backgroundColor: "#1a1b28", borderColor: "#2a2b3e" }
                   }
                 >
@@ -151,7 +151,7 @@ export default function AdminPage() {
                 >
                   <p className="text-[11px] text-[#4b4c6b] font-mono truncate">{payment.userId.substring(0, 12)}...</p>
                   <p className="text-[13px] font-semibold text-[#c9cadb]">R$ {payment.amount.toFixed(2)}</p>
-                  <p className="text-[13px] font-bold text-[#F97316]">{payment.coins}</p>
+                  <p className="text-[13px] font-bold text-[#7C3AED]">{payment.coins}</p>
                   <div
                     className="px-2 py-0.5 rounded text-[10px] font-bold border"
                     style={{ color: cfg.color, backgroundColor: cfg.color + "15", borderColor: cfg.color + "30" }}

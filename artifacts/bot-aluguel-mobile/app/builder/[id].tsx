@@ -19,7 +19,7 @@ const C = {
   fg: "#C9CADB",
   muted: "#4B4C6B",
   border: "#1A1B28",
-  primary: "#F97316",
+  primary: "#7C3AED",
   secondary: "#131420",
   destructive: "#EF4444",
 };
@@ -35,7 +35,7 @@ interface FlowNode { id: string; type: NodeType; label: string; config: Record<s
 interface FlowEdge { id: string; source: string; target: string; sourceHandle?: "true" | "false"; }
 
 const NODE_CFG: Record<NodeType, { color: string; dim: string; label: string; icon: string }> = {
-  command:   { color: "#F97316", dim: "#F9731630", label: "Comando",  icon: "message-square" },
+  command:   { color: "#7C3AED", dim: "#7C3AED30", label: "Comando",  icon: "message-square" },
   action:    { color: "#A855F7", dim: "#A855F730", label: "Ação",     icon: "zap" },
   condition: { color: "#F59E0B", dim: "#F59E0B30", label: "Condição", icon: "git-branch" },
   response:  { color: "#22C55E", dim: "#22C55E30", label: "Resposta", icon: "message-circle" },
@@ -514,7 +514,7 @@ export default function BuilderScreen() {
           {hasUnsaved && (
             <View style={s.unsavedDot} />
           )}
-          <Pressable style={[s.saveBtn, { backgroundColor: "#F97316" }]} onPress={handleSave} disabled={saveMutation.isPending}>
+          <Pressable style={[s.saveBtn, { backgroundColor: "#7C3AED" }]} onPress={handleSave} disabled={saveMutation.isPending}>
             <Feather name="save" size={14} color="#FFF" />
             <Text style={s.saveBtnText}>{saveMutation.isPending ? "Salvando…" : "Salvar"}</Text>
           </Pressable>
@@ -556,7 +556,7 @@ export default function BuilderScreen() {
                 const sx = src.x + NODE_W;
                 const tx = tgt.x;
                 const ty = tgt.y + NODE_H / 2;
-                const edgeColor = edge.sourceHandle === "true" ? "#22C55E" : edge.sourceHandle === "false" ? "#EF4444" : "#F97316";
+                const edgeColor = edge.sourceHandle === "true" ? "#22C55E" : edge.sourceHandle === "false" ? "#EF4444" : "#7C3AED";
                 return (
                   <Path
                     key={edge.id}
@@ -793,11 +793,11 @@ function TemplatesModal({ visible, onSelect, onClose }: { visible: boolean; onSe
         {TEMPLATES.map(tpl => (
           <Pressable
             key={tpl.name}
-            style={({ pressed }) => [s.typeRow, { backgroundColor: pressed ? "#F9731618" : "transparent", borderColor: C.border }]}
+            style={({ pressed }) => [s.typeRow, { backgroundColor: pressed ? "#7C3AED18" : "transparent", borderColor: C.border }]}
             onPress={() => onSelect(tpl)}
           >
-            <View style={[s.typeIcon, { backgroundColor: "#F9731618" }]}>
-              <Feather name={tpl.icon as any} size={20} color="#F97316" />
+            <View style={[s.typeIcon, { backgroundColor: "#7C3AED18" }]}>
+              <Feather name={tpl.icon as any} size={20} color="#7C3AED" />
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[s.typeName, { color: C.fg }]}>{tpl.name}</Text>

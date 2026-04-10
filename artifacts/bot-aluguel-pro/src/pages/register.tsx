@@ -32,11 +32,11 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-[#090A0F] flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-sm">
         <div className="flex flex-col items-center mb-8">
-          <div className="h-14 w-14 rounded-xl bg-[#F97316] flex items-center justify-center mb-4 shadow-[0_0_32px_rgba(249,115,22,0.4)]">
+          <div className="h-14 w-14 rounded-xl bg-[#7C3AED] flex items-center justify-center mb-4 shadow-[0_0_32px_rgba(124,58,237,0.4)]">
             <Cpu className="h-7 w-7 text-white" />
           </div>
           <h1 className="text-[22px] font-bold text-white tracking-tight">
-            BotAluguel<span className="text-[#F97316]">.Pro</span>
+            BotAluguel<span className="text-[#7C3AED]">.Pro</span>
           </h1>
           <p className="text-[#4b4c6b] text-[12px] mt-1 tracking-wide">Crie sua conta grátis</p>
         </div>
@@ -55,7 +55,7 @@ export default function RegisterPage() {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   required
-                  className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors"
+                  className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#7C3AED] transition-colors"
                 />
               </div>
             </div>
@@ -70,7 +70,7 @@ export default function RegisterPage() {
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   required
-                  className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors"
+                  className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#7C3AED] transition-colors"
                 />
               </div>
             </div>
@@ -85,7 +85,7 @@ export default function RegisterPage() {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-9 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors"
+                  className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-9 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#7C3AED] transition-colors"
                 />
                 <button
                   type="button"
@@ -100,7 +100,7 @@ export default function RegisterPage() {
             <button
               type="submit"
               disabled={registerMutation.isPending}
-              className="w-full bg-[#F97316] hover:bg-[#ea6a00] text-white font-bold text-[14px] py-2.5 rounded-md transition-colors flex items-center justify-center gap-2 mt-2 disabled:opacity-70"
+              className="w-full bg-[#7C3AED] hover:bg-[#6D28D9] text-white font-bold text-[14px] py-2.5 rounded-md transition-colors flex items-center justify-center gap-2 mt-2 disabled:opacity-70"
             >
               {registerMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
               Criar conta
@@ -110,7 +110,7 @@ export default function RegisterPage() {
 
         <p className="text-center text-[#4b4c6b] text-[12px] mt-5">
           Já tem conta?{" "}
-          <Link href="/login" className="text-[#F97316] hover:text-[#ea6a00] font-semibold transition-colors">
+          <Link href="/login" className="text-[#7C3AED] hover:text-[#6D28D9] font-semibold transition-colors">
             Entrar
           </Link>
         </p>

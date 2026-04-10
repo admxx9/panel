@@ -57,7 +57,7 @@ export default function RegisterScreen() {
           <View style={s.logoIcon}>
             <Feather name="cpu" size={28} color="#FFF" />
           </View>
-          <Text style={s.logoText}>BotAluguel<Text style={{ color: "#F97316" }}>.Pro</Text></Text>
+          <Text style={s.logoText}>BotAluguel<Text style={{ color: "#7C3AED" }}>.Pro</Text></Text>
           <Text style={s.logoSub}>Crie sua conta grátis</Text>
         </View>
 
@@ -133,7 +133,7 @@ export default function RegisterScreen() {
 
         <Pressable style={s.loginLink} onPress={() => router.push("/(auth)/login")}>
           <Text style={s.loginLinkText}>
-            Já tem conta? <Text style={{ color: "#F97316", fontWeight: "700" }}>Entrar</Text>
+            Já tem conta? <Text style={{ color: "#7C3AED", fontWeight: "700" }}>Entrar</Text>
           </Text>
         </Pressable>
       </ScrollView>
@@ -150,11 +150,11 @@ const s = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 14,
-    backgroundColor: "#F97316",
+    backgroundColor: "#7C3AED",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 14,
-    shadowColor: "#F97316",
+    shadowColor: "#7C3AED",
     shadowOpacity: 0.5,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 0 },
@@ -185,11 +185,11 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 11,
   },
-  inputFocus: { borderColor: "#F97316" },
+  inputFocus: { borderColor: "#7C3AED" },
   input: { flex: 1, fontSize: 14, color: "#FFF", fontFamily: "Inter_400Regular" },
 
   btn: {
-    backgroundColor: "#F97316",
+    backgroundColor: "#7C3AED",
     borderRadius: 6,
     paddingVertical: 13,
     alignItems: "center",

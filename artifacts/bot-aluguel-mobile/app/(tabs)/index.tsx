@@ -35,7 +35,7 @@ function QuickAction({ icon, label, desc, onPress }: { icon: string; label: stri
       onPress={onPress}
     >
       <View style={s.qaIconWrap}>
-        <Feather name={icon as any} size={18} color="#F97316" />
+        <Feather name={icon as any} size={18} color="#7C3AED" />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={s.qaLabel}>{label}</Text>
@@ -60,7 +60,7 @@ export default function DashboardScreen() {
       contentContainerStyle={{ paddingTop, paddingBottom }}
       showsVerticalScrollIndicator={false}
       refreshControl={
-        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#F97316" />
+        <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#7C3AED" />
       }
     >
       <View style={s.topBar}>
@@ -69,7 +69,7 @@ export default function DashboardScreen() {
           <Text style={s.topUser}>{user?.name?.split(" ")[0] ?? "Usuário"}</Text>
         </View>
         <View style={s.coinsBadge}>
-          <Feather name="dollar-sign" size={12} color="#F97316" />
+          <Feather name="dollar-sign" size={12} color="#7C3AED" />
           <Text style={s.coinsText}>{isLoading ? "—" : (data?.coins ?? user?.coins ?? 0)}</Text>
           <Text style={s.coinsMoedas}>moedas</Text>
         </View>
@@ -77,7 +77,7 @@ export default function DashboardScreen() {
 
       {isLoading ? (
         <View style={s.loader}>
-          <ActivityIndicator color="#F97316" />
+          <ActivityIndicator color="#7C3AED" />
         </View>
       ) : (
         <>
@@ -101,9 +101,9 @@ export default function DashboardScreen() {
           </View>
 
           <View style={s.statsGrid}>
-            <StatCard label="Total de Bots" value={data?.totalBots ?? 0} icon="cpu" color="#F97316" />
+            <StatCard label="Total de Bots" value={data?.totalBots ?? 0} icon="cpu" color="#7C3AED" />
             <StatCard label="Bots Ativos" value={data?.activeBots ?? 0} icon="wifi" color="#22C55E" />
-            <StatCard label="Mensagens" value={data?.totalMessages ?? 0} icon="message-square" color="#C850C0" />
+            <StatCard label="Mensagens" value={data?.totalMessages ?? 0} icon="message-square" color="#7C3AED" />
             <StatCard label="Moedas" value={data?.coins ?? 0} icon="dollar-sign" color="#F59E0B" />
           </View>
 
@@ -191,7 +191,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  coinsText: { fontSize: 16, fontWeight: "700" as const, color: "#F97316", fontFamily: "Inter_700Bold" },
+  coinsText: { fontSize: 16, fontWeight: "700" as const, color: "#7C3AED", fontFamily: "Inter_700Bold" },
   coinsMoedas: { fontSize: 10, color: "#4B4C6B", fontFamily: "Inter_400Regular", marginTop: 1 },
 
   planRow: {
@@ -202,7 +202,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1A1B28",
     borderLeftWidth: 3,
-    borderLeftColor: "#F97316",
+    borderLeftColor: "#7C3AED",
     padding: 16,
     flexDirection: "row",
     alignItems: "center",
@@ -213,7 +213,7 @@ const s = StyleSheet.create({
   planName: { fontSize: 18, fontWeight: "700" as const, color: "#F1F2F6", fontFamily: "Inter_700Bold" },
   planExp: { fontSize: 11, color: "#4B4C6B", fontFamily: "Inter_400Regular", marginTop: 2 },
   planBtn: {
-    backgroundColor: "#F97316",
+    backgroundColor: "#7C3AED",
     borderRadius: 6,
     paddingHorizontal: 14,
     paddingVertical: 8,
@@ -271,7 +271,7 @@ const s = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 8,
-    backgroundColor: "#F9731618",
+    backgroundColor: "#7C3AED18",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -298,7 +298,7 @@ const s = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "#F97316",
+    backgroundColor: "#7C3AED",
     marginTop: 5,
   },
   actLine: { width: 1, height: 8, backgroundColor: "#1A1B28", marginLeft: 3.5 },

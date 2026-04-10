@@ -59,9 +59,10 @@
 - Planos: Basico (100), Pro (250), Premium (500) moedas/30 dias
 - Pagamentos: recarga PIX com codigo copia-e-cola, historico
 - Admin: stats da plataforma, tabela de usuarios e pagamentos
-- Tema Pterodactyl: fundo muito escuro (#090A0F), laranja primário (#F97316), gradiente laranja→rosa (#F97316→#C850C0), accent magenta (#C850C0)
-- Mobile app (Expo): `constants/colors.ts` define paleta. Gradientes `LinearGradient` usam `["#F97316", "#C850C0"]`
-- Web app: CSS variables em `index.css` — `--primary: 24 95% 53%`, `--accent: 303 52% 55%`
+- Tema Pterodactyl: fundo muito escuro (#090A0F), roxo primário (#7C3AED), accent indigo (#6D28D9). Sem shadcn nos pages — HTML raw com Tailwind.
+- Mobile app (Expo): `constants/colors.ts` define paleta com primary `#7C3AED`. Cores hardcoded via constante `C` (não `useColors()`).
+- Web app: CSS variables em `index.css` — `--primary: 263 84% 57%`, `--accent: 263 70% 50%`
+- Dashboard redesenhado: wave header SVG, feature cards (Criar Bot/Construtor/Moedas/Planos), lista "SEUS BOTS" com status, painel lateral com stats e pré-visualização de comandos
 
 ## Admin Credentials
 

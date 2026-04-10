@@ -37,8 +37,8 @@ function Row({
       onPress={onPress}
       disabled={!onPress}
     >
-      <View style={[s.rowIcon, { backgroundColor: destructive ? "#EF444415" : "#F9731615" }]}>
-        <Feather name={icon as any} size={15} color={destructive ? "#EF4444" : "#F97316"} />
+      <View style={[s.rowIcon, { backgroundColor: destructive ? "#EF444415" : "#7C3AED15" }]}>
+        <Feather name={icon as any} size={15} color={destructive ? "#EF4444" : "#7C3AED"} />
       </View>
       <Text style={[s.rowLabel, destructive && { color: "#EF4444" }]}>{label}</Text>
       {value ? (
@@ -93,8 +93,8 @@ export default function SettingsScreen() {
           <Text style={s.profileName}>{user?.name ?? "Usuário"}</Text>
           <Text style={s.profilePhone}>{user?.phone ?? "—"}</Text>
         </View>
-        <View style={[s.planTag, user?.isAdmin && { borderColor: "#C850C0", backgroundColor: "#C850C015" }]}>
-          <Text style={[s.planTagText, user?.isAdmin && { color: "#C850C0" }]}>
+        <View style={[s.planTag, user?.isAdmin && { borderColor: "#7C3AED", backgroundColor: "#7C3AED15" }]}>
+          <Text style={[s.planTagText, user?.isAdmin && { color: "#7C3AED" }]}>
             {user?.isAdmin ? "ADMIN" : user?.plan ?? "SEM PLANO"}
           </Text>
         </View>
@@ -136,7 +136,7 @@ const s = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#1A1B28",
     borderLeftWidth: 3,
-    borderLeftColor: "#F97316",
+    borderLeftColor: "#7C3AED",
     padding: 16,
     marginBottom: 24,
   },
@@ -144,24 +144,24 @@ const s = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 8,
-    backgroundColor: "#F9731620",
+    backgroundColor: "#7C3AED20",
     borderWidth: 1,
-    borderColor: "#F9731630",
+    borderColor: "#7C3AED30",
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText: { fontSize: 20, fontWeight: "800" as const, color: "#F97316", fontFamily: "Inter_700Bold" },
+  avatarText: { fontSize: 20, fontWeight: "800" as const, color: "#7C3AED", fontFamily: "Inter_700Bold" },
   profileName: { fontSize: 15, fontWeight: "600" as const, color: "#F1F2F6", fontFamily: "Inter_600SemiBold" },
   profilePhone: { fontSize: 12, color: "#4B4C6B", fontFamily: "Inter_400Regular", marginTop: 2 },
   planTag: {
     borderRadius: 4,
     borderWidth: 1,
-    borderColor: "#F9731640",
-    backgroundColor: "#F9731615",
+    borderColor: "#7C3AED40",
+    backgroundColor: "#7C3AED15",
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  planTagText: { fontSize: 9, fontWeight: "700" as const, color: "#F97316", fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+  planTagText: { fontSize: 9, fontWeight: "700" as const, color: "#7C3AED", fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
 
   section: { marginBottom: 20 },
   sectionTitle: { fontSize: 9, fontWeight: "600" as const, color: "#2A2B3E", fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 8, paddingLeft: 2 },

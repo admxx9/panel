@@ -732,7 +732,7 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
                   <select
                     value={String(localConfig[field.key] ?? "")}
                     onChange={(e) => setLocalConfig((c) => ({ ...c, [field.key]: e.target.value }))}
-                    className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 outline-none focus:border-[#F97316] transition-colors"
+                    className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 outline-none focus:border-[#7C3AED] transition-colors"
                   >
                     <option value="" disabled>Selecionar...</option>
                     {field.options.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
@@ -742,7 +742,7 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
                     value={String(localConfig[field.key] ?? "")}
                     onChange={(e) => setLocalConfig((c) => ({ ...c, [field.key]: e.target.value }))}
                     placeholder={field.placeholder}
-                    className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 min-h-[80px] resize-none outline-none focus:border-[#F97316] transition-colors"
+                    className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 min-h-[80px] resize-none outline-none focus:border-[#7C3AED] transition-colors"
                   />
                 ) : (
                   <input
@@ -750,7 +750,7 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
                     value={String(localConfig[field.key] ?? "")}
                     onChange={(e) => setLocalConfig((c) => ({ ...c, [field.key]: e.target.value }))}
                     placeholder={field.placeholder}
-                    className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 h-9 outline-none focus:border-[#F97316] transition-colors"
+                    className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 h-9 outline-none focus:border-[#7C3AED] transition-colors"
                   />
                 )}
               </>
@@ -905,7 +905,7 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
         )}
       </div>
       <div className="p-4 border-t border-[#1a1b28]">
-        <button onClick={handleSave} className="w-full bg-[#F97316] hover:bg-[#ea6a00] text-white text-[13px] font-bold py-2 rounded-md transition-colors flex items-center justify-center gap-1.5">
+        <button onClick={handleSave} className="w-full bg-[#7C3AED] hover:bg-[#6D28D9] text-white text-[13px] font-bold py-2 rounded-md transition-colors flex items-center justify-center gap-1.5">
           <ChevronRight className="h-3.5 w-3.5" />Salvar Bloco
         </button>
       </div>
@@ -947,16 +947,16 @@ function SettingsFormContent({ botId, onClose }: { botId: string; onClose: () =>
       <div className="flex-1 overflow-auto p-4 space-y-4">
         <div>
           <label className="block text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-1">Nome do Bot</label>
-          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: MeuBot" className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 h-9 outline-none focus:border-[#F97316] transition-colors" />
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: MeuBot" className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 h-9 outline-none focus:border-[#7C3AED] transition-colors" />
         </div>
         <div>
           <label className="block text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-1">Prefixo dos comandos</label>
-          <input type="text" value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="." maxLength={3} className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 h-9 outline-none focus:border-[#F97316] transition-colors font-mono" />
+          <input type="text" value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="." maxLength={3} className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 h-9 outline-none focus:border-[#7C3AED] transition-colors font-mono" />
           <p className="text-[#4b4c6b] text-xs mt-1">Ex: <span className="font-mono text-white/60">{prefix || "."}sticker</span></p>
         </div>
         <div>
           <label className="block text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-1">Número do Dono</label>
-          <input type="text" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} placeholder="5511999999999" className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 h-9 outline-none focus:border-[#F97316] transition-colors" />
+          <input type="text" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} placeholder="5511999999999" className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 h-9 outline-none focus:border-[#7C3AED] transition-colors" />
           <p className="text-muted-foreground text-xs mt-1">DDD + número, sem espaços</p>
         </div>
         <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs text-muted-foreground">
@@ -969,7 +969,7 @@ function SettingsFormContent({ botId, onClose }: { botId: string; onClose: () =>
         </div>
       </div>
       <div className="p-4 border-t border-[#1a1b28]">
-        <button onClick={handleSave} disabled={updateSettings.isPending} className="w-full bg-[#F97316] hover:bg-[#ea6a00] disabled:opacity-50 text-white text-[13px] font-bold py-2 rounded-md transition-colors flex items-center justify-center gap-1.5">
+        <button onClick={handleSave} disabled={updateSettings.isPending} className="w-full bg-[#7C3AED] hover:bg-[#6D28D9] disabled:opacity-50 text-white text-[13px] font-bold py-2 rounded-md transition-colors flex items-center justify-center gap-1.5">
           {updateSettings.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
           Salvar Configurações
         </button>
@@ -1585,7 +1585,7 @@ export default function BuilderPage() {
               <MessageSquare className="h-12 w-12 text-primary/30 mx-auto mb-4" />
               <p className="text-white text-base font-semibold mb-1">Comece criando um comando</p>
               <p className="text-muted-foreground/60 text-xs mb-5">Clique no botao abaixo para adicionar seu primeiro bloco</p>
-              <button onClick={() => handleAddNode("command")} className="bg-[#F97316] hover:bg-[#ea6a00] text-white px-6 py-3 text-sm font-bold rounded-md shadow-xl shadow-[#F97316]/20 transition-colors flex items-center gap-2">
+              <button onClick={() => handleAddNode("command")} className="bg-[#7C3AED] hover:bg-[#6D28D9] text-white px-6 py-3 text-sm font-bold rounded-md shadow-xl shadow-[#7C3AED]/20 transition-colors flex items-center gap-2">
                 <Plus className="h-5 w-5" /> Adicionar Bloco Comando
               </button>
             </div>
@@ -1680,7 +1680,7 @@ export default function BuilderPage() {
           <select
             value={selectedBotId}
             onChange={(e) => handleBotSelect(e.target.value)}
-            className="w-44 bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 outline-none focus:border-[#F97316] transition-colors"
+            className="w-44 bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 outline-none focus:border-[#7C3AED] transition-colors"
           >
             <option value="" disabled>Selecionar bot</option>
             {bots?.map((bot: { id: string; name: string }) => (
@@ -1694,7 +1694,7 @@ export default function BuilderPage() {
           <button
             onClick={() => { setShowSettings((v) => !v); setEditingNodeId(null); }}
             disabled={!selectedBotId}
-            className="w-9 h-9 flex items-center justify-center rounded-md border border-[#1e1f2e] bg-[#131420] text-[#4b4c6b] hover:text-white hover:border-[#F97316] disabled:opacity-40 transition-colors"
+            className="w-9 h-9 flex items-center justify-center rounded-md border border-[#1e1f2e] bg-[#131420] text-[#4b4c6b] hover:text-white hover:border-[#7C3AED] disabled:opacity-40 transition-colors"
           >
             <Settings2 className="h-4 w-4" />
           </button>
@@ -1712,7 +1712,7 @@ export default function BuilderPage() {
               <span className="hidden sm:inline text-[13px] font-semibold">Limpar Tudo</span>
             </button>
           )}
-          <button onClick={handleSave} disabled={saveCommands.isPending || !selectedBotId} className="flex items-center gap-1.5 bg-[#F97316] hover:bg-[#ea6a00] disabled:opacity-50 text-white text-sm font-bold px-4 py-2 rounded-md transition-colors">
+          <button onClick={handleSave} disabled={saveCommands.isPending || !selectedBotId} className="flex items-center gap-1.5 bg-[#7C3AED] hover:bg-[#6D28D9] disabled:opacity-50 text-white text-sm font-bold px-4 py-2 rounded-md transition-colors">
             {saveCommands.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Salvar
           </button>

@@ -43,14 +43,14 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                 </SheetContent>
               </Sheet>
               <div className="flex items-center gap-1.5">
-                <div className="h-5 w-5 rounded bg-[#F97316] flex items-center justify-center">
+                <div className="h-5 w-5 rounded bg-[#7C3AED] flex items-center justify-center">
                   <Cpu className="h-3 w-3 text-white" />
                 </div>
-                <span className="font-bold text-[13px] text-white">BotAluguel<span className="text-[#F97316]">.Pro</span></span>
+                <span className="font-bold text-[13px] text-white">BotAluguel<span className="text-[#7C3AED]">.Pro</span></span>
               </div>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="h-6 w-6 rounded-md bg-[#131420] border border-[#1a1b28] flex items-center justify-center text-[11px] font-bold text-[#F97316]">
+              <div className="h-6 w-6 rounded-md bg-[#131420] border border-[#1a1b28] flex items-center justify-center text-[11px] font-bold text-[#7C3AED]">
                 {user?.name?.charAt(0).toUpperCase()}
               </div>
             </div>
@@ -73,14 +73,14 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                     aria-current={active ? "page" : undefined}
                     className="flex flex-col items-center justify-center gap-1 flex-1 relative"
                   >
-                    {active && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-[#F97316] rounded-b" />}
+                    {active && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-[#7C3AED] rounded-b" />}
                     <div className={cn(
                       "h-7 w-7 flex items-center justify-center rounded-md transition-colors",
-                      active ? "bg-[#F97316]/15" : ""
+                      active ? "bg-[#7C3AED]/15" : ""
                     )}>
-                      <item.icon className={cn("h-[15px] w-[15px]", active ? "text-[#F97316]" : "text-[#4b4c6b]")} />
+                      <item.icon className={cn("h-[15px] w-[15px]", active ? "text-[#7C3AED]" : "text-[#4b4c6b]")} />
                     </div>
-                    <span className={cn("text-[9px] font-semibold leading-none", active ? "text-[#F97316]" : "text-[#4b4c6b]")}>
+                    <span className={cn("text-[9px] font-semibold leading-none", active ? "text-[#7C3AED]" : "text-[#4b4c6b]")}>
                       {item.label}
                     </span>
                   </Link>

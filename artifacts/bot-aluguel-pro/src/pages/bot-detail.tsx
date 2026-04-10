@@ -120,8 +120,8 @@ export default function BotDetailPage() {
         <div className="bg-[#0d0e16] border border-[#1a1b28] rounded-lg p-5 border-l-[3px]" style={{ borderLeftColor: cfg.color }}>
           <div className="flex items-start justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 rounded-md bg-[#F97316]/15 flex items-center justify-center">
-                <Bot className="h-5 w-5 text-[#F97316]" />
+              <div className="h-10 w-10 rounded-md bg-[#7C3AED]/15 flex items-center justify-center">
+                <Bot className="h-5 w-5 text-[#7C3AED]" />
               </div>
               <div>
                 <h1 className="text-[18px] font-bold text-white">{bot.name}</h1>
@@ -159,7 +159,7 @@ export default function BotDetailPage() {
                   value={phoneInput}
                   onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ""))}
                   maxLength={15}
-                  className="w-full max-w-xs bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors"
+                  className="w-full max-w-xs bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#7C3AED] transition-colors"
                 />
               </div>
               <p className="text-[11px] text-[#4b4c6b] mt-1">Somente números, com DDI (55 para Brasil)</p>
@@ -170,7 +170,7 @@ export default function BotDetailPage() {
                 <button
                   key={t}
                   onClick={() => setConnType(t)}
-                  className={`px-4 py-1.5 rounded text-[12px] font-semibold flex items-center gap-1.5 transition-colors ${connType === t ? "bg-[#F97316] text-white" : "text-[#4b4c6b] hover:text-[#8b8ea0]"}`}
+                  className={`px-4 py-1.5 rounded text-[12px] font-semibold flex items-center gap-1.5 transition-colors ${connType === t ? "bg-[#7C3AED] text-white" : "text-[#4b4c6b] hover:text-[#8b8ea0]"}`}
                 >
                   <Icon className="h-3.5 w-3.5" />
                   {label}
@@ -192,7 +192,7 @@ export default function BotDetailPage() {
             <button
               onClick={handleConnect}
               disabled={connectBot.isPending}
-              className="bg-[#F97316] hover:bg-[#ea6a00] disabled:opacity-60 text-white text-[13px] font-bold px-5 py-2.5 rounded-md transition-colors flex items-center gap-2"
+              className="bg-[#7C3AED] hover:bg-[#6D28D9] disabled:opacity-60 text-white text-[13px] font-bold px-5 py-2.5 rounded-md transition-colors flex items-center gap-2"
             >
               {connectBot.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : connType === "code" ? <Hash className="h-3.5 w-3.5" /> : <QrCode className="h-3.5 w-3.5" />}
               {connType === "code" ? "Gerar Código de Pareamento" : "Gerar QR Code"}
@@ -210,7 +210,7 @@ export default function BotDetailPage() {
             {displayCode ? (
               <div className="flex flex-col items-center gap-4">
                 <p className="text-[12px] text-[#4b4c6b]">Insira este código no WhatsApp</p>
-                <div className="text-5xl font-mono font-black tracking-widest text-[#F97316] bg-[#F97316]/10 px-8 py-5 rounded-lg border border-[#F97316]/20">
+                <div className="text-5xl font-mono font-black tracking-widest text-[#7C3AED] bg-[#7C3AED]/10 px-8 py-5 rounded-lg border border-[#7C3AED]/20">
                   {displayCode}
                 </div>
                 <p className="text-[11px] text-[#4b4c6b] text-center">WhatsApp → Configurações → Dispositivos Vinculados → Vincular com número</p>
@@ -226,7 +226,7 @@ export default function BotDetailPage() {
               </div>
             ) : (
               <div className="flex flex-col items-center gap-3 py-8">
-                <Loader2 className="h-10 w-10 text-[#F97316] animate-spin" />
+                <Loader2 className="h-10 w-10 text-[#7C3AED] animate-spin" />
                 <p className="text-[13px] text-[#4b4c6b]">Iniciando sessão WhatsApp...</p>
               </div>
             )}
