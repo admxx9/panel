@@ -4,11 +4,13 @@ import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { Platform, StyleSheet, View } from "react-native";
 
+import { useAuth } from "@/context/AuthContext";
 import { useColors } from "@/hooks/useColors";
 
 export default function TabLayout() {
   const colors = useColors();
   const isIOS = Platform.OS === "ios";
+  const { user } = useAuth();
 
   return (
     <Tabs
@@ -32,7 +34,7 @@ export default function TabLayout() {
           ),
         tabBarLabelStyle: {
           fontFamily: "Inter_500Medium",
-          fontSize: 11,
+          fontSize: 10,
           marginBottom: Platform.OS === "web" ? 8 : 0,
         },
         tabBarIconStyle: {
@@ -43,37 +45,44 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Dashboard",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="home" size={size} color={color} />
-          ),
+          title: "Início",
+          tabBarIcon: ({ color, size }) => <Feather name="home" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="bots"
         options={{
           title: "Bots",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="cpu" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Feather name="cpu" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="payments"
+        options={{
+          title: "Moedas",
+          tabBarIcon: ({ color, size }) => <Feather name="dollar-sign" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="plans"
         options={{
           title: "Planos",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="star" size={size} color={color} />
-          ),
+          tabBarIcon: ({ color, size }) => <Feather name="star" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Config",
-          tabBarIcon: ({ color, size }) => (
-            <Feather name="settings" size={size} color={color} />
-          ),
+          title: "Conta",
+          tabBarIcon: ({ color, size }) => <Feather name="user" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="admin"
+        options={{
+          title: "Admin",
+          tabBarIcon: ({ color, size }) => <Feather name="shield" size={size} color={color} />,
+          tabBarItemStyle: user?.isAdmin ? {} : { display: "none" },
         }}
       />
     </Tabs>

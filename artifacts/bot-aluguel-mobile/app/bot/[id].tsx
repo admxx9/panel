@@ -146,6 +146,23 @@ export default function BotDetailScreen() {
           )}
         </View>
 
+        <View style={styles.quickActionsRow}>
+          <Pressable
+            style={({ pressed }) => [styles.quickAction, { backgroundColor: colors.primary + "20", borderColor: colors.primary + "40", opacity: pressed ? 0.75 : 1 }]}
+            onPress={() => router.push(`/builder/${id}` as any)}
+          >
+            <Feather name="git-branch" size={20} color={colors.primary} />
+            <Text style={[styles.quickActionLabel, { color: colors.primary }]}>Construtor</Text>
+          </Pressable>
+          <Pressable
+            style={({ pressed }) => [styles.quickAction, { backgroundColor: colors.secondary, borderColor: colors.border, opacity: pressed ? 0.75 : 1 }]}
+            onPress={() => router.push(`/bot/settings/${id}` as any)}
+          >
+            <Feather name="sliders" size={20} color={colors.foreground} />
+            <Text style={[styles.quickActionLabel, { color: colors.foreground }]}>Configurar</Text>
+          </Pressable>
+        </View>
+
         {bot.status === "connected" ? (
           <Pressable
             style={[styles.actionBtn, { backgroundColor: colors.destructive + "20", borderColor: colors.destructive + "40" }]}
@@ -415,4 +432,16 @@ const styles = StyleSheet.create({
   },
   infoLabel: { fontSize: 14, fontFamily: "Inter_400Regular" },
   infoValue: { fontSize: 14, fontWeight: "500" as const, fontFamily: "Inter_500Medium" },
+  quickActionsRow: { flexDirection: "row", gap: 12 },
+  quickAction: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 13,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  quickActionLabel: { fontSize: 14, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
 });

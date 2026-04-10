@@ -31,6 +31,8 @@ function RootLayoutNav() {
       <Stack.Screen name="(auth)" />
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="bot/[id]" />
+      <Stack.Screen name="bot/settings/[id]" />
+      <Stack.Screen name="builder/[id]" />
     </Stack>
   );
 }
