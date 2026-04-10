@@ -1,62 +1,118 @@
-import { Tabs } from "expo-router";
+import { Tabs, usePathname, router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Platform, StyleSheet, Text, View } from "react-native";
+import {
+  Platform,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 
-const TABS = [
-  { name: "index", title: "Início", icon: "home" },
-  { name: "bots", title: "Bots", icon: "cpu" },
-  { name: "payments", title: "Moedas", icon: "dollar-sign" },
-  { name: "plans", title: "Planos", icon: "star" },
-  { name: "settings", title: "Menu", icon: "menu" },
-  { name: "admin", title: "Admin", icon: "shield", adminOnly: true },
+const ALL_TABS = [
+  { name: "(tabs)/index", href: "/", title: "Início", icon: "home" },
+  { name: "(tabs)/bots", href: "/bots", title: "Bots", icon: "cpu" },
+  { name: "(tabs)/payments", href: "/payments", title: "Moedas", icon: "dollar-sign" },
+  { name: "(tabs)/plans", href: "/plans", title: "Planos", icon: "shopping-bag" },
+  { name: "(tabs)/settings", href: "/settings", title: "Menu", icon: "menu" },
+  { name: "(tabs)/admin", href: "/admin", title: "Admin", icon: "shield", adminOnly: true },
 ] as const;
 
-function TabBarIcon({ name, label, focused }: { name: string; label: string; focused: boolean }) {
+function CustomTabBar() {
+  const { user } = useAuth();
+  const insets = useSafeAreaInsets();
+  const pathname = usePathname();
+
+  const tabs = ALL_TABS.filter(
+    (t) => !("adminOnly" in t && t.adminOnly && !user?.isAdmin)
+  );
+
+  const BAR_HEIGHT = 64;
+  const CIRCLE = 62;
+  const OVERFLOW = 18;
+
+  const totalHeight = BAR_HEIGHT + insets.bottom + OVERFLOW;
+
   return (
-    <View style={tb.item}>
-      <View style={[tb.iconWrap, focused && tb.iconActive]}>
-        <Feather name={name as any} size={20} color={focused ? "#FFFFFF" : "#9CA3AF"} />
+    <View
+      style={[
+        styles.container,
+        {
+          height: totalHeight,
+          paddingBottom: insets.bottom,
+        },
+      ]}
+      pointerEvents="box-none"
+    >
+      <View style={styles.bar}>
+        {tabs.map((tab) => {
+          const isActive =
+            tab.href === "/"
+              ? pathname === "/" || pathname === ""
+              : pathname.startsWith(tab.href);
+
+          return (
+            <TouchableOpacity
+              key={tab.name}
+              style={styles.tabItem}
+              onPress={() => router.push(tab.href as any)}
+              activeOpacity={0.8}
+            >
+              {isActive ? (
+                <View
+                  style={[
+                    styles.activeCircle,
+                    {
+                      width: CIRCLE,
+                      height: CIRCLE,
+                      borderRadius: CIRCLE / 2,
+                      marginTop: -(OVERFLOW + 10),
+                    },
+                  ]}
+                >
+                  <Feather name={tab.icon as any} size={26} color="#FFFFFF" />
+                </View>
+              ) : (
+                <View style={styles.inactiveWrap}>
+                  <Feather name={tab.icon as any} size={22} color="#9CA3AF" />
+                </View>
+              )}
+              <Text
+                style={[styles.label, isActive && styles.labelActive]}
+                numberOfLines={1}
+              >
+                {tab.title}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
-      <Text style={[tb.label, focused && tb.labelActive]}>{label}</Text>
     </View>
   );
 }
 
 export default function TabLayout() {
   const { user } = useAuth();
-  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
+      tabBar={(props) => <CustomTabBar />}
       screenOptions={{
         headerShown: false,
-        tabBarStyle: {
-          ...tb.tabBar,
-          height: 64 + (Platform.OS === "ios" ? insets.bottom : 8),
-          paddingBottom: Platform.OS === "ios" ? insets.bottom : 8,
-        },
-        tabBarBackground: () => (
-          <View style={[StyleSheet.absoluteFill, { backgroundColor: "#FFFFFF", borderTopWidth: 1, borderTopColor: "#F0F0F0" }]} />
-        ),
-        tabBarShowLabel: false,
       }}
     >
-      {TABS.map((route) => (
+      {ALL_TABS.map((route) => (
         <Tabs.Screen
           key={route.name}
-          name={route.name}
+          name={route.name.replace("(tabs)/", "")}
           options={{
             title: route.title,
             tabBarItemStyle:
               "adminOnly" in route && route.adminOnly && !user?.isAdmin
                 ? { display: "none" }
                 : undefined,
-            tabBarIcon: ({ focused }) => (
-              <TabBarIcon name={route.icon} label={route.title} focused={focused} />
-            ),
           }}
         />
       ))}
@@ -64,47 +120,63 @@ export default function TabLayout() {
   );
 }
 
-const tb = StyleSheet.create({
-  tabBar: {
+const styles = StyleSheet.create({
+  container: {
     position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
     backgroundColor: "transparent",
-    borderTopWidth: 0,
-    elevation: 8,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
+    pointerEvents: "box-none" as any,
   },
-  item: {
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 4,
+  bar: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "flex-end",
+    backgroundColor: "#FFFFFF",
+    borderTopWidth: 1,
+    borderTopColor: "#F0F0F0",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingHorizontal: 4,
     paddingTop: 8,
-    width: 64,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 12,
+    overflow: "visible",
   },
-  iconWrap: {
-    width: 44,
-    height: 32,
+  tabItem: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "flex-end",
+    paddingBottom: 6,
+    overflow: "visible",
+  },
+  activeCircle: {
+    backgroundColor: "#7C3AED",
     alignItems: "center",
     justifyContent: "center",
-    borderRadius: 16,
-  },
-  iconActive: {
-    backgroundColor: "#7C3AED",
-    borderRadius: 20,
-    width: 48,
-    height: 34,
     shadowColor: "#7C3AED",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 6,
-    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 10,
+    borderWidth: 4,
+    borderColor: "#FFFFFF",
+  },
+  inactiveWrap: {
+    width: 44,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
   },
   label: {
     fontSize: 10,
     color: "#9CA3AF",
     fontFamily: "Inter_500Medium",
-    letterSpacing: 0.2,
+    marginTop: 2,
   },
   labelActive: {
     color: "#7C3AED",
