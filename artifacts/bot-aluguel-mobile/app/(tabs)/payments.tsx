@@ -69,7 +69,7 @@ export default function PaymentsScreen() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const paddingBottom = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
+  const paddingBottom = Platform.OS === "web" ? 34 + 110 : insets.bottom + 110;
   const historyList = (history as any[] | undefined) ?? [];
 
   return (

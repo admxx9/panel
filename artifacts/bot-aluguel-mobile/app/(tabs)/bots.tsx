@@ -118,7 +118,7 @@ export default function BotsScreen() {
   const [showCreate, setShowCreate] = useState(false);
   const [newBotName, setNewBotName] = useState("");
 
-  const paddingBottom = insets.bottom + 84;
+  const paddingBottom = insets.bottom + 110;
 
   const handleCreate = async () => {
     if (!newBotName.trim()) return;

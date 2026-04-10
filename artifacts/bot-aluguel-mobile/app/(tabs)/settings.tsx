@@ -54,7 +54,7 @@ export default function SettingsScreen() {
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
 
-  const paddingBottom = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
+  const paddingBottom = Platform.OS === "web" ? 34 + 110 : insets.bottom + 110;
   const initial = user?.name?.charAt(0).toUpperCase() ?? "U";
 
   function handleLogout() {

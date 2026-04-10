@@ -46,7 +46,7 @@ export default function AdminScreen() {
   const { data: users, isLoading: usersLoading, refetch: refetchUsers } = useAdminListUsers();
   const { data: payments, isLoading: paymentsLoading, refetch: refetchPayments } = useAdminListPayments();
 
-  const paddingBottom = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
+  const paddingBottom = Platform.OS === "web" ? 34 + 110 : insets.bottom + 110;
 
   function refetchAll() { refetchStats(); refetchUsers(); refetchPayments(); }
 

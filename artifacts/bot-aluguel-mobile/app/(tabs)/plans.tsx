@@ -102,7 +102,7 @@ export default function PlansScreen() {
   const activatePlan = useActivatePlan();
   const [activatingId, setActivatingId] = useState<string | null>(null);
 
-  const paddingBottom = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
+  const paddingBottom = Platform.OS === "web" ? 34 + 110 : insets.bottom + 110;
 
   const handleActivate = (plan: Plan) => {
     Alert.alert("Ativar plano", `Ativar "${plan.name}" por ${plan.coins} moedas?`, [

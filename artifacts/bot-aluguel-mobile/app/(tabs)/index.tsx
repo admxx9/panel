@@ -32,7 +32,7 @@ export default function DashboardScreen() {
   const { user } = useAuth();
   const { data, isLoading, refetch, isRefetching } = useGetDashboardStats();
 
-  const paddingBottom = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
+  const paddingBottom = Platform.OS === "web" ? 34 + 110 : insets.bottom + 110;
 
   return (
     <View style={s.root}>
