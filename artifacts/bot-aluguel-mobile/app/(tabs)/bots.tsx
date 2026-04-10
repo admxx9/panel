@@ -23,6 +23,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListBotsQueryKey } from "@workspace/api-client-react";
+import { LinearGradient } from "expo-linear-gradient";
 
 type Bot = {
   id: string;
@@ -35,69 +36,71 @@ type Bot = {
 };
 
 const STATUS_CFG = {
-  connected:    { color: "#22C55E", label: "Online", bg: "#22C55E15" },
-  connecting:   { color: "#F59E0B", label: "Conectando", bg: "#F59E0B15" },
-  disconnected: { color: "#9CA3AF", label: "Offline", bg: "#9CA3AF15" },
-  error:        { color: "#EF4444", label: "Erro", bg: "#EF444415" },
+  connected:    { color: "#22C55E", label: "Online" },
+  connecting:   { color: "#F59E0B", label: "Conectando" },
+  disconnected: { color: "#9CA3AF", label: "Offline" },
+  error:        { color: "#EF4444", label: "Erro" },
 };
 
-function BotRow({ bot, onDelete }: { bot: Bot; onDelete: (id: string, name: string) => void }) {
+function BotCard({ bot, onDelete }: { bot: Bot; onDelete: (id: string, name: string) => void }) {
   const cfg = STATUS_CFG[bot.status] ?? STATUS_CFG.disconnected;
-  const isOnline = bot.status === "connected";
 
   return (
-    <View style={row.card}>
-      <View style={[row.topGlow, { backgroundColor: cfg.color }]} />
-      <View style={row.top}>
-        <View style={[row.iconWrap, { backgroundColor: cfg.bg }]}>
-          <Feather name="message-circle" size={18} color={cfg.color} />
+    <View style={card.wrap}>
+      <View style={card.inner}>
+        <View style={card.iconCircle}>
+          <Feather name="message-circle" size={22} color="#A78BFA" />
         </View>
-        <View style={{ flex: 1 }}>
-          <Text style={row.name}>{bot.name}</Text>
-          <Text style={row.phone}>{bot.phone ? `+${bot.phone}` : "Sem número"}</Text>
-        </View>
-        <View style={[row.badge, { backgroundColor: cfg.bg, borderColor: cfg.color + "30" }]}>
-          <View style={[row.dot, { backgroundColor: cfg.color }]} />
-          <Text style={[row.badgeText, { color: cfg.color }]}>{cfg.label}</Text>
-        </View>
-      </View>
 
-      <View style={row.meta}>
-        <View style={row.metaItem}>
-          <Feather name="users" size={12} color="#A0A0B0" />
-          <Text style={row.metaText}>{bot.totalGroups} grupo{bot.totalGroups !== 1 ? "s" : ""}</Text>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={card.name} numberOfLines={1}>{bot.name}</Text>
+          <View style={card.metaRow}>
+            <View style={card.statusPill}>
+              <View style={[card.statusDot, { backgroundColor: cfg.color }]} />
+              <Text style={[card.statusText, { color: "#A0A0B0" }]}>{cfg.label}</Text>
+            </View>
+            <Text style={card.detail}>
+              · {bot.totalGroups} grupo{bot.totalGroups !== 1 ? "s" : ""}
+            </Text>
+          </View>
         </View>
-        <View style={row.metaItem}>
-          <Feather name="hash" size={12} color="#A0A0B0" />
-          <Text style={row.metaText}>prefix: {bot.prefix || "!"}</Text>
-        </View>
-      </View>
 
-      <View style={row.actions}>
         <Pressable
-          style={({ pressed }) => [row.btn, row.btnOutline, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [card.actionBtn, pressed && { opacity: 0.6 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push(`/bot/${bot.id}` as any);
+          }}
+        >
+          <Feather name="chevron-right" size={18} color="#A0A0B0" />
+        </Pressable>
+      </View>
+
+      <View style={card.actions}>
+        <Pressable
+          style={({ pressed }) => [card.btn, card.btnOutline, pressed && { opacity: 0.7 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             router.push(`/bot/${bot.id}` as any);
           }}
         >
           <Feather name="settings" size={13} color="#A0A0B0" />
-          <Text style={row.btnOutlineText}>Gerenciar</Text>
+          <Text style={card.btnOutlineText}>Gerenciar</Text>
         </Pressable>
 
         <Pressable
-          style={({ pressed }) => [row.btn, row.btnPrimary, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [card.btn, card.btnPrimary, pressed && { opacity: 0.7 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             router.push(`/builder/${bot.id}` as any);
           }}
         >
           <Feather name="grid" size={13} color="#FFF" />
-          <Text style={row.btnPrimaryText}>Builder</Text>
+          <Text style={card.btnPrimaryText}>Builder</Text>
         </Pressable>
 
         <Pressable
-          style={({ pressed }) => [row.btn, row.btnDanger, pressed && { opacity: 0.7 }]}
+          style={({ pressed }) => [card.btn, card.btnDanger, pressed && { opacity: 0.7 }]}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             onDelete(bot.id, bot.name);
@@ -148,31 +151,47 @@ export default function BotsScreen() {
   };
 
   const botList = (bots as Bot[] | undefined) ?? [];
-  const onlineCount = botList.filter(b => b.status === "connected").length;
-
   const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
 
   return (
     <View style={s.root}>
+      <View style={s.blobWrap} pointerEvents="none">
+        <LinearGradient
+          colors={["rgba(109,40,217,0.25)", "transparent"]}
+          style={[s.blob, { top: -80, left: -40, width: 240, height: 240 }]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+        />
+        <LinearGradient
+          colors={["rgba(167,139,250,0.15)", "transparent"]}
+          style={[s.blob, { bottom: -40, right: -40, width: 280, height: 280 }]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+        />
+        <LinearGradient
+          colors={["rgba(34,197,94,0.08)", "transparent"]}
+          style={[s.blob, { top: "40%", left: "55%", width: 180, height: 180 }]}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+        />
+      </View>
+
       <View style={[s.header, { paddingTop }]}>
-        <View style={{ flex: 1 }}>
-          <Text style={s.headerTitle}>Meus Bots</Text>
-          <Text style={s.headerSub}>{botList.length} bots · {onlineCount} online</Text>
-        </View>
+        <Text style={s.headerTitle}>Meus Bots</Text>
         <Pressable
           style={({ pressed }) => [s.addBtn, pressed && { opacity: 0.8 }]}
           onPress={() => setShowCreate(true)}
         >
-          <Feather name="plus" size={18} color="#F0F0F5" />
+          <Feather name="plus" size={22} color="#F0F0F5" />
         </Pressable>
       </View>
 
       <FlatList
         data={botList}
         keyExtractor={(b) => b.id}
-        contentContainerStyle={{ padding: 20, paddingBottom }}
+        contentContainerStyle={{ padding: 16, paddingBottom }}
         showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
+        ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#6D28D9" />
         }
@@ -185,10 +204,12 @@ export default function BotsScreen() {
           ) : (
             <View style={s.empty}>
               <View style={s.emptyIcon}>
-                <Feather name="cpu" size={32} color="#A0A0B0" />
+                <Feather name="cpu" size={32} color="#A78BFA" />
               </View>
               <Text style={s.emptyTitle}>Nenhum bot criado</Text>
-              <Text style={s.emptyDesc}>Crie seu primeiro bot e comece a automatizar grupos no WhatsApp</Text>
+              <Text style={s.emptyDesc}>
+                Crie seu primeiro bot e comece a automatizar grupos no WhatsApp
+              </Text>
               <Pressable style={s.emptyBtn} onPress={() => setShowCreate(true)}>
                 <Feather name="plus" size={14} color="#FFF" />
                 <Text style={s.emptyBtnText}>Criar primeiro bot</Text>
@@ -196,7 +217,7 @@ export default function BotsScreen() {
             </View>
           )
         }
-        renderItem={({ item }) => <BotRow bot={item} onDelete={handleDelete} />}
+        renderItem={({ item }) => <BotCard bot={item} onDelete={handleDelete} />}
       />
 
       <Modal
@@ -245,99 +266,97 @@ export default function BotsScreen() {
   );
 }
 
-const row = StyleSheet.create({
-  card: {
-    backgroundColor: "#1A1A24",
-    borderRadius: 16,
+const card = StyleSheet.create({
+  wrap: {
+    borderRadius: 24,
+    backgroundColor: "rgba(255,255,255,0.05)",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "rgba(255,255,255,0.08)",
     overflow: "hidden",
   },
-  topGlow: {
-    height: 1,
-    opacity: 0.4,
-  },
-  top: {
+  inner: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 14,
     padding: 16,
-    paddingBottom: 10,
   },
-  iconWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
+  iconCircle: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
     alignItems: "center",
     justifyContent: "center",
   },
   name: {
-    fontSize: 16,
+    fontSize: 17,
     color: "#F0F0F5",
     fontFamily: "Inter_600SemiBold",
+    marginBottom: 4,
   },
-  phone: {
-    fontSize: 12,
-    color: "#A0A0B0",
-    fontFamily: "Inter_400Regular",
-    marginTop: 2,
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
   },
-  badge: {
+  statusPill: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    borderRadius: 8,
+    backgroundColor: "rgba(255,255,255,0.04)",
     borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    borderRadius: 20,
     paddingHorizontal: 8,
-    paddingVertical: 4,
+    paddingVertical: 3,
   },
-  dot: {
-    width: 5,
-    height: 5,
+  statusDot: {
+    width: 6,
+    height: 6,
     borderRadius: 3,
   },
-  badgeText: {
+  statusText: {
     fontSize: 10,
     fontFamily: "Inter_600SemiBold",
-    letterSpacing: 0.3,
+    letterSpacing: 0.5,
+    textTransform: "uppercase",
   },
-  meta: {
-    flexDirection: "row",
-    gap: 16,
-    paddingHorizontal: 16,
-    paddingBottom: 12,
-    paddingLeft: 72,
-  },
-  metaItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  metaText: {
-    fontSize: 12,
+  detail: {
+    fontSize: 13,
     color: "#A0A0B0",
     fontFamily: "Inter_400Regular",
+  },
+  actionBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   actions: {
     flexDirection: "row",
     gap: 8,
-    padding: 16,
-    paddingTop: 12,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#2A2A3560",
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    paddingTop: 4,
   },
   btn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 10,
+    paddingVertical: 9,
+    borderRadius: 12,
   },
   btnOutline: {
-    backgroundColor: "#1E1E28",
+    backgroundColor: "rgba(255,255,255,0.05)",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "rgba(255,255,255,0.08)",
   },
   btnOutlineText: {
     fontSize: 12,
@@ -353,39 +372,45 @@ const row = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
   },
   btnDanger: {
-    backgroundColor: "#EF444415",
+    backgroundColor: "rgba(239,68,68,0.1)",
     borderWidth: 1,
-    borderColor: "#EF444430",
+    borderColor: "rgba(239,68,68,0.2)",
   },
 });
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#0F0F14" },
 
+  blobWrap: {
+    ...StyleSheet.absoluteFillObject,
+    overflow: "hidden",
+  },
+  blob: {
+    position: "absolute",
+    borderRadius: 999,
+  },
+
   header: {
-    paddingHorizontal: 20,
-    paddingBottom: 16,
+    paddingHorizontal: 24,
+    paddingBottom: 20,
     flexDirection: "row",
     alignItems: "center",
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#2A2A3540",
+    justifyContent: "space-between",
+    zIndex: 10,
   },
   headerTitle: {
-    fontSize: 22,
+    fontSize: 28,
     color: "#F0F0F5",
-    fontFamily: "Inter_700Bold",
-  },
-  headerSub: {
-    fontSize: 13,
-    color: "#A0A0B0",
-    fontFamily: "Inter_400Regular",
-    marginTop: 2,
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: -0.5,
   },
   addBtn: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: "#6D28D9",
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -394,23 +419,30 @@ const s = StyleSheet.create({
   emptyIcon: {
     width: 72,
     height: 72,
-    borderRadius: 20,
-    backgroundColor: "#1A1A24",
+    borderRadius: 36,
+    backgroundColor: "rgba(255,255,255,0.06)",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "rgba(255,255,255,0.08)",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 4,
   },
   emptyTitle: { fontSize: 18, color: "#D1D1DB", fontFamily: "Inter_700Bold" },
-  emptyDesc: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 280, lineHeight: 20 },
+  emptyDesc: {
+    fontSize: 14,
+    color: "#A0A0B0",
+    fontFamily: "Inter_400Regular",
+    textAlign: "center",
+    maxWidth: 280,
+    lineHeight: 20,
+  },
   emptyText: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
   emptyBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     backgroundColor: "#6D28D9",
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 20,
     paddingVertical: 12,
     marginTop: 4,
@@ -426,26 +458,26 @@ const s = StyleSheet.create({
   },
   modal: {
     width: "100%",
-    backgroundColor: "#1A1A24",
-    borderRadius: 20,
+    backgroundColor: "rgba(26,26,36,0.95)",
+    borderRadius: 24,
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "rgba(255,255,255,0.08)",
     padding: 24,
     gap: 14,
   },
   modalHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
   modalIconWrap: {
-    padding: 6,
-    backgroundColor: "#6D28D915",
-    borderRadius: 8,
+    padding: 8,
+    backgroundColor: "rgba(109,40,217,0.15)",
+    borderRadius: 12,
   },
   modalTitle: { fontSize: 18, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
   modalLabel: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
   modalInput: {
-    backgroundColor: "#1E1E28",
-    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.05)",
+    borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "rgba(255,255,255,0.08)",
     color: "#F0F0F5",
     fontSize: 15,
     paddingHorizontal: 16,
@@ -455,17 +487,17 @@ const s = StyleSheet.create({
   modalActions: { flexDirection: "row", gap: 10, marginTop: 4 },
   cancelBtn: {
     flex: 1,
-    borderRadius: 12,
-    backgroundColor: "#1E1E28",
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.05)",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "rgba(255,255,255,0.08)",
     paddingVertical: 14,
     alignItems: "center",
   },
   cancelText: { color: "#A0A0B0", fontSize: 15, fontFamily: "Inter_600SemiBold" },
   confirmBtn: {
     flex: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     backgroundColor: "#6D28D9",
     paddingVertical: 14,
     alignItems: "center",
