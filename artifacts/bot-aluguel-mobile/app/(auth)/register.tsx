@@ -1,6 +1,5 @@
 import { useRegister } from "@workspace/api-client-react";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React, { useState } from "react";
@@ -18,241 +17,186 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/context/AuthContext";
-import { useColors } from "@/hooks/useColors";
 
 export default function RegisterScreen() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { signIn } = useAuth();
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState("");
-
+  const [phoneFocus, setPhoneFocus] = useState(false);
+  const [pwFocus, setPwFocus] = useState(false);
+  const [nameFocus, setNameFocus] = useState(false);
   const registerMutation = useRegister();
 
-  async function handleRegister() {
-    if (!name.trim() || !phone.trim() || !password.trim()) {
-      setError("Preencha todos os campos");
-      return;
-    }
-    if (password.length < 6) {
-      setError("Senha deve ter pelo menos 6 caracteres");
-      return;
-    }
-    setError("");
+  const handleRegister = async () => {
+    if (!name || !phone || !password) return;
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      const data = await registerMutation.mutateAsync({
-        data: { name: name.trim(), phone: phone.trim(), password },
-      });
-      await signIn(data.token, data.user);
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      const result = await registerMutation.mutateAsync({ data: { name, phone, password } });
+      await signIn(result.token, result.user);
       router.replace("/(tabs)/");
-    } catch (e: unknown) {
-      const msg = (e as { message?: string })?.message ?? "";
-      setError(msg.includes("409") || msg.includes("já")
-        ? "Telefone já cadastrado"
-        : "Erro ao criar conta. Tente novamente.");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    } catch (err: any) {
+      const msg = err?.data?.message ?? err?.message ?? "Erro ao criar conta";
+      alert(msg);
     }
-  }
-
-  const s = StyleSheet.create({
-    container: { flex: 1, backgroundColor: colors.background },
-    scroll: {
-      flexGrow: 1,
-      justifyContent: "center",
-      paddingHorizontal: 24,
-      paddingTop: insets.top + (Platform.OS === "web" ? 67 : 0),
-      paddingBottom: insets.bottom + (Platform.OS === "web" ? 34 : 20),
-    },
-    backBtn: {
-      flexDirection: "row",
-      alignItems: "center",
-      gap: 6,
-      marginBottom: 32,
-    },
-    backText: {
-      color: colors.mutedForeground,
-      fontSize: 14,
-      fontFamily: "Inter_400Regular",
-    },
-    title: {
-      fontSize: 28,
-      fontWeight: "700" as const,
-      color: colors.foreground,
-      fontFamily: "Inter_700Bold",
-      letterSpacing: -0.5,
-      marginBottom: 6,
-    },
-    subtitle: {
-      fontSize: 15,
-      color: colors.mutedForeground,
-      marginBottom: 32,
-      fontFamily: "Inter_400Regular",
-    },
-    form: { gap: 16 },
-    fieldLabel: {
-      fontSize: 13,
-      fontWeight: "500" as const,
-      color: colors.mutedForeground,
-      fontFamily: "Inter_500Medium",
-      marginBottom: 6,
-    },
-    inputWrapper: {
-      flexDirection: "row",
-      alignItems: "center",
-      backgroundColor: colors.secondary,
-      borderRadius: colors.radius,
-      borderWidth: 1,
-      borderColor: colors.border,
-      paddingHorizontal: 14,
-    },
-    input: {
-      flex: 1,
-      color: colors.foreground,
-      fontSize: 15,
-      paddingVertical: 14,
-      fontFamily: "Inter_400Regular",
-    },
-    eyeBtn: { padding: 4 },
-    errorBox: {
-      backgroundColor: "#DC262620",
-      borderRadius: colors.radius,
-      padding: 12,
-      borderWidth: 1,
-      borderColor: "#DC262640",
-    },
-    errorText: { color: colors.destructive, fontSize: 13, fontFamily: "Inter_400Regular" },
-    btn: { borderRadius: colors.radius, overflow: "hidden" as const, marginTop: 8 },
-    btnGradient: {
-      paddingVertical: 15,
-      alignItems: "center",
-      justifyContent: "center",
-    },
-    btnText: {
-      color: "#FFF",
-      fontSize: 16,
-      fontWeight: "600" as const,
-      fontFamily: "Inter_600SemiBold",
-    },
-    loginRow: {
-      flexDirection: "row",
-      justifyContent: "center",
-      marginTop: 24,
-      gap: 4,
-    },
-    loginText: { color: colors.mutedForeground, fontSize: 14, fontFamily: "Inter_400Regular" },
-    loginLink: {
-      color: colors.primary,
-      fontSize: 14,
-      fontWeight: "600" as const,
-      fontFamily: "Inter_600SemiBold",
-    },
-  });
+  };
 
   return (
-    <View style={s.container}>
-      <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-        <ScrollView
-          contentContainerStyle={s.scroll}
-          keyboardShouldPersistTaps="handled"
-          showsVerticalScrollIndicator={false}
-        >
-          <Pressable style={s.backBtn} onPress={() => router.back()}>
-            <Feather name="arrow-left" size={18} color={colors.mutedForeground} />
-            <Text style={s.backText}>Voltar</Text>
-          </Pressable>
+    <KeyboardAvoidingView
+      style={s.root}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+    >
+      <ScrollView
+        contentContainerStyle={[s.scroll, { paddingTop: insets.top + 32, paddingBottom: insets.bottom + 32 }]}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={s.logo}>
+          <View style={s.logoIcon}>
+            <Feather name="cpu" size={28} color="#FFF" />
+          </View>
+          <Text style={s.logoText}>BotAluguel<Text style={{ color: "#F97316" }}>.Pro</Text></Text>
+          <Text style={s.logoSub}>Crie sua conta grátis</Text>
+        </View>
 
-          <Text style={s.title}>Criar conta</Text>
-          <Text style={s.subtitle}>Comece gratuitamente agora</Text>
+        <View style={s.card}>
+          <Text style={s.cardTitle}>Criar conta</Text>
 
-          <View style={s.form}>
-            <View>
-              <Text style={s.fieldLabel}>NOME</Text>
-              <View style={s.inputWrapper}>
-                <TextInput
-                  style={s.input}
-                  placeholder="Seu nome"
-                  placeholderTextColor={colors.mutedForeground}
-                  value={name}
-                  onChangeText={setName}
-                  autoCapitalize="words"
-                />
-              </View>
+          <View style={s.field}>
+            <Text style={s.label}>NOME</Text>
+            <View style={[s.inputRow, nameFocus && s.inputFocus]}>
+              <Feather name="user" size={14} color="#4B4C6B" />
+              <TextInput
+                style={s.input}
+                placeholder="Seu nome"
+                placeholderTextColor="#4B4C6B"
+                value={name}
+                onChangeText={setName}
+                autoCapitalize="words"
+                onFocus={() => setNameFocus(true)}
+                onBlur={() => setNameFocus(false)}
+              />
             </View>
+          </View>
 
-            <View>
-              <Text style={s.fieldLabel}>TELEFONE</Text>
-              <View style={s.inputWrapper}>
-                <TextInput
-                  style={s.input}
-                  placeholder="Ex: 5511999999999"
-                  placeholderTextColor={colors.mutedForeground}
-                  value={phone}
-                  onChangeText={setPhone}
-                  keyboardType="phone-pad"
-                  autoCapitalize="none"
-                />
-              </View>
+          <View style={s.field}>
+            <Text style={s.label}>TELEFONE</Text>
+            <View style={[s.inputRow, phoneFocus && s.inputFocus]}>
+              <Feather name="phone" size={14} color="#4B4C6B" />
+              <TextInput
+                style={s.input}
+                placeholder="55 11 99999-9999"
+                placeholderTextColor="#4B4C6B"
+                value={phone}
+                onChangeText={setPhone}
+                keyboardType="phone-pad"
+                onFocus={() => setPhoneFocus(true)}
+                onBlur={() => setPhoneFocus(false)}
+              />
             </View>
+          </View>
 
-            <View>
-              <Text style={s.fieldLabel}>SENHA</Text>
-              <View style={s.inputWrapper}>
-                <TextInput
-                  style={s.input}
-                  placeholder="Mínimo 6 caracteres"
-                  placeholderTextColor={colors.mutedForeground}
-                  value={password}
-                  onChangeText={setPassword}
-                  secureTextEntry={!showPassword}
-                />
-                <Pressable style={s.eyeBtn} onPress={() => setShowPassword((v) => !v)}>
-                  <Feather
-                    name={showPassword ? "eye-off" : "eye"}
-                    size={18}
-                    color={colors.mutedForeground}
-                  />
-                </Pressable>
-              </View>
-            </View>
-
-            {error ? (
-              <View style={s.errorBox}>
-                <Text style={s.errorText}>{error}</Text>
-              </View>
-            ) : null}
-
-            <Pressable
-              style={({ pressed }) => [s.btn, { opacity: pressed || registerMutation.isPending ? 0.8 : 1 }]}
-              onPress={handleRegister}
-              disabled={registerMutation.isPending}
-            >
-              <LinearGradient
-                colors={["#F97316", "#C850C0"]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={s.btnGradient}
-              >
-                {registerMutation.isPending ? (
-                  <ActivityIndicator color="#FFF" size="small" />
-                ) : (
-                  <Text style={s.btnText}>Criar conta</Text>
-                )}
-              </LinearGradient>
-            </Pressable>
-
-            <View style={s.loginRow}>
-              <Text style={s.loginText}>Já tem conta?</Text>
-              <Pressable onPress={() => router.push("/(auth)/login")}>
-                <Text style={s.loginLink}>Entrar</Text>
+          <View style={s.field}>
+            <Text style={s.label}>SENHA</Text>
+            <View style={[s.inputRow, pwFocus && s.inputFocus]}>
+              <Feather name="lock" size={14} color="#4B4C6B" />
+              <TextInput
+                style={[s.input, { flex: 1 }]}
+                placeholder="Mínimo 6 caracteres"
+                placeholderTextColor="#4B4C6B"
+                value={password}
+                onChangeText={setPassword}
+                secureTextEntry={!showPassword}
+                onFocus={() => setPwFocus(true)}
+                onBlur={() => setPwFocus(false)}
+              />
+              <Pressable onPress={() => setShowPassword(v => !v)}>
+                <Feather name={showPassword ? "eye-off" : "eye"} size={14} color="#4B4C6B" />
               </Pressable>
             </View>
           </View>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </View>
+
+          <Pressable
+            style={({ pressed }) => [s.btn, { opacity: pressed || registerMutation.isPending ? 0.8 : 1 }]}
+            onPress={handleRegister}
+            disabled={registerMutation.isPending}
+          >
+            {registerMutation.isPending ? (
+              <ActivityIndicator color="#FFF" size="small" />
+            ) : (
+              <Text style={s.btnText}>Criar conta</Text>
+            )}
+          </Pressable>
+        </View>
+
+        <Pressable style={s.loginLink} onPress={() => router.push("/(auth)/login")}>
+          <Text style={s.loginLinkText}>
+            Já tem conta? <Text style={{ color: "#F97316", fontWeight: "700" }}>Entrar</Text>
+          </Text>
+        </Pressable>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
+
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: "#090A0F" },
+  scroll: { flexGrow: 1, paddingHorizontal: 24, justifyContent: "center" },
+
+  logo: { alignItems: "center", marginBottom: 32 },
+  logoIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    backgroundColor: "#F97316",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 14,
+    shadowColor: "#F97316",
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    shadowOffset: { width: 0, height: 0 },
+  },
+  logoText: { fontSize: 22, fontWeight: "800" as const, color: "#FFF", fontFamily: "Inter_700Bold" },
+  logoSub: { fontSize: 12, color: "#4B4C6B", fontFamily: "Inter_400Regular", marginTop: 4 },
+
+  card: {
+    backgroundColor: "#0D0E16",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#1A1B28",
+    padding: 20,
+    gap: 14,
+  },
+  cardTitle: { fontSize: 15, fontWeight: "700" as const, color: "#F1F2F6", fontFamily: "Inter_700Bold", marginBottom: 2 },
+
+  field: { gap: 6 },
+  label: { fontSize: 9, fontWeight: "600" as const, color: "#4B4C6B", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
+  inputRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    backgroundColor: "#131420",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#1E1F2E",
+    paddingHorizontal: 12,
+    paddingVertical: 11,
+  },
+  inputFocus: { borderColor: "#F97316" },
+  input: { flex: 1, fontSize: 14, color: "#FFF", fontFamily: "Inter_400Regular" },
+
+  btn: {
+    backgroundColor: "#F97316",
+    borderRadius: 6,
+    paddingVertical: 13,
+    alignItems: "center",
+    marginTop: 4,
+  },
+  btnText: { fontSize: 14, fontWeight: "700" as const, color: "#FFF", fontFamily: "Inter_700Bold" },
+
+  loginLink: { alignItems: "center", marginTop: 20 },
+  loginLinkText: { fontSize: 13, color: "#4B4C6B", fontFamily: "Inter_400Regular" },
+});

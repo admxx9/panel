@@ -4,14 +4,12 @@ import {
   useListBots,
 } from "@workspace/api-client-react";
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  Animated,
   FlatList,
   Modal,
   Platform,
@@ -23,8 +21,8 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
-import { useColors } from "@/hooks/useColors";
+import { useQueryClient } from "@tanstack/react-query";
+import { getListBotsQueryKey } from "@workspace/api-client-react";
 
 type Bot = {
   id: string;
@@ -36,333 +34,214 @@ type Bot = {
   prefix: string;
 };
 
-const STATUS_CONFIG = {
-  connected: { color: "#22C55E", label: "Online", icon: "wifi" },
-  connecting: { color: "#F59E0B", label: "Conectando", icon: "loader" },
-  disconnected: { color: "#6B7280", label: "Offline", icon: "wifi-off" },
-  error: { color: "#EF4444", label: "Erro", icon: "alert-circle" },
+const STATUS_CFG = {
+  connected:    { color: "#22C55E", label: "Online" },
+  connecting:   { color: "#F59E0B", label: "Conectando" },
+  disconnected: { color: "#4B4C6B", label: "Offline" },
+  error:        { color: "#EF4444", label: "Erro" },
 };
 
-const AVATAR_GRADIENTS: [string, string][] = [
-  ["#F97316", "#B45309"],
-  ["#C850C0", "#9D174D"],
-  ["#10B981", "#065F46"],
-  ["#3B82F6", "#1D4ED8"],
-  ["#EF4444", "#991B1B"],
-  ["#F59E0B", "#92400E"],
-];
-
-function getAvatarGradient(name: string): [string, string] {
-  const idx = (name.charCodeAt(0) || 0) % AVATAR_GRADIENTS.length;
-  return AVATAR_GRADIENTS[idx];
-}
-
-function StatusPulse({ color, active }: { color: string; active: boolean }) {
-  const pulseAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (!active) return;
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulseAnim, { toValue: 1, duration: 900, useNativeDriver: true }),
-        Animated.timing(pulseAnim, { toValue: 0, duration: 900, useNativeDriver: true }),
-      ])
-    );
-    loop.start();
-    return () => loop.stop();
-  }, [active]);
-
-  const scale = pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 2.2] });
-  const opacity = pulseAnim.interpolate({ inputRange: [0, 1], outputRange: [0.7, 0] });
+function BotRow({ bot, onDelete }: { bot: Bot; onDelete: (id: string, name: string) => void }) {
+  const cfg = STATUS_CFG[bot.status] ?? STATUS_CFG.disconnected;
 
   return (
-    <View style={styles.pulseContainer}>
-      {active && (
-        <Animated.View
-          style={[styles.pulseRing, { backgroundColor: color, transform: [{ scale }], opacity }]}
-        />
-      )}
-      <View style={[styles.statusDot, { backgroundColor: color }]} />
+    <View style={[row.card, { borderLeftColor: cfg.color }]}>
+      <View style={row.top}>
+        <View style={row.dotWrap}>
+          <View style={[row.dot, { backgroundColor: cfg.color }]} />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={row.name}>{bot.name}</Text>
+          <Text style={row.phone}>{bot.phone ? `+${bot.phone}` : "Sem número"}</Text>
+        </View>
+        <View style={[row.badge, { borderColor: cfg.color + "40", backgroundColor: cfg.color + "15" }]}>
+          <Text style={[row.badgeText, { color: cfg.color }]}>{cfg.label}</Text>
+        </View>
+      </View>
+
+      <View style={row.meta}>
+        <View style={row.metaItem}>
+          <Feather name="users" size={11} color="#4B4C6B" />
+          <Text style={row.metaText}>{bot.totalGroups} grupo{bot.totalGroups !== 1 ? "s" : ""}</Text>
+        </View>
+        <View style={row.metaItem}>
+          <Feather name="hash" size={11} color="#4B4C6B" />
+          <Text style={row.metaText}>prefix: {bot.prefix || "!"}</Text>
+        </View>
+      </View>
+
+      <View style={row.actions}>
+        <Pressable
+          style={({ pressed }) => [row.btn, row.btnGhost, { opacity: pressed ? 0.7 : 1 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push(`/bot/${bot.id}` as any);
+          }}
+        >
+          <Feather name="settings" size={13} color="#8B8EA0" />
+          <Text style={[row.btnText, { color: "#8B8EA0" }]}>Gerenciar</Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [row.btn, row.btnPrimary, { opacity: pressed ? 0.7 : 1 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+            router.push(`/builder/${bot.id}` as any);
+          }}
+        >
+          <Feather name="layout" size={13} color="#FFF" />
+          <Text style={[row.btnText, { color: "#FFF" }]}>Construtor</Text>
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [row.btn, row.btnDanger, { opacity: pressed ? 0.7 : 1 }]}
+          onPress={() => {
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            onDelete(bot.id, bot.name);
+          }}
+        >
+          <Feather name="trash-2" size={13} color="#EF4444" />
+        </Pressable>
+      </View>
     </View>
   );
 }
 
-function BotCard({ bot, onDelete }: { bot: Bot; onDelete: (id: string) => void }) {
-  const colors = useColors();
-  const status = STATUS_CONFIG[bot.status] ?? STATUS_CONFIG.disconnected;
-  const grad = getAvatarGradient(bot.name);
-  const initial = bot.name.charAt(0).toUpperCase();
-  const pressAnim = useRef(new Animated.Value(1)).current;
-
-  const handlePressIn = () =>
-    Animated.spring(pressAnim, { toValue: 0.97, useNativeDriver: true, speed: 40 }).start();
-  const handlePressOut = () =>
-    Animated.spring(pressAnim, { toValue: 1, useNativeDriver: true, speed: 40 }).start();
-
-  return (
-    <Animated.View style={{ transform: [{ scale: pressAnim }] }}>
-      <Pressable
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        onPress={() => router.push(`/bot/${bot.id}` as any)}
-        onLongPress={() => {
-          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          Alert.alert("Excluir bot", `Tem certeza que deseja excluir "${bot.name}"?`, [
-            { text: "Cancelar", style: "cancel" },
-            { text: "Excluir", style: "destructive", onPress: () => onDelete(bot.id) },
-          ]);
-        }}
-      >
-        <View style={[styles.card, { backgroundColor: "#0F1018", borderColor: "#1E2030" }]}>
-          <View style={styles.cardMain}>
-            <View style={styles.avatarWrapper}>
-              <LinearGradient colors={grad} style={styles.avatar} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}>
-                <Text style={styles.avatarText}>{initial}</Text>
-              </LinearGradient>
-              <View style={styles.statusPulsePos}>
-                <StatusPulse color={status.color} active={bot.status === "connected"} />
-              </View>
-            </View>
-
-            <View style={{ flex: 1, gap: 2 }}>
-              <Text style={[styles.botName, { color: "#F1F2F6" }]} numberOfLines={1}>
-                {bot.name}
-              </Text>
-              <Text style={[styles.botPhone, { color: "#6B7280" }]}>
-                {bot.phone ? bot.phone : "Sem número vinculado"}
-              </Text>
-              <View style={styles.statusRow}>
-                <View style={[styles.statusChip, { backgroundColor: status.color + "1A" }]}>
-                  <Feather name={status.icon as any} size={10} color={status.color} />
-                  <Text style={[styles.statusChipText, { color: status.color }]}>{status.label}</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          <View style={[styles.statsRow, { borderTopColor: "#1E2030" }]}>
-            <View style={styles.statItem}>
-              <Feather name="users" size={12} color="#6B7280" />
-              <Text style={[styles.statText, { color: "#6B7280" }]}>{bot.totalGroups} grupos</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Feather name="hash" size={12} color="#6B7280" />
-              <Text style={[styles.statText, { color: "#6B7280" }]}>{bot.prefix}</Text>
-            </View>
-          </View>
-
-          <View style={[styles.actionRow, { borderTopColor: "#1E2030" }]}>
-            <Pressable
-              style={({ pressed }) => [styles.actionBtn, { opacity: pressed ? 0.7 : 1 }]}
-              onPress={() => router.push(`/bot/${bot.id}` as any)}
-            >
-              <LinearGradient
-                colors={["#1E2030", "#252840"]}
-                style={styles.actionBtnInner}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Feather name="smartphone" size={14} color="#8B8EA0" />
-                <Text style={[styles.actionBtnText, { color: "#8B8EA0" }]}>Detalhes</Text>
-              </LinearGradient>
-            </Pressable>
-
-            <Pressable
-              style={({ pressed }) => [styles.actionBtn, { opacity: pressed ? 0.7 : 1 }]}
-              onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                router.push(`/builder/${bot.id}` as any);
-              }}
-            >
-              <LinearGradient
-                colors={["#B45309", "#F97316"]}
-                style={styles.actionBtnInner}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Feather name="layout" size={14} color="#FFF" />
-                <Text style={[styles.actionBtnText, { color: "#FFF" }]}>Construtor</Text>
-              </LinearGradient>
-            </Pressable>
-          </View>
-        </View>
-      </Pressable>
-    </Animated.View>
-  );
-}
-
 export default function BotsScreen() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newBotName, setNewBotName] = useState("");
-  const fabAnim = useRef(new Animated.Value(1)).current;
-
   const { data: bots, isLoading, refetch, isRefetching } = useListBots();
   const createBot = useCreateBot();
   const deleteBot = useDeleteBot();
+  const queryClient = useQueryClient();
+  const [showCreate, setShowCreate] = useState(false);
+  const [newBotName, setNewBotName] = useState("");
 
   const paddingTop = Platform.OS === "web" ? insets.top + 67 : insets.top + 16;
-  const paddingBottom = Platform.OS === "web" ? 34 + 84 : insets.bottom + 100;
+  const paddingBottom = insets.bottom + 80;
 
-  const onFabPressIn = () =>
-    Animated.spring(fabAnim, { toValue: 0.9, useNativeDriver: true, speed: 40 }).start();
-  const onFabPressOut = () =>
-    Animated.spring(fabAnim, { toValue: 1, useNativeDriver: true, speed: 40 }).start();
-
-  async function handleCreate() {
+  const handleCreate = async () => {
     if (!newBotName.trim()) return;
     try {
       await createBot.mutateAsync({ data: { name: newBotName.trim() } });
+      queryClient.invalidateQueries({ queryKey: getListBotsQueryKey() });
       setNewBotName("");
-      setShowCreateModal(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      refetch();
+      setShowCreate(false);
     } catch {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert("Erro", "Não foi possível criar o bot.");
     }
-  }
+  };
 
-  async function handleDelete(id: string) {
-    try {
-      await deleteBot.mutateAsync({ botId: id });
-      refetch();
-    } catch {
-      Alert.alert("Erro", "Não foi possível excluir o bot.");
-    }
-  }
+  const handleDelete = (id: string, name: string) => {
+    Alert.alert("Remover bot", `Deseja remover "${name}"?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Remover",
+        style: "destructive",
+        onPress: async () => {
+          await deleteBot.mutateAsync({ botId: id });
+          queryClient.invalidateQueries({ queryKey: getListBotsQueryKey() });
+        },
+      },
+    ]);
+  };
 
-  const botCount = bots?.length ?? 0;
+  const botList = (bots as Bot[] | undefined) ?? [];
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#090A0F" }}>
+    <View style={[s.root]}>
+      <View style={[s.header, { paddingTop }]}>
+        <View>
+          <Text style={s.pageLabel}>GERENCIAMENTO</Text>
+          <Text style={s.pageTitle}>Meus Bots</Text>
+        </View>
+        <Pressable
+          style={({ pressed }) => [s.createBtn, { opacity: pressed ? 0.8 : 1 }]}
+          onPress={() => setShowCreate(true)}
+        >
+          <Feather name="plus" size={16} color="#FFF" />
+          <Text style={s.createBtnText}>Novo Bot</Text>
+        </Pressable>
+      </View>
+
+      <View style={s.statsRow}>
+        <View style={s.statChip}>
+          <View style={[s.statDot, { backgroundColor: "#F97316" }]} />
+          <Text style={s.statChipText}>{botList.length} total</Text>
+        </View>
+        <View style={s.statChip}>
+          <View style={[s.statDot, { backgroundColor: "#22C55E" }]} />
+          <Text style={s.statChipText}>{botList.filter(b => b.status === "connected").length} online</Text>
+        </View>
+        <View style={s.statChip}>
+          <View style={[s.statDot, { backgroundColor: "#4B4C6B" }]} />
+          <Text style={s.statChipText}>{botList.filter(b => b.status === "disconnected").length} offline</Text>
+        </View>
+      </View>
+
       <FlatList
-        data={bots ?? []}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <BotCard bot={item as Bot} onDelete={handleDelete} />
-        )}
-        contentContainerStyle={{ paddingHorizontal: 16, paddingTop, paddingBottom, gap: 12 }}
+        data={botList}
+        keyExtractor={(b) => b.id}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom }}
         showsVerticalScrollIndicator={false}
-        ListHeaderComponent={
-          <View style={{ marginBottom: 8 }}>
-            <Text style={styles.screenTitle}>Meus Bots</Text>
-            <Text style={[styles.screenSubtitle, { color: "#6B7280" }]}>
-              {isLoading ? "Carregando..." : botCount === 0 ? "Nenhum bot criado ainda" : `${botCount} ${botCount === 1 ? "bot ativo" : "bots ativos"}`}
-            </Text>
-          </View>
+        ItemSeparatorComponent={() => <View style={s.sep} />}
+        refreshControl={
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#F97316" />
         }
         ListEmptyComponent={
           isLoading ? (
-            <View style={styles.loader}>
+            <View style={s.loader}>
               <ActivityIndicator color="#F97316" size="large" />
+              <Text style={s.loaderText}>Carregando bots...</Text>
             </View>
           ) : (
-            <View style={styles.emptyState}>
-              <LinearGradient
-                colors={["#B45309", "#F97316"]}
-                style={styles.emptyIcon}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-              >
-                <Feather name="cpu" size={32} color="#FFF" />
-              </LinearGradient>
-              <Text style={[styles.emptyTitle, { color: "#F1F2F6" }]}>Nenhum bot ainda</Text>
-              <Text style={[styles.emptyBody, { color: "#6B7280" }]}>
-                Crie seu primeiro bot e comece a automatizar grupos no WhatsApp
-              </Text>
-              <Pressable
-                style={styles.emptyBtn}
-                onPress={() => setShowCreateModal(true)}
-              >
-                <LinearGradient
-                  colors={["#B45309", "#F97316"]}
-                  style={styles.emptyBtnInner}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  <Feather name="plus" size={16} color="#FFF" />
-                  <Text style={styles.emptyBtnText}>Criar primeiro bot</Text>
-                </LinearGradient>
+            <View style={s.emptyState}>
+              <View style={s.emptyIcon}>
+                <Feather name="cpu" size={32} color="#2A2B3E" />
+              </View>
+              <Text style={s.emptyTitle}>Nenhum bot criado</Text>
+              <Text style={s.emptyDesc}>Crie seu primeiro bot e comece a automatizar grupos no WhatsApp</Text>
+              <Pressable style={s.emptyBtn} onPress={() => setShowCreate(true)}>
+                <Feather name="plus" size={14} color="#F97316" />
+                <Text style={s.emptyBtnText}>Criar primeiro bot</Text>
               </Pressable>
             </View>
           )
         }
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#F97316" />
-        }
+        renderItem={({ item }) => <BotRow bot={item} onDelete={handleDelete} />}
       />
 
-      {botCount > 0 && (
-        <Animated.View
-          style={[
-            styles.fab,
-            { bottom: insets.bottom + (Platform.OS === "web" ? 84 : 84), transform: [{ scale: fabAnim }] },
-          ]}
-        >
-          <Pressable
-            onPressIn={onFabPressIn}
-            onPressOut={onFabPressOut}
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-              setShowCreateModal(true);
-            }}
-          >
-            <LinearGradient
-              colors={["#B45309", "#F97316"]}
-              style={styles.fabInner}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-            >
-              <Feather name="plus" size={22} color="#FFF" />
-            </LinearGradient>
-          </Pressable>
-        </Animated.View>
-      )}
-
-      <Modal visible={showCreateModal} transparent animationType="fade">
-        <Pressable style={styles.overlay} onPress={() => setShowCreateModal(false)}>
-          <Pressable style={styles.sheet}>
-            <View style={styles.sheetHandle} />
-            <Text style={[styles.sheetTitle, { color: "#F1F2F6" }]}>Novo Bot</Text>
-            <Text style={[styles.sheetSubtitle, { color: "#6B7280" }]}>
-              Escolha um nome para identificar seu bot
-            </Text>
+      <Modal
+        visible={showCreate}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCreate(false)}
+      >
+        <Pressable style={s.overlay} onPress={() => setShowCreate(false)}>
+          <Pressable style={s.modal} onPress={() => {}}>
+            <Text style={s.modalTitle}>Criar novo bot</Text>
+            <Text style={s.modalLabel}>NOME DO BOT</Text>
             <TextInput
-              style={styles.input}
+              style={s.modalInput}
               placeholder="Ex: Bot Vendas"
-              placeholderTextColor="#4B5563"
+              placeholderTextColor="#4B4C6B"
               value={newBotName}
               onChangeText={setNewBotName}
               autoFocus
-              returnKeyType="done"
-              onSubmitEditing={handleCreate}
             />
-            <View style={styles.sheetActions}>
-              <Pressable
-                style={styles.cancelBtn}
-                onPress={() => setShowCreateModal(false)}
-              >
-                <Text style={[styles.cancelBtnText, { color: "#6B7280" }]}>Cancelar</Text>
+            <View style={s.modalActions}>
+              <Pressable style={s.cancelBtn} onPress={() => setShowCreate(false)}>
+                <Text style={s.cancelText}>Cancelar</Text>
               </Pressable>
               <Pressable
-                style={{ flex: 1, borderRadius: 12, overflow: "hidden" }}
+                style={[s.confirmBtn, { opacity: createBot.isPending ? 0.7 : 1 }]}
                 onPress={handleCreate}
                 disabled={createBot.isPending}
               >
-                <LinearGradient
-                  colors={["#B45309", "#F97316"]}
-                  style={styles.createBtn}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 1 }}
-                >
-                  {createBot.isPending ? (
-                    <ActivityIndicator color="#FFF" size="small" />
-                  ) : (
-                    <Text style={styles.createBtnText}>Criar Bot</Text>
-                  )}
-                </LinearGradient>
+                {createBot.isPending ? (
+                  <ActivityIndicator color="#FFF" size="small" />
+                ) : (
+                  <Text style={s.confirmText}>Criar Bot</Text>
+                )}
               </Pressable>
             </View>
           </Pressable>
@@ -372,278 +251,239 @@ export default function BotsScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  screenTitle: {
-    fontSize: 26,
-    fontWeight: "700" as const,
-    fontFamily: "Inter_700Bold",
-    color: "#F1F2F6",
-    letterSpacing: -0.5,
+const row = StyleSheet.create({
+  card: {
+    backgroundColor: "#0D0E16",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#1A1B28",
+    borderLeftWidth: 3,
+    padding: 14,
+    gap: 10,
   },
-  screenSubtitle: {
-    fontSize: 13,
+  top: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  dotWrap: {
+    alignItems: "center",
+    justifyContent: "center",
+    width: 16,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  name: {
+    fontSize: 15,
+    fontWeight: "600" as const,
+    color: "#F1F2F6",
+    fontFamily: "Inter_600SemiBold",
+  },
+  phone: {
+    fontSize: 11,
+    color: "#4B4C6B",
     fontFamily: "Inter_400Regular",
     marginTop: 2,
   },
-  loader: { paddingVertical: 80, alignItems: "center" },
-  card: {
-    borderRadius: 16,
+  badge: {
+    borderRadius: 4,
     borderWidth: 1,
-    overflow: "hidden" as const,
-  },
-  cardMain: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 14,
-    padding: 16,
-  },
-  avatarWrapper: {
-    position: "relative" as const,
-  },
-  avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatarText: {
-    fontSize: 22,
-    fontWeight: "700" as const,
-    color: "#FFF",
-    fontFamily: "Inter_700Bold",
-  },
-  statusPulsePos: {
-    position: "absolute" as const,
-    bottom: -3,
-    right: -3,
-  },
-  pulseContainer: {
-    width: 14,
-    height: 14,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  pulseRing: {
-    position: "absolute" as const,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-  },
-  statusDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: "#0F1018",
-  },
-  botName: {
-    fontSize: 16,
-    fontWeight: "600" as const,
-    fontFamily: "Inter_600SemiBold",
-    letterSpacing: -0.2,
-  },
-  botPhone: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-  },
-  statusRow: {
-    flexDirection: "row" as const,
-    marginTop: 4,
-  },
-  statusChip: {
-    flexDirection: "row" as const,
-    alignItems: "center",
-    gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 20,
   },
-  statusChipText: {
-    fontSize: 11,
-    fontWeight: "500" as const,
-    fontFamily: "Inter_500Medium",
+  badgeText: {
+    fontSize: 10,
+    fontWeight: "600" as const,
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 0.3,
   },
-  statsRow: {
-    flexDirection: "row" as const,
+  meta: {
+    flexDirection: "row",
+    gap: 16,
+    paddingLeft: 26,
+  },
+  metaItem: {
+    flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderTopWidth: 1,
-    gap: 12,
+    gap: 4,
   },
-  statItem: {
-    flexDirection: "row" as const,
+  metaText: {
+    fontSize: 11,
+    color: "#4B4C6B",
+    fontFamily: "Inter_400Regular",
+  },
+  actions: {
+    flexDirection: "row",
+    gap: 6,
+    paddingLeft: 26,
+  },
+  btn: {
+    flexDirection: "row",
     alignItems: "center",
     gap: 5,
-  },
-  statText: {
-    fontSize: 12,
-    fontFamily: "Inter_400Regular",
-  },
-  statDivider: {
-    width: 1,
-    height: 12,
-    backgroundColor: "#1E2030",
-  },
-  actionRow: {
-    flexDirection: "row" as const,
-    gap: 8,
-    padding: 12,
-    borderTopWidth: 1,
-  },
-  actionBtn: {
-    flex: 1,
-    borderRadius: 10,
-    overflow: "hidden" as const,
-  },
-  actionBtnInner: {
-    flexDirection: "row" as const,
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 10,
-  },
-  actionBtnText: {
-    fontSize: 13,
-    fontWeight: "600" as const,
-    fontFamily: "Inter_600SemiBold",
-  },
-  emptyState: {
-    alignItems: "center",
-    paddingTop: 60,
-    paddingHorizontal: 24,
-    gap: 14,
-  },
-  emptyIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 24,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  emptyTitle: {
-    fontSize: 20,
-    fontWeight: "700" as const,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: -0.3,
-  },
-  emptyBody: {
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    textAlign: "center" as const,
-    lineHeight: 22,
-  },
-  emptyBtn: {
-    borderRadius: 12,
-    overflow: "hidden" as const,
-    marginTop: 8,
-  },
-  emptyBtnInner: {
-    flexDirection: "row" as const,
-    alignItems: "center",
-    gap: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-  },
-  emptyBtnText: {
-    color: "#FFF",
-    fontSize: 15,
-    fontWeight: "600" as const,
-    fontFamily: "Inter_600SemiBold",
-  },
-  fab: {
-    position: "absolute" as const,
-    right: 20,
-    borderRadius: 28,
-    overflow: "hidden" as const,
-    elevation: 8,
-    shadowColor: "#F97316",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 12,
-  },
-  fabInner: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  overlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.75)",
-    justifyContent: "flex-end",
-  },
-  sheet: {
-    backgroundColor: "#0F1018",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    padding: 24,
-    paddingBottom: 40,
+    paddingHorizontal: 10,
+    paddingVertical: 7,
+    borderRadius: 5,
     borderWidth: 1,
-    borderColor: "#1E2030",
-    gap: 16,
   },
-  sheetHandle: {
-    width: 36,
-    height: 4,
-    backgroundColor: "#2D2F45",
-    borderRadius: 2,
-    alignSelf: "center" as const,
+  btnGhost: {
+    borderColor: "#1A1B28",
+    backgroundColor: "#131420",
+  },
+  btnPrimary: {
+    borderColor: "#F97316",
+    backgroundColor: "#F97316",
+  },
+  btnDanger: {
+    borderColor: "#EF444430",
+    backgroundColor: "#EF444415",
+  },
+  btnText: {
+    fontSize: 12,
+    fontWeight: "600" as const,
+    fontFamily: "Inter_600SemiBold",
+  },
+});
+
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: "#090A0F" },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+  },
+  pageLabel: {
+    fontSize: 10,
+    color: "#4B4C6B",
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 1,
     marginBottom: 4,
   },
-  sheetTitle: {
-    fontSize: 20,
-    fontWeight: "700" as const,
-    fontFamily: "Inter_700Bold",
-    letterSpacing: -0.3,
-  },
-  sheetSubtitle: {
-    fontSize: 13,
-    fontFamily: "Inter_400Regular",
-    marginTop: -8,
-  },
-  input: {
-    backgroundColor: "#161824",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#1E2030",
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 15,
+  pageTitle: {
+    fontSize: 22,
+    fontWeight: "800" as const,
     color: "#F1F2F6",
-    fontFamily: "Inter_400Regular",
-  },
-  sheetActions: {
-    flexDirection: "row" as const,
-    gap: 12,
-  },
-  cancelBtn: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    backgroundColor: "#161824",
-    borderWidth: 1,
-    borderColor: "#1E2030",
-  },
-  cancelBtnText: {
-    fontSize: 15,
-    fontFamily: "Inter_500Medium",
+    fontFamily: "Inter_700Bold",
+    letterSpacing: -0.5,
   },
   createBtn: {
-    paddingVertical: 14,
-    borderRadius: 12,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 6,
+    backgroundColor: "#F97316",
+    borderRadius: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 9,
   },
   createBtnText: {
     color: "#FFF",
-    fontSize: 15,
-    fontWeight: "600" as const,
-    fontFamily: "Inter_600SemiBold",
+    fontSize: 13,
+    fontWeight: "700" as const,
+    fontFamily: "Inter_700Bold",
   },
+
+  statsRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  statChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "#0D0E16",
+    borderRadius: 5,
+    borderWidth: 1,
+    borderColor: "#1A1B28",
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+  },
+  statDot: { width: 6, height: 6, borderRadius: 3 },
+  statChipText: { fontSize: 11, color: "#8B8EA0", fontFamily: "Inter_400Regular" },
+
+  sep: { height: 6 },
+  loader: { paddingVertical: 60, alignItems: "center", gap: 12 },
+  loaderText: { color: "#4B4C6B", fontSize: 13, fontFamily: "Inter_400Regular" },
+
+  emptyState: { alignItems: "center", paddingVertical: 60, gap: 12 },
+  emptyIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 12,
+    backgroundColor: "#0D0E16",
+    borderWidth: 1,
+    borderColor: "#1A1B28",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
+  emptyTitle: { fontSize: 16, fontWeight: "700" as const, color: "#4B4C6B", fontFamily: "Inter_700Bold" },
+  emptyDesc: { fontSize: 13, color: "#2A2B3E", fontFamily: "Inter_400Regular", textAlign: "center", maxWidth: 260, lineHeight: 18 },
+  emptyBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    borderWidth: 1,
+    borderColor: "#F97316",
+    borderRadius: 6,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    marginTop: 4,
+  },
+  emptyBtnText: { color: "#F97316", fontSize: 13, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
+
+  overlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.7)",
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20,
+  },
+  modal: {
+    width: "100%",
+    backgroundColor: "#0D0E16",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#1A1B28",
+    padding: 24,
+  },
+  modalTitle: { fontSize: 16, fontWeight: "700" as const, color: "#F1F2F6", fontFamily: "Inter_700Bold", marginBottom: 20 },
+  modalLabel: { fontSize: 10, color: "#4B4C6B", fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 6 },
+  modalInput: {
+    backgroundColor: "#131420",
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#1E1F2E",
+    color: "#F1F2F6",
+    fontSize: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
+    fontFamily: "Inter_400Regular",
+    marginBottom: 20,
+  },
+  modalActions: { flexDirection: "row", gap: 10 },
+  cancelBtn: {
+    flex: 1,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: "#1A1B28",
+    paddingVertical: 13,
+    alignItems: "center",
+  },
+  cancelText: { color: "#4B4C6B", fontSize: 14, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
+  confirmBtn: {
+    flex: 1,
+    borderRadius: 6,
+    backgroundColor: "#F97316",
+    paddingVertical: 13,
+    alignItems: "center",
+  },
+  confirmText: { color: "#FFF", fontSize: 14, fontWeight: "700" as const, fontFamily: "Inter_700Bold" },
 });

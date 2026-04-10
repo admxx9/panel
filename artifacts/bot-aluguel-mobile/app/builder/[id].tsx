@@ -12,7 +12,17 @@ import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useGetBotCommands, useSaveBotCommands } from "@workspace/api-client-react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useColors } from "@/hooks/useColors";
+
+const C = {
+  bg: "#090A0F",
+  card: "#0D0E16",
+  fg: "#C9CADB",
+  muted: "#4B4C6B",
+  border: "#1A1B28",
+  primary: "#F97316",
+  secondary: "#131420",
+  destructive: "#EF4444",
+};
 
 const { width: SW, height: SH } = Dimensions.get("window");
 const NODE_W = 180;
@@ -242,10 +252,9 @@ interface NodeCardProps {
   onPortTap: (handle?: "true" | "false") => void;
   onInputTap: () => void;
   onDragEnd: (id: string, x: number, y: number) => void;
-  colors: ReturnType<typeof useColors>;
 }
 
-function NodeCard({ node, canvasScale, selected, connectingFrom, isConnectable, onTap, onPortTap, onInputTap, onDragEnd, colors }: NodeCardProps) {
+function NodeCard({ node, canvasScale, selected, connectingFrom, isConnectable, onTap, onPortTap, onInputTap, onDragEnd }: NodeCardProps) {
   const cfg = NODE_CFG[node.type];
   const sharedX = useSharedValue(node.x);
   const sharedY = useSharedValue(node.y);
@@ -294,7 +303,7 @@ function NodeCard({ node, canvasScale, selected, connectingFrom, isConnectable, 
           onPress={isConnecting ? onInputTap : onTap}
           style={({ pressed }) => [
             s.node,
-            { borderColor: selected ? cfg.color : isConnectable ? cfg.color + "80" : colors.border },
+            { borderColor: selected ? cfg.color : isConnectable ? cfg.color + "80" : C.border },
             pressed && { opacity: 0.9 },
           ]}
         >
@@ -304,14 +313,14 @@ function NodeCard({ node, canvasScale, selected, connectingFrom, isConnectable, 
             <Text style={[s.nodeType, { color: cfg.color }]}>{cfg.label}</Text>
           </View>
           <View style={s.nodeBody}>
-            <Text style={[s.nodeLabel, { color: colors.foreground }]} numberOfLines={2}>
+            <Text style={[s.nodeLabel, { color: C.fg }]} numberOfLines={2}>
               {getNodeLabel(node)}
             </Text>
           </View>
         </Pressable>
 
         <Pressable style={[s.port, s.portLeft]} onPress={onInputTap}>
-          <View style={[s.portDot, { backgroundColor: colors.border, borderColor: colors.border }]} />
+          <View style={[s.portDot, { backgroundColor: C.border, borderColor: C.border }]} />
         </Pressable>
 
         {node.type === "condition" ? (
@@ -337,7 +346,6 @@ function NodeCard({ node, canvasScale, selected, connectingFrom, isConnectable, 
 
 export default function BuilderScreen() {
   const { id: botId } = useLocalSearchParams<{ id: string }>();
-  const colors = useColors();
   const insets = useSafeAreaInsets();
 
   const [nodes, setNodes] = useState<FlowNode[]>([]);
@@ -496,12 +504,12 @@ export default function BuilderScreen() {
   const getNodeById = (id: string) => nodes.find(n => n.id === id);
 
   return (
-    <View style={[s.root, { backgroundColor: colors.background }]}>
-      <View style={[s.topBar, { paddingTop: paddingTop + 10, borderBottomColor: colors.border }]}>
+    <View style={[s.root, { backgroundColor: C.bg }]}>
+      <View style={[s.topBar, { paddingTop: paddingTop + 10, borderBottomColor: C.border }]}>
         <Pressable style={s.backBtn} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={20} color={colors.foreground} />
+          <Feather name="arrow-left" size={20} color={C.fg} />
         </Pressable>
-        <Text style={[s.title, { color: colors.foreground }]}>Construtor de Fluxo</Text>
+        <Text style={[s.title, { color: C.fg }]}>Construtor de Fluxo</Text>
         <View style={s.topBarRight}>
           {hasUnsaved && (
             <View style={s.unsavedDot} />
@@ -574,35 +582,33 @@ export default function BuilderScreen() {
                 onPortTap={(handle) => handlePortTap(node.id, handle)}
                 onInputTap={() => connectingFrom ? handleInputTap(node.id) : handleNodeTap(node)}
                 onDragEnd={handleDragEnd}
-                colors={colors}
               />
             ))}
           </Animated.View>
         </View>
       </GestureDetector>
 
-      <View style={[s.toolbar, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: insets.bottom + 8 }]}>
-        <Pressable style={[s.toolBtn, { backgroundColor: colors.secondary }]} onPress={() => setShowTemplates(true)}>
-          <Feather name="layout" size={18} color={colors.primary} />
-          <Text style={[s.toolBtnText, { color: colors.primary }]}>Templates</Text>
+      <View style={[s.toolbar, { backgroundColor: C.card, borderTopColor: C.border, paddingBottom: insets.bottom + 8 }]}>
+        <Pressable style={[s.toolBtn, { backgroundColor: C.secondary }]} onPress={() => setShowTemplates(true)}>
+          <Feather name="layout" size={18} color={C.primary} />
+          <Text style={[s.toolBtnText, { color: C.primary }]}>Templates</Text>
         </Pressable>
-        <Pressable style={[s.toolBtnPrimary, { backgroundColor: colors.primary }]} onPress={() => setShowTypePicker(true)}>
+        <Pressable style={[s.toolBtnPrimary, { backgroundColor: C.primary }]} onPress={() => setShowTypePicker(true)}>
           <Feather name="plus" size={20} color="#FFF" />
           <Text style={s.toolBtnPrimaryText}>Adicionar bloco</Text>
         </Pressable>
         <View style={s.zoomBtns}>
-          <Pressable style={[s.zoomBtn, { backgroundColor: colors.secondary }]} onPress={() => zoom(1.2)}>
-            <Feather name="zoom-in" size={16} color={colors.foreground} />
+          <Pressable style={[s.zoomBtn, { backgroundColor: C.secondary }]} onPress={() => zoom(1.2)}>
+            <Feather name="zoom-in" size={16} color={C.fg} />
           </Pressable>
-          <Pressable style={[s.zoomBtn, { backgroundColor: colors.secondary }]} onPress={() => zoom(0.8)}>
-            <Feather name="zoom-out" size={16} color={colors.foreground} />
+          <Pressable style={[s.zoomBtn, { backgroundColor: C.secondary }]} onPress={() => zoom(0.8)}>
+            <Feather name="zoom-out" size={16} color={C.fg} />
           </Pressable>
         </View>
       </View>
 
       <NodeEditor
         node={editingNode}
-        colors={colors}
         onSave={updateNode}
         onDelete={deleteNode}
         onClose={() => setEditingNode(null)}
@@ -610,14 +616,12 @@ export default function BuilderScreen() {
 
       <TypePickerModal
         visible={showTypePicker}
-        colors={colors}
         onSelect={addNode}
         onClose={() => setShowTypePicker(false)}
       />
 
       <TemplatesModal
         visible={showTemplates}
-        colors={colors}
         onSelect={applyTemplate}
         onClose={() => setShowTemplates(false)}
       />
@@ -625,7 +629,7 @@ export default function BuilderScreen() {
   );
 }
 
-function NodeEditor({ node, colors, onSave, onDelete, onClose }: { node: FlowNode | null; colors: ReturnType<typeof useColors>; onSave: (n: FlowNode) => void; onDelete: (id: string) => void; onClose: () => void }) {
+function NodeEditor({ node, onSave, onDelete, onClose }: { node: FlowNode | null; onSave: (n: FlowNode) => void; onDelete: (id: string) => void; onClose: () => void }) {
   const [draft, setDraft] = useState<FlowNode | null>(null);
   const [selectOpen, setSelectOpen] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
@@ -647,42 +651,42 @@ function NodeEditor({ node, colors, onSave, onDelete, onClose }: { node: FlowNod
     <Modal visible animationType="slide" transparent>
       <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
         <Pressable style={s.editorOverlay} onPress={onClose} />
-        <View style={[s.editorSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}>
-          <View style={[s.editorHandle, { backgroundColor: colors.border }]} />
-          <View style={[s.editorHeader, { borderBottomColor: colors.border }]}>
+        <View style={[s.editorSheet, { backgroundColor: C.card, paddingBottom: insets.bottom + 16 }]}>
+          <View style={[s.editorHandle, { backgroundColor: C.border }]} />
+          <View style={[s.editorHeader, { borderBottomColor: C.border }]}>
             <View style={[s.editorTypeChip, { backgroundColor: cfg.dim }]}>
               <Feather name={cfg.icon as any} size={14} color={cfg.color} />
               <Text style={[s.editorTypeName, { color: cfg.color }]}>{cfg.label}</Text>
             </View>
             <View style={{ flex: 1 }} />
             <Pressable onPress={() => { Alert.alert("Excluir bloco?", "Esta ação não pode ser desfeita.", [{ text: "Cancelar", style: "cancel" }, { text: "Excluir", style: "destructive", onPress: () => onDelete(draft.id) }]); }}>
-              <Feather name="trash-2" size={18} color={colors.destructive} />
+              <Feather name="trash-2" size={18} color={C.destructive} />
             </Pressable>
             <Pressable onPress={onClose} style={{ marginLeft: 16 }}>
-              <Feather name="x" size={20} color={colors.mutedForeground} />
+              <Feather name="x" size={20} color={C.muted} />
             </Pressable>
           </View>
 
           <ScrollView style={{ flex: 1 }} contentContainerStyle={s.editorBody} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             {visibleFields.map(field => (
               <View key={field.key} style={s.formGroup}>
-                <Text style={[s.formLabel, { color: colors.mutedForeground }]}>{field.label}</Text>
+                <Text style={[s.formLabel, { color: C.muted }]}>{field.label}</Text>
                 {field.type === "text" && (
                   <TextInput
-                    style={[s.formInput, { color: colors.foreground, backgroundColor: colors.secondary, borderColor: colors.border }]}
+                    style={[s.formInput, { color: C.fg, backgroundColor: C.secondary, borderColor: C.border }]}
                     value={String(draft.config[field.key] ?? "")}
                     onChangeText={v => setVal(field.key, v)}
                     placeholder={field.placeholder}
-                    placeholderTextColor={colors.mutedForeground}
+                    placeholderTextColor={C.muted}
                   />
                 )}
                 {field.type === "textarea" && (
                   <TextInput
-                    style={[s.formInput, s.formTextarea, { color: colors.foreground, backgroundColor: colors.secondary, borderColor: colors.border }]}
+                    style={[s.formInput, s.formTextarea, { color: C.fg, backgroundColor: C.secondary, borderColor: C.border }]}
                     value={String(draft.config[field.key] ?? "")}
                     onChangeText={v => setVal(field.key, v)}
                     placeholder={field.placeholder}
-                    placeholderTextColor={colors.mutedForeground}
+                    placeholderTextColor={C.muted}
                     multiline
                     numberOfLines={4}
                   />
@@ -691,23 +695,23 @@ function NodeEditor({ node, colors, onSave, onDelete, onClose }: { node: FlowNod
                   <Switch
                     value={!!draft.config[field.key]}
                     onValueChange={v => setVal(field.key, v)}
-                    trackColor={{ false: colors.secondary, true: cfg.color + "80" }}
-                    thumbColor={draft.config[field.key] ? cfg.color : colors.mutedForeground}
+                    trackColor={{ false: C.secondary, true: cfg.color + "80" }}
+                    thumbColor={draft.config[field.key] ? cfg.color : C.muted}
                   />
                 )}
                 {field.type === "select" && (
                   <View>
                     <Pressable
-                      style={[s.formInput, { backgroundColor: colors.secondary, borderColor: selectOpen === field.key ? cfg.color : colors.border, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}
+                      style={[s.formInput, { backgroundColor: C.secondary, borderColor: selectOpen === field.key ? cfg.color : C.border, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}
                       onPress={() => setSelectOpen(selectOpen === field.key ? null : field.key)}
                     >
-                      <Text style={{ color: draft.config[field.key] ? colors.foreground : colors.mutedForeground, flex: 1, fontSize: 14 }} numberOfLines={1}>
+                      <Text style={{ color: draft.config[field.key] ? C.fg : C.muted, flex: 1, fontSize: 14 }} numberOfLines={1}>
                         {field.options?.find(o => o.value === draft.config[field.key])?.label ?? "Selecione…"}
                       </Text>
-                      <Feather name={selectOpen === field.key ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
+                      <Feather name={selectOpen === field.key ? "chevron-up" : "chevron-down"} size={16} color={C.muted} />
                     </Pressable>
                     {selectOpen === field.key && (
-                      <View style={[s.selectDropdown, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                      <View style={[s.selectDropdown, { backgroundColor: C.card, borderColor: C.border }]}>
                         <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled>
                           {field.options?.map(opt => (
                             <Pressable
@@ -715,7 +719,7 @@ function NodeEditor({ node, colors, onSave, onDelete, onClose }: { node: FlowNod
                               style={[s.selectOption, draft.config[field.key] === opt.value && { backgroundColor: cfg.dim }]}
                               onPress={() => { setVal(field.key, opt.value); setSelectOpen(null); }}
                             >
-                              <Text style={[s.selectOptionText, { color: draft.config[field.key] === opt.value ? cfg.color : colors.foreground }]}>{opt.label}</Text>
+                              <Text style={[s.selectOptionText, { color: draft.config[field.key] === opt.value ? cfg.color : C.fg }]}>{opt.label}</Text>
                             </Pressable>
                           ))}
                         </ScrollView>
@@ -737,7 +741,7 @@ function NodeEditor({ node, colors, onSave, onDelete, onClose }: { node: FlowNod
   );
 }
 
-function TypePickerModal({ visible, colors, onSelect, onClose }: { visible: boolean; colors: ReturnType<typeof useColors>; onSelect: (t: NodeType) => void; onClose: () => void }) {
+function TypePickerModal({ visible, onSelect, onClose }: { visible: boolean; onSelect: (t: NodeType) => void; onClose: () => void }) {
   const insets = useSafeAreaInsets();
   const types: NodeType[] = ["command", "action", "condition", "response", "buttons"];
   const descriptions: Record<NodeType, string> = {
@@ -750,23 +754,23 @@ function TypePickerModal({ visible, colors, onSelect, onClose }: { visible: bool
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={s.modalOverlay} onPress={onClose} />
-      <View style={[s.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }]}>
-        <View style={[s.editorHandle, { backgroundColor: colors.border }]} />
-        <Text style={[s.modalTitle, { color: colors.foreground }]}>Adicionar bloco</Text>
+      <View style={[s.modalSheet, { backgroundColor: C.card, paddingBottom: insets.bottom + 20 }]}>
+        <View style={[s.editorHandle, { backgroundColor: C.border }]} />
+        <Text style={[s.modalTitle, { color: C.fg }]}>Adicionar bloco</Text>
         {types.map(type => {
           const cfg = NODE_CFG[type];
           return (
             <Pressable
               key={type}
-              style={({ pressed }) => [s.typeRow, { backgroundColor: pressed ? cfg.dim : "transparent", borderColor: colors.border }]}
+              style={({ pressed }) => [s.typeRow, { backgroundColor: pressed ? cfg.dim : "transparent", borderColor: C.border }]}
               onPress={() => onSelect(type)}
             >
               <View style={[s.typeIcon, { backgroundColor: cfg.dim }]}>
                 <Feather name={cfg.icon as any} size={20} color={cfg.color} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={[s.typeName, { color: colors.foreground }]}>{cfg.label}</Text>
-                <Text style={[s.typeDesc, { color: colors.mutedForeground }]}>{descriptions[type]}</Text>
+                <Text style={[s.typeName, { color: C.fg }]}>{cfg.label}</Text>
+                <Text style={[s.typeDesc, { color: C.muted }]}>{descriptions[type]}</Text>
               </View>
               <Feather name="plus" size={18} color={cfg.color} />
             </Pressable>
@@ -777,29 +781,29 @@ function TypePickerModal({ visible, colors, onSelect, onClose }: { visible: bool
   );
 }
 
-function TemplatesModal({ visible, colors, onSelect, onClose }: { visible: boolean; colors: ReturnType<typeof useColors>; onSelect: (t: typeof TEMPLATES[0]) => void; onClose: () => void }) {
+function TemplatesModal({ visible, onSelect, onClose }: { visible: boolean; onSelect: (t: typeof TEMPLATES[0]) => void; onClose: () => void }) {
   const insets = useSafeAreaInsets();
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={s.modalOverlay} onPress={onClose} />
-      <View style={[s.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }]}>
-        <View style={[s.editorHandle, { backgroundColor: colors.border }]} />
-        <Text style={[s.modalTitle, { color: colors.foreground }]}>Templates prontos</Text>
-        <Text style={[s.modalSubtitle, { color: colors.mutedForeground }]}>Substitui o fluxo atual</Text>
+      <View style={[s.modalSheet, { backgroundColor: C.card, paddingBottom: insets.bottom + 20 }]}>
+        <View style={[s.editorHandle, { backgroundColor: C.border }]} />
+        <Text style={[s.modalTitle, { color: C.fg }]}>Templates prontos</Text>
+        <Text style={[s.modalSubtitle, { color: C.muted }]}>Substitui o fluxo atual</Text>
         {TEMPLATES.map(tpl => (
           <Pressable
             key={tpl.name}
-            style={({ pressed }) => [s.typeRow, { backgroundColor: pressed ? "#F9731618" : "transparent", borderColor: colors.border }]}
+            style={({ pressed }) => [s.typeRow, { backgroundColor: pressed ? "#F9731618" : "transparent", borderColor: C.border }]}
             onPress={() => onSelect(tpl)}
           >
             <View style={[s.typeIcon, { backgroundColor: "#F9731618" }]}>
               <Feather name={tpl.icon as any} size={20} color="#F97316" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[s.typeName, { color: colors.foreground }]}>{tpl.name}</Text>
-              <Text style={[s.typeDesc, { color: colors.mutedForeground }]}>{tpl.nodes.length} blocos · {tpl.edges.length} conexões</Text>
+              <Text style={[s.typeName, { color: C.fg }]}>{tpl.name}</Text>
+              <Text style={[s.typeDesc, { color: C.muted }]}>{tpl.nodes.length} blocos · {tpl.edges.length} conexões</Text>
             </View>
-            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+            <Feather name="chevron-right" size={18} color={C.muted} />
           </Pressable>
         ))}
       </View>

@@ -1,24 +1,16 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useLocation } from "wouter";
-import {
-  Bot, QrCode, Hash, Wifi, WifiOff, Loader2, ArrowLeft, RefreshCw, Phone,
-} from "lucide-react";
+import { Bot, QrCode, Hash, Wifi, WifiOff, Loader2, ArrowLeft, RefreshCw, Phone } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useGetBot, useConnectBot, useDisconnectBot, getGetBotQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-  connected: { label: "Conectado", color: "bg-green-500/10 text-green-400 border-green-500/20" },
-  connecting: { label: "Conectando...", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
-  disconnected: { label: "Desconectado", color: "bg-white/5 text-muted-foreground border-white/10" },
-  error: { label: "Erro", color: "bg-red-500/10 text-red-400 border-red-500/20" },
+const STATUS_CFG: Record<string, { label: string; color: string }> = {
+  connected:    { label: "Online",      color: "#22C55E" },
+  connecting:   { label: "Conectando", color: "#F59E0B" },
+  disconnected: { label: "Offline",     color: "#4b4c6b" },
+  error:        { label: "Erro",        color: "#EF4444" },
 };
 
 export default function BotDetailPage() {
@@ -35,110 +27,69 @@ export default function BotDetailPage() {
   const [liveQr, setLiveQr] = useState<string | null>(null);
   const [livePairCode, setLivePairCode] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
+  const [connType, setConnType] = useState<"code" | "qrcode">("code");
   const sseRef = useRef<EventSource | null>(null);
 
-  const closeSse = () => {
-    if (sseRef.current) {
-      sseRef.current.close();
-      sseRef.current = null;
-    }
-  };
+  const closeSse = () => { if (sseRef.current) { sseRef.current.close(); sseRef.current = null; } };
 
   const openSse = (id: string) => {
     closeSse();
     const token = localStorage.getItem("bot_token") ?? "";
-    const url = `/api/bots/${id}/stream?token=${encodeURIComponent(token)}`;
-    const es = new EventSource(url);
+    const es = new EventSource(`/api/bots/${id}/stream?token=${encodeURIComponent(token)}`);
     sseRef.current = es;
-
-    es.addEventListener("qr", (e) => {
-      const data = JSON.parse((e as MessageEvent).data);
-      setLiveQr(data.qrCode);
-      setLivePairCode(null);
-      refetch();
-    });
-
-    es.addEventListener("paircode", (e) => {
-      const data = JSON.parse((e as MessageEvent).data);
-      setLivePairCode(data.code);
-      setLiveQr(null);
-      refetch();
-    });
-
+    es.addEventListener("qr", (e) => { const d = JSON.parse((e as MessageEvent).data); setLiveQr(d.qrCode); setLivePairCode(null); refetch(); });
+    es.addEventListener("paircode", (e) => { const d = JSON.parse((e as MessageEvent).data); setLivePairCode(d.code); setLiveQr(null); refetch(); });
     es.addEventListener("status", (e) => {
-      const data = JSON.parse((e as MessageEvent).data);
-      if (data.status === "connected") {
-        setConnecting(false);
-        setLiveQr(null);
-        setLivePairCode(null);
-        closeSse();
-        toast({ title: "WhatsApp conectado!", description: `Número: +${data.phone}` });
-      } else if (data.status === "disconnected") {
-        setConnecting(false);
-        closeSse();
-      }
-      refetch();
-      queryClient.invalidateQueries({ queryKey: getGetBotQueryKey(botId) });
+      const d = JSON.parse((e as MessageEvent).data);
+      if (d.status === "connected") {
+        setConnecting(false); setLiveQr(null); setLivePairCode(null); closeSse();
+        toast({ title: "WhatsApp conectado!", description: `Número: +${d.phone}` });
+      } else if (d.status === "disconnected") { setConnecting(false); closeSse(); }
+      refetch(); queryClient.invalidateQueries({ queryKey: getGetBotQueryKey(botId) });
     });
-
     es.addEventListener("error", (e) => {
-      try {
-        const data = JSON.parse((e as MessageEvent).data ?? "{}");
-        toast({ title: "Erro na conexão", description: data.message ?? "Tente novamente.", variant: "destructive" });
-      } catch {}
+      try { const d = JSON.parse((e as MessageEvent).data ?? "{}"); toast({ title: "Erro", description: d.message ?? "Tente novamente.", variant: "destructive" }); } catch {}
       setConnecting(false);
     });
-
     es.onerror = () => {};
   };
 
-  useEffect(() => {
-    return () => closeSse();
-  }, []);
+  useEffect(() => () => closeSse(), []);
 
-  const handleConnect = async (type: "qrcode" | "code") => {
-    if (type === "code" && !phoneInput.trim()) {
+  const handleConnect = async () => {
+    if (connType === "code" && !phoneInput.trim()) {
       toast({ title: "Informe o número", description: "Digite o número do WhatsApp do bot.", variant: "destructive" });
       return;
     }
     try {
-      setConnecting(true);
-      setLiveQr(null);
-      setLivePairCode(null);
-      await connectBot.mutateAsync({ botId, data: { type, phone: phoneInput || undefined } });
+      setConnecting(true); setLiveQr(null); setLivePairCode(null);
+      await connectBot.mutateAsync({ botId, data: { type: connType, phone: phoneInput || undefined } });
       queryClient.invalidateQueries({ queryKey: getGetBotQueryKey(botId) });
       openSse(botId);
-      toast({ title: "Aguardando...", description: type === "qrcode" ? "QR Code sendo gerado..." : "Código sendo gerado..." });
-    } catch {
-      setConnecting(false);
-      toast({ title: "Erro", description: "Não foi possível iniciar a conexão.", variant: "destructive" });
-    }
+      toast({ title: "Aguardando...", description: connType === "qrcode" ? "QR Code sendo gerado..." : "Código sendo gerado..." });
+    } catch { setConnecting(false); toast({ title: "Erro", description: "Não foi possível iniciar a conexão.", variant: "destructive" }); }
   };
 
   const handleDisconnect = async () => {
     try {
-      closeSse();
-      setLiveQr(null);
-      setLivePairCode(null);
-      setConnecting(false);
+      closeSse(); setLiveQr(null); setLivePairCode(null); setConnecting(false);
       await disconnectBot.mutateAsync({ botId });
       queryClient.invalidateQueries({ queryKey: getGetBotQueryKey(botId) });
       toast({ title: "Bot desconectado" });
-    } catch {
-      toast({ title: "Erro", description: "Não foi possível desconectar.", variant: "destructive" });
-    }
+    } catch { toast({ title: "Erro", description: "Não foi possível desconectar.", variant: "destructive" }); }
   };
 
   const isConnecting = connecting || bot?.status === "connecting";
   const displayQr = liveQr;
   const displayCode = livePairCode ?? (bot?.status === "connecting" && bot.connectionType === "code" ? bot.pairCode : null);
+  const cfg = STATUS_CFG[bot?.status ?? "disconnected"] ?? STATUS_CFG.disconnected;
 
   if (isLoading) {
     return (
       <DashboardLayout>
         <div className="space-y-4">
-          <Skeleton className="h-24 rounded-xl bg-card" />
-          <Skeleton className="h-64 rounded-xl bg-card" />
+          <div className="h-24 bg-[#0d0e16] border border-[#1a1b28] rounded-lg animate-pulse" />
+          <div className="h-64 bg-[#0d0e16] border border-[#1a1b28] rounded-lg animate-pulse" />
         </div>
       </DashboardLayout>
     );
@@ -147,8 +98,9 @@ export default function BotDetailPage() {
   if (!bot) {
     return (
       <DashboardLayout>
-        <div className="text-center py-12">
-          <p className="text-muted-foreground">Bot não encontrado</p>
+        <div className="flex flex-col items-center py-20 gap-2">
+          <Bot className="h-8 w-8 text-[#2a2b3e]" />
+          <p className="text-[13px] text-[#4b4c6b]">Bot não encontrado</p>
         </div>
       </DashboardLayout>
     );
@@ -158,188 +110,149 @@ export default function BotDetailPage() {
     <DashboardLayout>
       <button
         onClick={() => setLocation("/dashboard/bots")}
-        className="flex items-center gap-2 text-muted-foreground hover:text-white text-sm mb-6 transition-colors"
+        className="flex items-center gap-1.5 text-[#4b4c6b] hover:text-white text-[12px] mb-6 transition-colors"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-3.5 w-3.5" />
         Voltar para Meus Bots
       </button>
 
-      <div className="space-y-6">
-        {/* Bot header */}
-        <div className="bg-card border border-white/5 rounded-xl p-6">
+      <div className="space-y-4">
+        <div className="bg-[#0d0e16] border border-[#1a1b28] rounded-lg p-5 border-l-[3px]" style={{ borderLeftColor: cfg.color }}>
           <div className="flex items-start justify-between">
-            <div className="flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                <Bot className="h-6 w-6 text-primary" />
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-md bg-[#F97316]/15 flex items-center justify-center">
+                <Bot className="h-5 w-5 text-[#F97316]" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-white">{bot.name}</h1>
-                <p className="text-muted-foreground text-sm">
-                  {bot.phone ? `+${bot.phone}` : "Sem número vinculado"} &bull; {bot.totalGroups} grupos
+                <h1 className="text-[18px] font-bold text-white">{bot.name}</h1>
+                <p className="text-[12px] text-[#4b4c6b]">
+                  {bot.phone ? `+${bot.phone}` : "Sem número"} &bull; {bot.totalGroups} grupos
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-2">
-              <Badge className={`border ${statusConfig[bot.status]?.color || statusConfig.disconnected.color}`}>
-                {isConnecting && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                {statusConfig[bot.status]?.label || "Desconhecido"}
-              </Badge>
+              <div className="px-2.5 py-1 rounded text-[11px] font-bold border flex items-center gap-1.5" style={{ color: cfg.color, backgroundColor: cfg.color + "15", borderColor: cfg.color + "30" }}>
+                {isConnecting && <Loader2 className="h-3 w-3 animate-spin" />}
+                {cfg.label}
+              </div>
               {bot.status === "connected" && (
-                <Button size="sm" variant="outline" onClick={handleDisconnect} className="border-red-500/20 text-red-400 hover:bg-red-500/10 text-xs">
-                  <WifiOff className="h-3 w-3 mr-1" />
+                <button onClick={handleDisconnect} className="h-7 px-3 flex items-center gap-1.5 rounded-md bg-[#EF4444]/10 border border-[#EF4444]/20 text-[#EF4444] text-[11px] font-semibold hover:bg-[#EF4444]/20 transition-colors">
+                  <WifiOff className="h-3 w-3" />
                   Desconectar
-                </Button>
+                </button>
               )}
             </div>
           </div>
         </div>
 
-        {/* Connection form — shown when disconnected and not in progress */}
         {!isConnecting && (bot.status === "disconnected" || bot.status === "error") && (
-          <div className="bg-card border border-white/5 rounded-xl p-6">
-            <h2 className="text-white font-semibold mb-2">Conectar ao WhatsApp</h2>
-            <p className="text-muted-foreground text-sm mb-5">
-              Informe o número do WhatsApp que será usado como bot (com DDI e DDD, ex: 5511999990000).
-            </p>
+          <div className="bg-[#0d0e16] border border-[#1a1b28] rounded-lg p-5">
+            <p className="text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-4">Conectar ao WhatsApp</p>
 
-            <div className="mb-5">
-              <Label className="text-white/80 text-sm mb-2 block">
-                <Phone className="inline h-3.5 w-3.5 mr-1" />
-                Número do bot (WhatsApp)
-              </Label>
-              <Input
-                placeholder="Ex: 5511999990000"
-                value={phoneInput}
-                onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ""))}
-                className="bg-background border-white/10 text-white max-w-xs"
-                maxLength={15}
-              />
-              <p className="text-xs text-muted-foreground mt-1">Somente números, com DDI (55 para Brasil)</p>
+            <div className="mb-4">
+              <label className="block text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-1.5">Número do bot (com DDI)</label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#4b4c6b]" />
+                <input
+                  type="tel"
+                  placeholder="5511999990000"
+                  value={phoneInput}
+                  onChange={(e) => setPhoneInput(e.target.value.replace(/\D/g, ""))}
+                  maxLength={15}
+                  className="w-full max-w-xs bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors"
+                />
+              </div>
+              <p className="text-[11px] text-[#4b4c6b] mt-1">Somente números, com DDI (55 para Brasil)</p>
             </div>
 
-            <Tabs defaultValue="code">
-              <TabsList className="bg-background border border-white/10 mb-6">
-                <TabsTrigger value="code" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                  <Hash className="h-4 w-4 mr-2" />
-                  Código 8 Dígitos
-                </TabsTrigger>
-                <TabsTrigger value="qrcode" className="data-[state=active]:bg-primary data-[state=active]:text-white">
-                  <QrCode className="h-4 w-4 mr-2" />
-                  QR Code
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="code">
-                <p className="text-muted-foreground text-sm mb-4">
-                  Gere um código de pareamento. No WhatsApp vá em{" "}
-                  <strong className="text-white/70">Dispositivos Vinculados → Vincular com número</strong> e insira o código.
-                </p>
-                <Button
-                  onClick={() => handleConnect("code")}
-                  disabled={connectBot.isPending}
-                  className="bg-primary hover:bg-primary/90 text-white"
+            <div className="flex gap-1 mb-5 bg-[#131420] border border-[#1a1b28] rounded-md p-1 w-fit">
+              {([["code", "Código 8 Dígitos", Hash], ["qrcode", "QR Code", QrCode]] as const).map(([t, label, Icon]) => (
+                <button
+                  key={t}
+                  onClick={() => setConnType(t)}
+                  className={`px-4 py-1.5 rounded text-[12px] font-semibold flex items-center gap-1.5 transition-colors ${connType === t ? "bg-[#F97316] text-white" : "text-[#4b4c6b] hover:text-[#8b8ea0]"}`}
                 >
-                  {connectBot.isPending
-                    ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    : <Hash className="mr-2 h-4 w-4" />
-                  }
-                  Gerar Código de Pareamento
-                </Button>
-              </TabsContent>
+                  <Icon className="h-3.5 w-3.5" />
+                  {label}
+                </button>
+              ))}
+            </div>
 
-              <TabsContent value="qrcode">
-                <p className="text-muted-foreground text-sm mb-4">
-                  Clique em Gerar QR Code e escaneie com o WhatsApp em{" "}
-                  <strong className="text-white/70">Dispositivos Vinculados → Vincular dispositivo</strong>.
-                </p>
-                <Button
-                  onClick={() => handleConnect("qrcode")}
-                  disabled={connectBot.isPending}
-                  className="bg-primary hover:bg-primary/90 text-white"
-                >
-                  {connectBot.isPending
-                    ? <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    : <QrCode className="mr-2 h-4 w-4" />
-                  }
-                  Gerar QR Code
-                </Button>
-              </TabsContent>
-            </Tabs>
+            {connType === "code" && (
+              <p className="text-[12px] text-[#4b4c6b] mb-4">
+                Gere um código. No WhatsApp vá em <span className="text-[#8b8ea0]">Dispositivos Vinculados → Vincular com número</span> e insira o código.
+              </p>
+            )}
+            {connType === "qrcode" && (
+              <p className="text-[12px] text-[#4b4c6b] mb-4">
+                Clique em Gerar QR Code e escaneie em <span className="text-[#8b8ea0]">Dispositivos Vinculados → Vincular dispositivo</span>.
+              </p>
+            )}
+
+            <button
+              onClick={handleConnect}
+              disabled={connectBot.isPending}
+              className="bg-[#F97316] hover:bg-[#ea6a00] disabled:opacity-60 text-white text-[13px] font-bold px-5 py-2.5 rounded-md transition-colors flex items-center gap-2"
+            >
+              {connectBot.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : connType === "code" ? <Hash className="h-3.5 w-3.5" /> : <QrCode className="h-3.5 w-3.5" />}
+              {connType === "code" ? "Gerar Código de Pareamento" : "Gerar QR Code"}
+            </button>
           </div>
         )}
 
-        {/* Connecting / waiting for QR or pairing code */}
         {isConnecting && (
-          <div className="bg-card border border-yellow-500/20 rounded-xl p-6">
-            <div className="flex items-center gap-3 mb-5">
-              <Loader2 className="h-5 w-5 text-yellow-400 animate-spin" />
-              <h2 className="text-white font-semibold">Aguardando Conexão</h2>
+          <div className="bg-[#0d0e16] border border-[#F59E0B]/30 border-l-[3px] border-l-[#F59E0B] rounded-lg p-5">
+            <div className="flex items-center gap-2 mb-5">
+              <Loader2 className="h-4 w-4 text-[#F59E0B] animate-spin" />
+              <p className="text-[13px] font-semibold text-[#F59E0B]">Aguardando Conexão</p>
             </div>
 
             {displayCode ? (
               <div className="flex flex-col items-center gap-4">
-                <p className="text-muted-foreground text-sm">Insira este código no WhatsApp</p>
-                <div className="text-5xl font-mono font-bold tracking-widest text-primary bg-primary/10 px-8 py-5 rounded-xl border border-primary/20">
+                <p className="text-[12px] text-[#4b4c6b]">Insira este código no WhatsApp</p>
+                <div className="text-5xl font-mono font-black tracking-widest text-[#F97316] bg-[#F97316]/10 px-8 py-5 rounded-lg border border-[#F97316]/20">
                   {displayCode}
                 </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  WhatsApp → Configurações → Dispositivos Vinculados → Vincular com número
-                </p>
-                <p className="text-xs text-yellow-400/80 text-center">
-                  O código expira em ~60 segundos. Insira rapidamente!
-                </p>
+                <p className="text-[11px] text-[#4b4c6b] text-center">WhatsApp → Configurações → Dispositivos Vinculados → Vincular com número</p>
+                <p className="text-[11px] text-[#F59E0B] text-center">O código expira em ~60 segundos. Insira rapidamente!</p>
               </div>
             ) : displayQr ? (
               <div className="flex flex-col items-center gap-4">
-                <p className="text-muted-foreground text-sm">Escaneie o QR Code com seu WhatsApp</p>
-                <div className="p-4 bg-white rounded-xl">
-                  <img src={displayQr} alt="QR Code WhatsApp" className="w-64 h-64" />
+                <p className="text-[12px] text-[#4b4c6b]">Escaneie com seu WhatsApp</p>
+                <div className="p-3 bg-white rounded-lg">
+                  <img src={displayQr} alt="QR Code" className="w-56 h-56" />
                 </div>
-                <p className="text-xs text-muted-foreground text-center">
-                  WhatsApp → Dispositivos Vinculados → Vincular dispositivo
-                </p>
+                <p className="text-[11px] text-[#4b4c6b] text-center">WhatsApp → Dispositivos Vinculados → Vincular dispositivo</p>
               </div>
             ) : (
               <div className="flex flex-col items-center gap-3 py-8">
-                <Loader2 className="h-10 w-10 text-primary animate-spin" />
-                <p className="text-muted-foreground text-sm">Iniciando sessão WhatsApp...</p>
-                <p className="text-xs text-muted-foreground">Aguarde alguns segundos</p>
+                <Loader2 className="h-10 w-10 text-[#F97316] animate-spin" />
+                <p className="text-[13px] text-[#4b4c6b]">Iniciando sessão WhatsApp...</p>
               </div>
             )}
 
             <div className="flex justify-center gap-3 mt-6">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  refetch();
-                  queryClient.invalidateQueries({ queryKey: getGetBotQueryKey(botId) });
-                }}
-                className="text-muted-foreground"
+              <button
+                onClick={() => { refetch(); queryClient.invalidateQueries({ queryKey: getGetBotQueryKey(botId) }); }}
+                className="flex items-center gap-1.5 text-[12px] text-[#4b4c6b] hover:text-[#8b8ea0] transition-colors"
               >
-                <RefreshCw className="h-3 w-3 mr-1" />
+                <RefreshCw className="h-3 w-3" />
                 Atualizar
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDisconnect}
-                className="text-red-400/70 hover:text-red-400"
-              >
+              </button>
+              <button onClick={handleDisconnect} className="text-[12px] text-[#EF4444]/70 hover:text-[#EF4444] transition-colors">
                 Cancelar
-              </Button>
+              </button>
             </div>
           </div>
         )}
 
-        {/* Connected */}
         {bot.status === "connected" && !isConnecting && (
-          <div className="bg-card border border-green-500/10 rounded-xl p-6">
-            <div className="flex items-center gap-3 text-green-400">
-              <Wifi className="h-5 w-5" />
-              <span className="font-semibold">Bot conectado e ativo!</span>
+          <div className="bg-[#0d0e16] border border-[#22C55E]/20 border-l-[3px] border-l-[#22C55E] rounded-lg p-5">
+            <div className="flex items-center gap-2">
+              <Wifi className="h-4 w-4 text-[#22C55E]" />
+              <p className="text-[14px] font-semibold text-[#22C55E]">Bot conectado e ativo!</p>
             </div>
-            <p className="text-muted-foreground text-sm mt-2">
+            <p className="text-[12px] text-[#4b4c6b] mt-2">
               Seu bot está em execução. Acesse o Builder para configurar os comandos.
             </p>
           </div>

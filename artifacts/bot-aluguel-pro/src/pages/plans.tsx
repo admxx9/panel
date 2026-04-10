@@ -1,16 +1,19 @@
-import { CheckCircle, Loader2, Crown, Star, Zap } from "lucide-react";
+import { CheckCircle, Loader2, Coins, Star, Zap, Crown } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { useListPlans, useGetActivePlan, useActivatePlan, getGetActivePlanQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/lib/auth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const planIcons: Record<string, React.ElementType> = {
+const PLAN_COLORS: Record<string, string> = {
+  basico: "#F97316",
+  pro:    "#C850C0",
+  premium: "#F59E0B",
+};
+
+const PLAN_ICONS: Record<string, React.ElementType> = {
   basico: Star,
   pro: Zap,
   premium: Crown,
@@ -28,7 +31,7 @@ export default function PlansPage() {
     if ((user?.coins ?? 0) < coins) {
       toast({
         title: "Moedas insuficientes",
-        description: `Voce precisa de ${coins} moedas mas tem apenas ${user?.coins}. Recarregue em Comprar Moedas.`,
+        description: `Você precisa de ${coins} moedas mas tem apenas ${user?.coins}. Recarregue em Comprar Moedas.`,
         variant: "destructive",
       });
       return;
@@ -36,11 +39,10 @@ export default function PlansPage() {
     try {
       await activatePlan.mutateAsync({ planId });
       queryClient.invalidateQueries({ queryKey: getGetActivePlanQueryKey() });
-      toast({ title: "Plano ativado!", description: `${planName} ativado com sucesso por 30 dias!` });
+      toast({ title: "Plano ativado!", description: `${planName} ativado com sucesso!` });
     } catch (err: unknown) {
       const apiErr = err as { data?: { message?: string }; message?: string };
-      const msg = apiErr?.data?.message || apiErr?.message || "Erro ao ativar plano";
-      toast({ title: "Erro", description: msg, variant: "destructive" });
+      toast({ title: "Erro", description: apiErr?.data?.message || apiErr?.message || "Erro ao ativar", variant: "destructive" });
     }
   };
 
@@ -48,23 +50,25 @@ export default function PlansPage() {
 
   return (
     <DashboardLayout>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Planos</h1>
-        <p className="text-muted-foreground text-sm mt-1">
-          Saldo atual:{" "}
-          <span className="text-primary font-semibold">{user?.coins ?? 0} moedas</span>
-        </p>
+      <div className="mb-6 pb-4 border-b border-[#1a1b28] flex items-center justify-between">
+        <div>
+          <p className="text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase">Assinatura</p>
+          <h1 className="text-[20px] font-bold text-white mt-0.5">Planos</h1>
+        </div>
+        <div className="flex items-center gap-2 bg-[#0d0e16] border border-[#1a1b28] rounded-lg px-3 py-2">
+          <Coins className="h-3.5 w-3.5 text-[#F97316]" />
+          <span className="text-[13px] font-bold text-[#F97316]">{user?.coins ?? 0}</span>
+          <span className="text-[11px] text-[#4b4c6b]">moedas</span>
+        </div>
       </div>
 
       {activePlan && "planId" in activePlan && activePlan.planId && (
-        <div className="bg-green-500/5 border border-green-500/20 rounded-xl p-4 mb-6 flex items-center gap-3">
-          <CheckCircle className="h-5 w-5 text-green-400 flex-shrink-0" />
+        <div className="bg-[#0d0e16] border border-[#22C55E]/30 border-l-[3px] border-l-[#22C55E] rounded-lg p-4 mb-6 flex items-center gap-3">
+          <CheckCircle className="h-4 w-4 text-[#22C55E] shrink-0" />
           <div>
-            <p className="text-green-400 font-medium text-sm">
-              Plano {activePlan.planName} ativo
-            </p>
+            <p className="text-[13px] font-semibold text-[#22C55E]">Plano {activePlan.planName} ativo</p>
             {activePlan.expiresAt && (
-              <p className="text-muted-foreground text-xs">
+              <p className="text-[11px] text-[#4b4c6b]">
                 Expira em {format(new Date(activePlan.expiresAt), "dd/MM/yyyy", { locale: ptBR })}
               </p>
             )}
@@ -73,69 +77,70 @@ export default function PlansPage() {
       )}
 
       {plansLoading || planLoading ? (
-        <div className="grid md:grid-cols-3 gap-6">
-          {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-80 rounded-xl bg-card" />)}
+        <div className="grid md:grid-cols-3 gap-4">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-80 bg-[#0d0e16] border border-[#1a1b28] rounded-lg animate-pulse" />
+          ))}
         </div>
       ) : (
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-3 gap-4">
           {plans?.map((plan) => {
-            const PlanIcon = planIcons[plan.id] || Star;
+            const color = PLAN_COLORS[plan.id] ?? "#F97316";
             const active = isActivePlan(plan.id);
-            const isPro = plan.id === "pro";
+            const PlanIcon = PLAN_ICONS[plan.id] ?? Star;
             return (
               <div
                 key={plan.id}
-                className={`relative p-6 rounded-xl border transition-all duration-300 ${
-                  isPro
-                    ? "border-primary/30 bg-primary/5 shadow-lg shadow-primary/10"
-                    : active
-                    ? "border-green-500/30 bg-green-500/5"
-                    : "border-white/5 bg-card hover:border-white/10"
-                }`}
+                className="bg-[#0d0e16] border border-[#1a1b28] rounded-lg p-5 flex flex-col gap-4 border-l-[3px] transition-colors hover:border-[#2a2b3e]"
+                style={{ borderLeftColor: color }}
               >
-                {isPro && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-white border-0 text-xs">
-                    Mais Popular
-                  </Badge>
-                )}
-                {active && (
-                  <Badge className="absolute -top-3 right-4 bg-green-500 text-white border-0 text-xs">
-                    Ativo
-                  </Badge>
-                )}
-                <div className="mb-6">
-                  <div className={`h-10 w-10 rounded-lg flex items-center justify-center mb-3 ${isPro ? "bg-primary/20" : "bg-white/5"}`}>
-                    <PlanIcon className={`h-5 w-5 ${isPro ? "text-primary" : "text-muted-foreground"}`} />
+                <div className="flex items-start justify-between">
+                  <div
+                    className="h-9 w-9 rounded-md flex items-center justify-center"
+                    style={{ backgroundColor: color + "20" }}
+                  >
+                    <PlanIcon className="h-4 w-4" style={{ color }} />
                   </div>
-                  <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-                  <p className="text-muted-foreground text-sm mt-1">{plan.description}</p>
-                  <div className="mt-3 flex items-baseline gap-1">
-                    <span className="text-3xl font-extrabold text-white">{plan.coins}</span>
-                    <span className="text-muted-foreground text-sm">moedas / {plan.days} dias</span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    R$ {(plan.coins * 0.01).toFixed(2)} &bull; {plan.maxGroups === -1 ? "Grupos ilimitados" : `${plan.maxGroups} grupo${plan.maxGroups > 1 ? "s" : ""}`}
+                  {active && (
+                    <div
+                      className="px-2 py-1 rounded text-[10px] font-bold border"
+                      style={{ color, backgroundColor: color + "15", borderColor: color + "30" }}
+                    >
+                      ATIVO
+                    </div>
+                  )}
+                </div>
+
+                <div>
+                  <h3 className="text-[16px] font-bold text-white">{plan.name}</h3>
+                  <p className="text-[12px] text-[#4b4c6b] mt-1">{plan.description}</p>
+                  <p className="text-[28px] font-extrabold mt-3 leading-none" style={{ color }}>{plan.coins}</p>
+                  <p className="text-[12px] text-[#4b4c6b] mt-1">
+                    moedas &bull; {plan.days} dias &bull; {plan.maxGroups === -1 ? "Grupos ilimitados" : `${plan.maxGroups} grupos`}
                   </p>
                 </div>
 
-                <ul className="space-y-2.5 mb-6">
+                <ul className="space-y-2 flex-1">
                   {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2 text-sm text-muted-foreground">
-                      <CheckCircle className="h-4 w-4 text-primary flex-shrink-0 mt-0.5" />
+                    <li key={feature} className="flex items-start gap-2 text-[12px] text-[#8b8ea0]">
+                      <CheckCircle className="h-3.5 w-3.5 shrink-0 mt-0.5" style={{ color }} />
                       {feature}
                     </li>
                   ))}
                 </ul>
 
-                <Button
-                  className={`w-full ${isPro ? "bg-primary hover:bg-primary/90 text-white" : "border-white/10 bg-white/5 hover:bg-white/10 text-white"}`}
-                  variant={isPro ? "default" : "outline"}
+                <button
                   disabled={active || activatePlan.isPending}
                   onClick={() => handleActivate(plan.id, plan.name, plan.coins)}
+                  className="w-full py-2.5 rounded-md text-[13px] font-bold transition-colors flex items-center justify-center gap-2 disabled:opacity-60"
+                  style={active
+                    ? { backgroundColor: color + "15", color, border: `1px solid ${color}30` }
+                    : { backgroundColor: color, color: "#fff" }
+                  }
                 >
-                  {activatePlan.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  {activatePlan.isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                   {active ? "Plano Ativo" : `Ativar por ${plan.coins} moedas`}
-                </Button>
+                </button>
               </div>
             );
           })}

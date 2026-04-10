@@ -1,12 +1,8 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useListBots } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Save, Settings, Bot, Hash, Phone } from "lucide-react";
+import { Loader2, Save, Bot, Hash, Phone, Settings, HelpCircle } from "lucide-react";
 
 type BotSettings = {
   name: string;
@@ -43,10 +39,7 @@ export default function SettingsPage() {
       const token = localStorage.getItem("bot_token") ?? "";
       const res = await fetch(`/api/bots/${selectedBotId}/settings`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(settings),
       });
       if (!res.ok) {
@@ -55,11 +48,7 @@ export default function SettingsPage() {
       }
       toast({ title: "Configurações salvas!", description: "As configurações do bot foram atualizadas." });
     } catch (err) {
-      toast({
-        title: "Erro",
-        description: (err as Error).message ?? "Não foi possível salvar.",
-        variant: "destructive",
-      });
+      toast({ title: "Erro", description: (err as Error).message ?? "Não foi possível salvar.", variant: "destructive" });
     } finally {
       setSaving(false);
     }
@@ -67,123 +56,135 @@ export default function SettingsPage() {
 
   return (
     <DashboardLayout>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Configurações do Bot</h1>
-        <p className="text-muted-foreground text-sm mt-1">Personalize o prefixo, nome e número do dono</p>
+      <div className="mb-6 pb-4 border-b border-[#1a1b28]">
+        <p className="text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase">Bot</p>
+        <h1 className="text-[20px] font-bold text-white mt-0.5">Configurações</h1>
       </div>
 
-      <div className="max-w-xl space-y-6">
-        <div className="bg-card border border-white/5 rounded-xl p-6 space-y-5">
-          <div>
-            <Label className="text-white/80 text-sm mb-2 block">
-              <Bot className="inline h-3.5 w-3.5 mr-1" />
-              Selecionar Bot
-            </Label>
-            <Select onValueChange={setSelectedBotId} value={selectedBotId}>
-              <SelectTrigger className="bg-background border-white/10 text-white">
-                <SelectValue placeholder="Escolha um bot para configurar" />
-              </SelectTrigger>
-              <SelectContent className="bg-card border-white/10">
-                {botsLoading && (
-                  <SelectItem value="loading" disabled className="text-muted-foreground">
-                    Carregando...
-                  </SelectItem>
-                )}
-                {bots?.map((bot) => (
-                  <SelectItem key={bot.id} value={bot.id} className="text-white hover:bg-white/5">
-                    {bot.name}
-                  </SelectItem>
-                ))}
-                {!botsLoading && (!bots || bots.length === 0) && (
-                  <SelectItem value="none" disabled className="text-muted-foreground">
-                    Crie um bot primeiro
-                  </SelectItem>
-                )}
-              </SelectContent>
-            </Select>
+      <div className="max-w-xl space-y-4">
+        <div className="bg-[#0d0e16] border border-[#1a1b28] rounded-lg p-5">
+          <p className="text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-3">Selecionar Bot</p>
+          <div className="relative">
+            <Bot className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#4b4c6b]" />
+            <select
+              value={selectedBotId}
+              onChange={(e) => setSelectedBotId(e.target.value)}
+              className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white outline-none focus:border-[#F97316] transition-colors appearance-none"
+            >
+              <option value="">Escolha um bot para configurar</option>
+              {botsLoading && <option disabled>Carregando...</option>}
+              {bots?.map((bot) => (
+                <option key={bot.id} value={bot.id}>{bot.name}</option>
+              ))}
+              {!botsLoading && (!bots || bots.length === 0) && (
+                <option disabled>Crie um bot primeiro</option>
+              )}
+            </select>
           </div>
         </div>
 
         {selectedBotId && (
-          <div className="bg-card border border-white/5 rounded-xl p-6 space-y-5">
-            <div className="flex items-center gap-2 mb-1">
-              <Settings className="h-4 w-4 text-primary" />
-              <h2 className="text-white font-semibold">Configurações Gerais</h2>
+          <div className="bg-[#0d0e16] border border-[#1a1b28] rounded-lg p-5 space-y-4">
+            <div className="flex items-center gap-2 pb-3 border-b border-[#1a1b28]">
+              <Settings className="h-3.5 w-3.5 text-[#F97316]" />
+              <p className="text-[13px] font-semibold text-[#c9cadb]">Configurações Gerais</p>
             </div>
 
             <div>
-              <Label className="text-white/80 text-sm mb-2 block">Nome do Bot</Label>
-              <Input
-                value={settings.name}
-                onChange={(e) => setSettings((s) => ({ ...s, name: e.target.value }))}
-                placeholder="Ex: MeuBot"
-                className="bg-background border-white/10 text-white"
-              />
-              <p className="text-xs text-muted-foreground mt-1">Nome de exibição do bot na plataforma</p>
+              <label className="block text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-1.5">Nome do Bot</label>
+              <div className="relative">
+                <Bot className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#4b4c6b]" />
+                <input
+                  type="text"
+                  value={settings.name}
+                  onChange={(e) => setSettings((s) => ({ ...s, name: e.target.value }))}
+                  placeholder="Ex: MeuBot"
+                  className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors"
+                />
+              </div>
+              <p className="text-[11px] text-[#4b4c6b] mt-1">Nome de exibição do bot na plataforma</p>
             </div>
 
             <div>
-              <Label className="text-white/80 text-sm mb-2 block">
-                <Hash className="inline h-3.5 w-3.5 mr-1" />
-                Prefixo dos Comandos
-              </Label>
-              <Input
-                value={settings.prefix}
-                onChange={(e) => setSettings((s) => ({ ...s, prefix: e.target.value }))}
-                placeholder="Ex: . ou ! ou /"
-                maxLength={3}
-                className="bg-background border-white/10 text-white max-w-24"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Caractere que precede os comandos. Ex: <span className="text-white/60">.</span>sticker, <span className="text-white/60">!</span>ban
+              <label className="block text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-1.5">Prefixo dos Comandos</label>
+              <div className="relative">
+                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#4b4c6b]" />
+                <input
+                  type="text"
+                  value={settings.prefix}
+                  onChange={(e) => setSettings((s) => ({ ...s, prefix: e.target.value }))}
+                  placeholder=". ou ! ou /"
+                  maxLength={3}
+                  className="w-full max-w-28 bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors"
+                />
+              </div>
+              <p className="text-[11px] text-[#4b4c6b] mt-1">
+                Caractere que precede os comandos. Ex: <span className="text-[#8b8ea0] font-mono">.sticker</span>, <span className="text-[#8b8ea0] font-mono">!ban</span>
               </p>
             </div>
 
             <div>
-              <Label className="text-white/80 text-sm mb-2 block">
-                <Phone className="inline h-3.5 w-3.5 mr-1" />
-                Número do Dono (com DDI)
-              </Label>
-              <Input
-                value={settings.ownerPhone}
-                onChange={(e) => setSettings((s) => ({ ...s, ownerPhone: e.target.value.replace(/\D/g, "") }))}
-                placeholder="Ex: 5511999990000"
-                maxLength={15}
-                className="bg-background border-white/10 text-white max-w-xs"
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                Número com DDI (55 para Brasil) — usado para comandos de admin
-              </p>
+              <label className="block text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-1.5">Número do Dono (com DDI)</label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#4b4c6b]" />
+                <input
+                  type="text"
+                  value={settings.ownerPhone}
+                  onChange={(e) => setSettings((s) => ({ ...s, ownerPhone: e.target.value.replace(/\D/g, "") }))}
+                  placeholder="5511999990000"
+                  maxLength={15}
+                  className="w-full max-w-xs bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors"
+                />
+              </div>
+              <p className="text-[11px] text-[#4b4c6b] mt-1">Número com DDI (55 para Brasil) — usado para comandos de admin</p>
             </div>
 
-            <div className="pt-2">
-              <Button
+            <div className="pt-1">
+              <button
                 onClick={handleSave}
                 disabled={saving}
-                className="bg-primary hover:bg-primary/90 text-white"
+                className="bg-[#F97316] hover:bg-[#ea6a00] disabled:opacity-60 text-white text-[13px] font-bold px-5 py-2.5 rounded-md transition-colors flex items-center gap-2"
               >
-                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                 Salvar Configurações
-              </Button>
+              </button>
             </div>
           </div>
         )}
 
-        <div className="bg-card border border-white/5 rounded-xl p-6">
-          <h2 className="text-white font-semibold mb-3">Como os Comandos Funcionam</h2>
-          <div className="space-y-3 text-sm text-muted-foreground">
-            <div className="flex items-start gap-3">
-              <span className="bg-primary/10 text-primary border border-primary/20 rounded px-2 py-0.5 text-xs font-mono font-bold mt-0.5 flex-shrink-0">.sticker</span>
-              <p>Com o prefixo <span className="text-white/70">.</span> e gatilho <span className="text-white/70">sticker</span>, o bot responde ao comando <span className="text-white/70">.sticker</span> enviado em grupos.</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="bg-yellow-500/10 text-yellow-400 border border-yellow-500/20 rounded px-2 py-0.5 text-xs font-mono font-bold mt-0.5 flex-shrink-0">Builder</span>
-              <p>Use o <span className="text-white/70">Construtor Visual</span> para montar o fluxo: Comando → Ação → Resposta.</p>
-            </div>
-            <div className="flex items-start gap-3">
-              <span className="bg-green-500/10 text-green-400 border border-green-500/20 rounded px-2 py-0.5 text-xs font-mono font-bold mt-0.5 flex-shrink-0">Live</span>
-              <p>O bot precisa estar <span className="text-white/70">conectado</span> ao WhatsApp para processar comandos em tempo real.</p>
-            </div>
+        <div className="bg-[#0d0e16] border border-[#1a1b28] rounded-lg p-5">
+          <div className="flex items-center gap-2 mb-4 pb-3 border-b border-[#1a1b28]">
+            <HelpCircle className="h-3.5 w-3.5 text-[#4b4c6b]" />
+            <p className="text-[13px] font-semibold text-[#c9cadb]">Como os Comandos Funcionam</p>
+          </div>
+          <div className="space-y-3">
+            {[
+              {
+                tag: ".sticker",
+                color: "#F97316",
+                desc: <>Com o prefixo <span className="text-[#8b8ea0]">.</span> e gatilho <span className="text-[#8b8ea0]">sticker</span>, o bot responde ao comando <span className="text-[#8b8ea0] font-mono">.sticker</span> enviado em grupos.</>,
+              },
+              {
+                tag: "Builder",
+                color: "#C850C0",
+                desc: <>Use o <span className="text-[#8b8ea0]">Construtor Visual</span> para montar o fluxo: Comando → Ação → Resposta.</>,
+              },
+              {
+                tag: "Live",
+                color: "#22C55E",
+                desc: <>O bot precisa estar <span className="text-[#8b8ea0]">conectado</span> ao WhatsApp para processar comandos em tempo real.</>,
+              },
+            ].map((item) => (
+              <div key={item.tag} className="flex items-start gap-3 text-[12px] text-[#4b4c6b]">
+                <span
+                  className="font-mono font-bold text-[11px] px-2 py-0.5 rounded shrink-0 mt-0.5"
+                  style={{ color: item.color, backgroundColor: item.color + "15", border: `1px solid ${item.color}30` }}
+                >
+                  {item.tag}
+                </span>
+                <p>{item.desc}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>

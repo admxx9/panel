@@ -1,10 +1,10 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, MessageSquare, CreditCard, Wallet, LogOut, Settings, Wrench, SlidersHorizontal } from "lucide-react";
+import { LayoutDashboard, MessageSquare, CreditCard, Wallet, LogOut, Settings, Wrench, SlidersHorizontal, Shield, Cpu } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/dashboard", label: "Visão Geral", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Visão Geral", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/bots", label: "Meus Bots", icon: MessageSquare },
   { href: "/dashboard/builder", label: "Construtor", icon: Wrench },
   { href: "/dashboard/settings", label: "Configurações", icon: SlidersHorizontal },
@@ -12,71 +12,88 @@ const navItems = [
   { href: "/dashboard/payments", label: "Comprar Moedas", icon: Wallet },
 ];
 
+function NavItem({ href, label, icon: Icon, isActive }: { href: string; label: string; icon: React.ElementType; isActive: boolean }) {
+  return (
+    <Link href={href}>
+      <div className={cn(
+        "flex items-center gap-3 px-3 py-2 rounded-sm text-sm font-medium transition-all duration-150 select-none relative group",
+        isActive
+          ? "text-primary bg-primary/8 border-l-2 border-primary ml-[-1px]"
+          : "text-[#5a5b7a] hover:text-[#c9cadb] hover:bg-white/[0.04] border-l-2 border-transparent ml-[-1px]"
+      )}>
+        <Icon className={cn("h-[15px] w-[15px] shrink-0", isActive ? "text-primary" : "")} />
+        <span className="truncate">{label}</span>
+      </div>
+    </Link>
+  );
+}
+
 export function Sidebar() {
   const [location] = useLocation();
   const { logout, user } = useAuth();
 
+  const isActive = (href: string, exact?: boolean) => {
+    if (exact) return location === href;
+    return location === href || (location.startsWith(href) && href !== "/dashboard");
+  };
+
   return (
-    <aside className="w-64 border-r border-white/5 bg-card flex flex-col h-full hidden md:flex">
-      <div className="p-6">
-        <Link href="/dashboard" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary glow-primary">
-            <span className="text-xl font-bold text-white">B</span>
+    <aside className="w-56 border-r border-[#1a1b28] bg-[#0a0b12] flex flex-col h-full hidden md:flex shrink-0">
+      <div className="px-5 py-5 border-b border-[#1a1b28]">
+        <Link href="/dashboard" className="flex items-center gap-2.5">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-[#F97316] shadow-[0_0_12px_rgba(249,115,22,0.4)]">
+            <Cpu className="h-4 w-4 text-white" />
           </div>
-          <span className="text-xl font-bold tracking-tight text-white">BotAluguel<span className="text-primary">.Pro</span></span>
+          <span className="font-bold text-[15px] tracking-tight text-white leading-none">
+            BotAluguel<span className="text-[#F97316]">.Pro</span>
+          </span>
         </Link>
       </div>
 
-      <div className="flex-1 px-4 space-y-2">
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-0.5">
+        <p className="text-[9px] font-semibold text-[#2a2b3e] tracking-[1px] uppercase px-3 mb-2">Painel</p>
         {navItems.map((item) => (
-          <Link 
-            key={item.href} 
+          <NavItem
+            key={item.href}
             href={item.href}
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200",
-              location === item.href || (location.startsWith(item.href) && item.href !== "/dashboard")
-                ? "bg-primary/10 text-primary border border-primary/20" 
-                : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
-            )}
-          >
-            <item.icon className={cn("h-4 w-4", location === item.href ? "text-primary" : "")} />
-            {item.label}
-          </Link>
+            label={item.label}
+            icon={item.icon}
+            isActive={isActive(item.href, item.exact)}
+          />
         ))}
+
         {user?.isAdmin && (
-          <Link 
-            href="/admin"
-            className={cn(
-              "flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-medium transition-all duration-200 mt-4",
-              location.startsWith("/admin")
-                ? "bg-accent/10 text-accent border border-accent/20" 
-                : "text-muted-foreground hover:bg-white/5 hover:text-foreground"
-            )}
-          >
-            <Settings className="h-4 w-4" />
-            Painel Admin
-          </Link>
+          <>
+            <div className="my-3 h-px bg-[#1a1b28]" />
+            <p className="text-[9px] font-semibold text-[#2a2b3e] tracking-[1px] uppercase px-3 mb-2">Admin</p>
+            <NavItem
+              href="/admin"
+              label="Painel Admin"
+              icon={Shield}
+              isActive={isActive("/admin")}
+            />
+          </>
         )}
       </div>
 
-      <div className="p-4 border-t border-white/5">
-        <div className="flex items-center gap-3 px-3 py-2 mb-4">
-          <div className="h-8 w-8 rounded-full bg-secondary flex items-center justify-center text-sm font-bold text-white border border-white/10">
+      <div className="border-t border-[#1a1b28] p-4">
+        <div className="flex items-center gap-2.5 mb-3">
+          <div className="h-7 w-7 rounded-md bg-[#131420] border border-[#1a1b28] flex items-center justify-center text-xs font-bold text-[#F97316]">
             {user?.name?.charAt(0).toUpperCase()}
           </div>
-          <div className="flex flex-col">
-            <span className="text-sm font-medium text-white">{user?.name}</span>
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <Wallet className="h-3 w-3" /> {user?.coins} moedas
+          <div className="flex flex-col min-w-0">
+            <span className="text-[13px] font-semibold text-[#c9cadb] truncate">{user?.name}</span>
+            <span className="text-[11px] text-[#4b4c6b] flex items-center gap-1">
+              <Wallet className="h-2.5 w-2.5" /> {user?.coins} moedas
             </span>
           </div>
         </div>
-        <button 
+        <button
           onClick={logout}
-          className="flex w-full items-center gap-3 px-3 py-2 text-sm font-medium text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-md transition-colors"
+          className="flex w-full items-center gap-2.5 px-3 py-2 text-[12px] font-medium text-[#4b4c6b] hover:text-red-400 hover:bg-red-500/10 rounded-sm transition-colors"
         >
-          <LogOut className="h-4 w-4" />
-          Sair
+          <LogOut className="h-3.5 w-3.5" />
+          Sair da conta
         </button>
       </div>
     </aside>

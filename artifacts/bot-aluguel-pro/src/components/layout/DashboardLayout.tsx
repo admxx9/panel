@@ -2,13 +2,13 @@ import { Sidebar } from "./Sidebar";
 import { ProtectedRoute } from "../ProtectedRoute";
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, MessageSquare, Wrench, Wallet, CreditCard, Menu, Bot } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { LayoutDashboard, MessageSquare, Wrench, Wallet, CreditCard, Menu, Cpu, Settings } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/lib/auth";
 
 const bottomNavItems = [
-  { href: "/dashboard", label: "Inicio", icon: LayoutDashboard },
+  { href: "/dashboard", label: "Painel", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/bots", label: "Bots", icon: MessageSquare },
   { href: "/dashboard/builder", label: "Builder", icon: Wrench },
   { href: "/dashboard/plans", label: "Planos", icon: CreditCard },
@@ -17,56 +17,72 @@ const bottomNavItems = [
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
+  const { user } = useAuth();
+
+  const isActive = (href: string, exact?: boolean) => {
+    if (exact) return location === href;
+    return location === href || (location.startsWith(href) && href !== "/dashboard");
+  };
 
   return (
     <ProtectedRoute>
-      <div className="flex h-[100dvh] bg-background overflow-hidden">
+      <div className="flex h-[100dvh] bg-[#090A0F] overflow-hidden">
         <Sidebar />
+
         <div className="flex-1 flex flex-col min-w-0">
-          <header className="h-14 border-b border-white/5 bg-card/80 backdrop-blur-lg flex items-center justify-between px-4 md:hidden">
-            <div className="flex items-center gap-2">
+          <header className="h-12 border-b border-[#1a1b28] bg-[#0a0b12] flex items-center justify-between px-4 md:hidden shrink-0">
+            <div className="flex items-center gap-2.5">
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon" className="text-white h-9 w-9" aria-label="Abrir menu">
-                    <Menu className="h-5 w-5" />
-                  </Button>
+                  <button className="text-[#4b4c6b] hover:text-white transition-colors p-1" aria-label="Abrir menu">
+                    <Menu className="h-4.5 w-4.5" />
+                  </button>
                 </SheetTrigger>
-                <SheetContent side="left" className="p-0 w-64 bg-card border-r border-white/5">
+                <SheetContent side="left" className="p-0 w-56 bg-[#0a0b12] border-r border-[#1a1b28]">
                   <Sidebar />
                 </SheetContent>
               </Sheet>
               <div className="flex items-center gap-1.5">
-                <div className="h-6 w-6 rounded bg-primary flex items-center justify-center">
-                  <Bot className="h-3 w-3 text-white" />
+                <div className="h-5 w-5 rounded bg-[#F97316] flex items-center justify-center">
+                  <Cpu className="h-3 w-3 text-white" />
                 </div>
-                <span className="font-bold text-sm text-white">BotAluguel<span className="text-primary">.Pro</span></span>
+                <span className="font-bold text-[13px] text-white">BotAluguel<span className="text-[#F97316]">.Pro</span></span>
+              </div>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <div className="h-6 w-6 rounded-md bg-[#131420] border border-[#1a1b28] flex items-center justify-center text-[11px] font-bold text-[#F97316]">
+                {user?.name?.charAt(0).toUpperCase()}
               </div>
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-4 md:p-8 pb-20 md:pb-8">
-            <div className="mx-auto max-w-6xl">
+
+          <main className="flex-1 overflow-auto">
+            <div className="mx-auto max-w-5xl px-4 md:px-8 py-6 pb-24 md:pb-8">
               {children}
             </div>
           </main>
-          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-lg border-t border-white/10 safe-area-bottom">
-            <div className="flex items-center justify-around h-16 px-1">
+
+          <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#0a0b12] border-t border-[#1a1b28]">
+            <div className="flex items-stretch justify-around h-14">
               {bottomNavItems.map((item) => {
-                const isActive = location === item.href || (location.startsWith(item.href) && item.href !== "/dashboard");
+                const active = isActive(item.href, item.exact);
                 return (
-                  <Link key={item.href} href={item.href}
-                    aria-current={isActive ? "page" : undefined}
-                    className={cn(
-                      "flex flex-col items-center justify-center gap-0.5 px-2 py-1 rounded-lg transition-all min-w-[56px]",
-                      isActive ? "text-primary" : "text-muted-foreground"
-                    )}
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    aria-current={active ? "page" : undefined}
+                    className="flex flex-col items-center justify-center gap-1 flex-1 relative"
                   >
+                    {active && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-[#F97316] rounded-b" />}
                     <div className={cn(
-                      "h-8 w-8 flex items-center justify-center rounded-lg transition-all",
-                      isActive ? "bg-primary/15 scale-110" : ""
+                      "h-7 w-7 flex items-center justify-center rounded-md transition-colors",
+                      active ? "bg-[#F97316]/15" : ""
                     )}>
-                      <item.icon className={cn("h-[18px] w-[18px]", isActive ? "text-primary" : "")} />
+                      <item.icon className={cn("h-[15px] w-[15px]", active ? "text-[#F97316]" : "text-[#4b4c6b]")} />
                     </div>
-                    <span className={cn("text-[10px] font-medium", isActive ? "text-primary" : "")}>{item.label}</span>
+                    <span className={cn("text-[9px] font-semibold leading-none", active ? "text-[#F97316]" : "text-[#4b4c6b]")}>
+                      {item.label}
+                    </span>
                   </Link>
                 );
               })}

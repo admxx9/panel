@@ -1,5 +1,4 @@
 import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
@@ -15,53 +14,50 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { useAuth } from "@/context/AuthContext";
-import { useColors } from "@/hooks/useColors";
 
-function SettingRow({
-  icon,
-  label,
-  value,
-  onPress,
-  destructive,
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <View style={s.section}>
+      <Text style={s.sectionTitle}>{title}</Text>
+      <View style={s.sectionCard}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
+function Row({
+  icon, label, value, onPress, destructive, last,
 }: {
-  icon: string;
-  label: string;
-  value?: string;
-  onPress?: () => void;
-  destructive?: boolean;
+  icon: string; label: string; value?: string; onPress?: () => void; destructive?: boolean; last?: boolean;
 }) {
-  const colors = useColors();
   return (
     <Pressable
-      style={({ pressed }) => [
-        styles.row,
-        { backgroundColor: colors.card, borderColor: colors.border, opacity: pressed ? 0.75 : 1 },
-      ]}
+      style={({ pressed }) => [s.row, !last && s.rowBorder, { opacity: pressed && onPress ? 0.7 : 1 }]}
       onPress={onPress}
       disabled={!onPress}
     >
-      <View style={[styles.rowIcon, { backgroundColor: destructive ? colors.destructive + "20" : colors.primary + "15" }]}>
-        <Feather name={icon as any} size={16} color={destructive ? colors.destructive : colors.primary} />
+      <View style={[s.rowIcon, { backgroundColor: destructive ? "#EF444415" : "#F9731615" }]}>
+        <Feather name={icon as any} size={15} color={destructive ? "#EF4444" : "#F97316"} />
       </View>
-      <Text style={[styles.rowLabel, { color: destructive ? colors.destructive : colors.foreground }]}>
-        {label}
-      </Text>
+      <Text style={[s.rowLabel, destructive && { color: "#EF4444" }]}>{label}</Text>
       {value ? (
-        <Text style={[styles.rowValue, { color: colors.mutedForeground }]}>{value}</Text>
+        <Text style={s.rowValue}>{value}</Text>
       ) : onPress ? (
-        <Feather name="chevron-right" size={16} color={colors.mutedForeground} />
+        <Feather name="chevron-right" size={14} color="#2A2B3E" />
       ) : null}
     </Pressable>
   );
 }
 
 export default function SettingsScreen() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
   const { user, signOut } = useAuth();
 
   const paddingTop = Platform.OS === "web" ? insets.top + 67 : insets.top + 16;
-  const paddingBottom = Platform.OS === "web" ? 34 + 84 : insets.bottom + 84;
+  const paddingBottom = Platform.OS === "web" ? 34 + 84 : insets.bottom + 80;
+
+  const initial = user?.name?.charAt(0).toUpperCase() ?? "U";
 
   function handleLogout() {
     Alert.alert("Sair", "Deseja encerrar a sessão?", [
@@ -78,129 +74,116 @@ export default function SettingsScreen() {
     ]);
   }
 
-  const initial = user?.name?.[0]?.toUpperCase() ?? "U";
-
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={[styles.scroll, { paddingTop, paddingBottom }]}
+      style={s.root}
+      contentContainerStyle={{ paddingTop, paddingBottom, paddingHorizontal: 20 }}
       showsVerticalScrollIndicator={false}
     >
-      <Text style={[styles.title, { color: colors.foreground }]}>Configurações</Text>
+      <View style={s.topBar}>
+        <Text style={s.pageLabel}>CONTA</Text>
+        <Text style={s.pageTitle}>Configurações</Text>
+      </View>
 
-      <View style={styles.profileCard}>
-        <LinearGradient
-          colors={["#F97316", "#C850C0"]}
-          style={styles.avatar}
-        >
-          <Text style={styles.avatarText}>{initial}</Text>
-        </LinearGradient>
-        <View>
-          <Text style={[styles.profileName, { color: colors.foreground }]}>{user?.name ?? ""}</Text>
-          <Text style={[styles.profilePhone, { color: colors.mutedForeground }]}>{user?.phone ?? ""}</Text>
-          {user?.isAdmin && (
-            <View style={[styles.adminBadge, { backgroundColor: colors.primary + "20" }]}>
-              <Text style={[styles.adminText, { color: colors.primary }]}>Admin</Text>
-            </View>
-          )}
+      <View style={s.profileCard}>
+        <View style={s.avatar}>
+          <Text style={s.avatarText}>{initial}</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={s.profileName}>{user?.name ?? "Usuário"}</Text>
+          <Text style={s.profilePhone}>{user?.phone ?? "—"}</Text>
+        </View>
+        <View style={[s.planTag, user?.isAdmin && { borderColor: "#C850C0", backgroundColor: "#C850C015" }]}>
+          <Text style={[s.planTagText, user?.isAdmin && { color: "#C850C0" }]}>
+            {user?.isAdmin ? "ADMIN" : user?.plan ?? "SEM PLANO"}
+          </Text>
         </View>
       </View>
 
-      <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>CONTA</Text>
-      <View style={{ gap: 2 }}>
-        <SettingRow
-          icon="dollar-sign"
-          label="Moedas"
-          value={String(user?.coins ?? 0)}
-        />
-        <SettingRow
-          icon="phone"
-          label="Telefone"
-          value={user?.phone ?? ""}
-        />
-        <SettingRow
-          icon="calendar"
-          label="Membro desde"
-          value={user?.createdAt ? new Date(user.createdAt).toLocaleDateString("pt-BR") : ""}
-        />
-      </View>
+      <Section title="CONTA">
+        <Row icon="dollar-sign" label="Moedas disponíveis" value={`${user?.coins ?? 0}`} />
+        <Row icon="star" label="Plano atual" value={user?.plan ?? "Nenhum"} last />
+      </Section>
 
-      <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>APLICATIVO</Text>
-      <View style={{ gap: 2 }}>
-        <SettingRow icon="info" label="Versão" value="1.0.0" />
-        <SettingRow
-          icon="help-circle"
-          label="Suporte"
-          onPress={() => {}}
-        />
-      </View>
+      <Section title="NAVEGAÇÃO">
+        <Row icon="cpu" label="Meus Bots" onPress={() => router.push("/(tabs)/bots")} />
+        <Row icon="dollar-sign" label="Comprar Moedas" onPress={() => router.push("/(tabs)/payments")} />
+        <Row icon="star" label="Ver Planos" onPress={() => router.push("/(tabs)/plans")} last />
+      </Section>
 
-      <View style={{ marginTop: 8 }}>
-        <SettingRow
-          icon="log-out"
-          label="Sair da conta"
-          onPress={handleLogout}
-          destructive
-        />
-      </View>
+      <Section title="SESSÃO">
+        <Row icon="log-out" label="Sair da conta" onPress={handleLogout} destructive last />
+      </Section>
+
+      <Text style={s.version}>BotAluguel Pro v1.0</Text>
     </ScrollView>
   );
 }
 
-const styles = StyleSheet.create({
-  scroll: { paddingHorizontal: 20, gap: 16 },
-  title: { fontSize: 22, fontWeight: "700" as const, fontFamily: "Inter_700Bold" },
+const s = StyleSheet.create({
+  root: { flex: 1, backgroundColor: "#090A0F" },
+
+  topBar: { marginBottom: 20 },
+  pageLabel: { fontSize: 10, color: "#4B4C6B", fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 4 },
+  pageTitle: { fontSize: 22, fontWeight: "800" as const, color: "#F1F2F6", fontFamily: "Inter_700Bold", letterSpacing: -0.5 },
+
   profileCard: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 16,
-    marginBottom: 8,
+    gap: 14,
+    backgroundColor: "#0D0E16",
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: "#1A1B28",
+    borderLeftWidth: 3,
+    borderLeftColor: "#F97316",
+    padding: 16,
+    marginBottom: 24,
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    backgroundColor: "#F9731620",
+    borderWidth: 1,
+    borderColor: "#F9731630",
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText: {
-    color: "#FFF",
-    fontSize: 24,
-    fontWeight: "700" as const,
-    fontFamily: "Inter_700Bold",
-  },
-  profileName: { fontSize: 18, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
-  profilePhone: { fontSize: 14, fontFamily: "Inter_400Regular", marginTop: 2 },
-  adminBadge: {
+  avatarText: { fontSize: 20, fontWeight: "800" as const, color: "#F97316", fontFamily: "Inter_700Bold" },
+  profileName: { fontSize: 15, fontWeight: "600" as const, color: "#F1F2F6", fontFamily: "Inter_600SemiBold" },
+  profilePhone: { fontSize: 12, color: "#4B4C6B", fontFamily: "Inter_400Regular", marginTop: 2 },
+  planTag: {
+    borderRadius: 4,
+    borderWidth: 1,
+    borderColor: "#F9731640",
+    backgroundColor: "#F9731615",
     paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 6,
-    marginTop: 6,
-    alignSelf: "flex-start" as const,
+    paddingVertical: 3,
   },
-  adminText: { fontSize: 11, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
-  sectionLabel: {
-    fontSize: 11,
-    fontFamily: "Inter_500Medium",
-    letterSpacing: 0.8,
-    marginTop: 8,
-    marginBottom: 4,
-  },
+  planTagText: { fontSize: 9, fontWeight: "700" as const, color: "#F97316", fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+
+  section: { marginBottom: 20 },
+  sectionTitle: { fontSize: 9, fontWeight: "600" as const, color: "#2A2B3E", fontFamily: "Inter_600SemiBold", letterSpacing: 1, marginBottom: 8, paddingLeft: 2 },
+  sectionCard: { backgroundColor: "#0D0E16", borderRadius: 8, borderWidth: 1, borderColor: "#1A1B28", overflow: "hidden" as const },
+
   row: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 13,
   },
+  rowBorder: { borderBottomWidth: 1, borderBottomColor: "#1A1B28" },
   rowIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 6,
     alignItems: "center",
     justifyContent: "center",
   },
-  rowLabel: { flex: 1, fontSize: 15, fontFamily: "Inter_400Regular" },
-  rowValue: { fontSize: 14, fontFamily: "Inter_400Regular" },
+  rowLabel: { flex: 1, fontSize: 14, color: "#C9CADB", fontFamily: "Inter_400Regular" },
+  rowValue: { fontSize: 13, color: "#4B4C6B", fontFamily: "Inter_400Regular" },
+
+  version: { textAlign: "center", fontSize: 11, color: "#1A1B28", fontFamily: "Inter_400Regular", marginTop: 8 },
 });

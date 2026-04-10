@@ -1,25 +1,20 @@
 import { useState } from "react";
-import { Coins, CreditCard, Copy, CheckCircle, Clock, Loader2, History } from "lucide-react";
+import { Coins, Copy, CheckCircle, Clock, Loader2, Zap } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { useCreatePixCharge, useGetPaymentHistory, useCheckPixStatus, getGetPaymentHistoryQueryKey, getCheckPixStatusQueryKey } from "@workspace/api-client-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
-import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-const statusLabels: Record<string, { label: string; color: string }> = {
-  pending: { label: "Pendente", color: "bg-yellow-500/10 text-yellow-400 border-yellow-500/20" },
-  paid: { label: "Pago", color: "bg-green-500/10 text-green-400 border-green-500/20" },
-  expired: { label: "Expirado", color: "bg-white/5 text-muted-foreground border-white/10" },
-  error: { label: "Erro", color: "bg-red-500/10 text-red-400 border-red-500/20" },
+const STATUS_CFG: Record<string, { label: string; color: string }> = {
+  pending: { label: "Pendente", color: "#F59E0B" },
+  paid:    { label: "Pago",     color: "#22C55E" },
+  expired: { label: "Expirado", color: "#4b4c6b" },
+  error:   { label: "Erro",     color: "#EF4444" },
 };
 
-const presets = [5, 10, 25, 50, 100];
+const PRESETS = [5, 10, 25, 50, 100];
 
 export default function PaymentsPage() {
   const [amount, setAmount] = useState("");
@@ -42,7 +37,7 @@ export default function PaymentsPage() {
   const handleCreatePix = async () => {
     const val = parseFloat(amount);
     if (!val || val < 0.01) {
-      toast({ title: "Valor invalido", description: "Minimo de R$ 0,01", variant: "destructive" });
+      toast({ title: "Valor inválido", description: "Mínimo de R$ 0,01", variant: "destructive" });
       return;
     }
     try {
@@ -51,7 +46,7 @@ export default function PaymentsPage() {
       setPixData({ copyPaste: result.copyPaste, coins: result.coins, amount: result.amount });
       queryClient.invalidateQueries({ queryKey: getGetPaymentHistoryQueryKey() });
     } catch {
-      toast({ title: "Erro", description: "Nao foi possivel gerar o PIX.", variant: "destructive" });
+      toast({ title: "Erro", description: "Não foi possível gerar o PIX.", variant: "destructive" });
     }
   };
 
@@ -60,7 +55,7 @@ export default function PaymentsPage() {
       navigator.clipboard.writeText(pixData.copyPaste);
       setCopied(true);
       setTimeout(() => setCopied(false), 3000);
-      toast({ title: "Copiado!", description: "Codigo PIX copiado para a area de transferencia." });
+      toast({ title: "Copiado!", description: "Código PIX copiado." });
     }
   };
 
@@ -68,143 +63,156 @@ export default function PaymentsPage() {
     queryClient.invalidateQueries({ queryKey: getGetPaymentHistoryQueryKey() });
   }
 
+  const historyList = (history as any[] | undefined) ?? [];
+
   return (
     <DashboardLayout>
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white">Comprar Moedas</h1>
-        <p className="text-muted-foreground text-sm mt-1">1 BRL = 100 moedas &bull; Pagamento via PIX instantaneo</p>
+      <div className="mb-6 pb-4 border-b border-[#1a1b28]">
+        <p className="text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase">Recarga</p>
+        <h1 className="text-[20px] font-bold text-white mt-0.5">Comprar Moedas</h1>
+        <p className="text-[12px] text-[#4b4c6b] mt-1">R$ 1,00 = 100 moedas &bull; Pagamento via PIX instantâneo</p>
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
-        <div className="bg-card border border-white/5 rounded-xl p-6">
-          <div className="flex items-center gap-2 mb-6">
-            <CreditCard className="h-5 w-5 text-primary" />
-            <h2 className="text-white font-semibold">Gerar PIX</h2>
-          </div>
+        <div className="bg-[#0d0e16] border border-[#1a1b28] rounded-lg p-5">
+          <p className="text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-4">Gerar PIX</p>
 
           {!pixData ? (
             <div className="space-y-4">
               <div>
-                <Label className="text-white/80 text-sm mb-2 block">Valores rapidos</Label>
+                <p className="text-[10px] font-semibold text-[#4b4c6b] tracking-[0.5px] uppercase mb-2">Valores rápidos</p>
                 <div className="flex flex-wrap gap-2">
-                  {presets.map((preset) => (
+                  {PRESETS.map((preset) => (
                     <button
                       key={preset}
                       onClick={() => setAmount(preset.toString())}
-                      className={`px-3 py-1.5 rounded-lg text-sm border transition-all ${
+                      className={`px-3 py-2 rounded-md text-[12px] border transition-colors ${
                         amount === preset.toString()
-                          ? "bg-primary/20 border-primary/40 text-primary"
-                          : "bg-background border-white/10 text-muted-foreground hover:border-white/20 hover:text-white"
+                          ? "bg-[#F97316]/15 border-[#F97316]/40 text-[#F97316]"
+                          : "bg-[#131420] border-[#1e1f2e] text-[#4b4c6b] hover:text-[#8b8ea0]"
                       }`}
                     >
-                      R$ {preset}
-                      <span className="block text-xs opacity-60">{preset * 100} moedas</span>
+                      <span className="font-semibold">R$ {preset}</span>
+                      <span className="block text-[10px] opacity-70">{preset * 100} moedas</span>
                     </button>
                   ))}
                 </div>
               </div>
+
               <div>
-                <Label className="text-white/80 text-sm mb-1.5 block">Ou digite o valor (R$)</Label>
-                <div className="flex gap-2">
-                  <Input
+                <p className="text-[10px] font-semibold text-[#4b4c6b] tracking-[0.5px] uppercase mb-2">Valor personalizado</p>
+                <div className="flex items-center bg-[#131420] border border-[#1e1f2e] rounded-md px-3 focus-within:border-[#F97316] transition-colors">
+                  <span className="text-[#4b4c6b] text-[14px] font-bold mr-2">R$</span>
+                  <input
                     type="number"
-                    placeholder="Ex: 10.00"
+                    placeholder="0,00"
                     value={amount}
                     onChange={(e) => setAmount(e.target.value)}
                     min="0.01"
                     step="0.01"
-                    className="bg-background border-white/10 text-white"
+                    className="flex-1 bg-transparent text-[16px] font-bold text-white py-3 outline-none placeholder-[#4b4c6b]"
                   />
                 </div>
                 {amount && parseFloat(amount) > 0 && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    = {Math.floor(parseFloat(amount) * 100)} moedas
+                  <p className="text-[11px] text-[#4b4c6b] mt-1 flex items-center gap-1">
+                    <Coins className="h-3 w-3 text-[#F97316]" />
+                    {Math.floor(parseFloat(amount) * 100)} moedas
                   </p>
                 )}
               </div>
-              <Button
+
+              <button
                 onClick={handleCreatePix}
                 disabled={createPix.isPending || !amount}
-                className="w-full bg-primary hover:bg-primary/90 text-white"
+                className="w-full bg-[#F97316] hover:bg-[#ea6a00] disabled:opacity-60 text-white py-2.5 rounded-md text-[13px] font-bold transition-colors flex items-center justify-center gap-2"
               >
-                {createPix.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Coins className="mr-2 h-4 w-4" />}
+                {createPix.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
                 Gerar PIX
-              </Button>
+              </button>
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-center">
-                <p className="text-primary text-2xl font-bold">{pixData.coins} moedas</p>
-                <p className="text-muted-foreground text-sm">R$ {pixData.amount.toFixed(2)}</p>
+              <div className="bg-[#131420] border border-[#1a1b28] border-l-[3px] border-l-[#F97316] rounded-md p-4 text-center">
+                <p className="text-[28px] font-extrabold text-[#F97316]">{pixData.coins}</p>
+                <p className="text-[12px] text-[#4b4c6b]">moedas por R$ {pixData.amount.toFixed(2)}</p>
               </div>
 
               {pixStatus?.status === "paid" ? (
-                <div className="bg-green-500/10 border border-green-500/20 rounded-lg p-4 text-center">
-                  <CheckCircle className="h-8 w-8 text-green-400 mx-auto mb-2" />
-                  <p className="text-green-400 font-semibold">Pagamento confirmado!</p>
-                  <p className="text-muted-foreground text-sm">{pixData.coins} moedas adicionadas ao saldo.</p>
+                <div className="bg-[#22C55E]/10 border border-[#22C55E]/30 rounded-md p-4 text-center">
+                  <CheckCircle className="h-8 w-8 text-[#22C55E] mx-auto mb-2" />
+                  <p className="text-[#22C55E] font-semibold text-[14px]">Pagamento confirmado!</p>
+                  <p className="text-[12px] text-[#4b4c6b]">{pixData.coins} moedas adicionadas ao saldo.</p>
                 </div>
               ) : (
                 <>
                   <div>
-                    <Label className="text-white/80 text-sm mb-2 block">PIX Copia e Cola</Label>
-                    <div className="bg-background border border-white/10 rounded-lg p-3 text-xs text-muted-foreground font-mono break-all max-h-20 overflow-y-auto">
+                    <p className="text-[10px] font-semibold text-[#4b4c6b] uppercase tracking-wide mb-2">PIX Copia e Cola</p>
+                    <div className="bg-[#090A0F] border border-[#1a1b28] rounded-md p-3 text-[11px] text-[#4b4c6b] font-mono break-all max-h-20 overflow-y-auto">
                       {pixData.copyPaste}
                     </div>
                   </div>
-                  <Button onClick={handleCopy} variant="outline" className="w-full border-white/10 text-white hover:bg-white/5">
-                    {copied ? <CheckCircle className="mr-2 h-4 w-4 text-green-400" /> : <Copy className="mr-2 h-4 w-4" />}
-                    {copied ? "Copiado!" : "Copiar Codigo PIX"}
-                  </Button>
-                  <div className="flex items-center gap-2 text-muted-foreground text-xs">
-                    <Clock className="h-3 w-3 animate-pulse text-yellow-400" />
-                    Aguardando pagamento... verificando automaticamente
-                  </div>
+                  <button
+                    onClick={handleCopy}
+                    className={`w-full py-2.5 rounded-md text-[13px] font-bold border flex items-center justify-center gap-2 transition-colors ${
+                      copied
+                        ? "border-[#22C55E]/40 text-[#22C55E] bg-[#22C55E]/10"
+                        : "border-[#F97316] text-[#F97316] hover:bg-[#F97316]/10"
+                    }`}
+                  >
+                    {copied ? <CheckCircle className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                    {copied ? "Copiado!" : "Copiar Código PIX"}
+                  </button>
+                  <p className="flex items-center justify-center gap-2 text-[11px] text-[#4b4c6b]">
+                    <Clock className="h-3 w-3 text-[#F59E0B] animate-pulse" />
+                    Aguardando pagamento...
+                  </p>
                 </>
               )}
 
-              <Button
-                variant="ghost"
-                size="sm"
-                className="text-muted-foreground text-xs w-full"
+              <button
                 onClick={() => { setPixData(null); setPendingTxid(null); setAmount(""); }}
+                className="w-full text-[12px] text-[#4b4c6b] hover:text-[#8b8ea0] transition-colors py-1"
               >
                 Gerar novo PIX
-              </Button>
+              </button>
             </div>
           )}
         </div>
 
-        <div className="bg-card border border-white/5 rounded-xl p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <History className="h-5 w-5 text-muted-foreground" />
-            <h2 className="text-white font-semibold">Historico</h2>
-          </div>
+        <div className="bg-[#0d0e16] border border-[#1a1b28] rounded-lg p-5">
+          <p className="text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-4">Histórico</p>
           {historyLoading ? (
-            <div className="space-y-3">
-              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-12 rounded-lg bg-background" />)}
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="h-12 bg-[#131420] rounded-md animate-pulse" />
+              ))}
             </div>
-          ) : history && history.length > 0 ? (
-            <div className="space-y-3 max-h-96 overflow-y-auto">
-              {history.map((payment) => {
-                const s = statusLabels[payment.status] || statusLabels.pending;
+          ) : historyList.length > 0 ? (
+            <div className="space-y-1 max-h-80 overflow-y-auto">
+              {historyList.map((payment: any) => {
+                const cfg = STATUS_CFG[payment.status] ?? STATUS_CFG.pending;
                 return (
-                  <div key={payment.id} className="flex items-center justify-between p-3 rounded-lg bg-background border border-white/5">
+                  <div key={payment.id} className="flex items-center justify-between px-4 py-3 bg-[#131420] border border-[#1a1b28] rounded-md hover:border-[#2a2b3e] transition-colors">
                     <div>
-                      <p className="text-white text-sm font-medium">+{payment.coins} moedas</p>
-                      <p className="text-muted-foreground text-xs">
-                        R$ {payment.amount.toFixed(2)} &bull; {format(new Date(payment.createdAt), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      <p className="text-[13px] font-semibold text-[#c9cadb]">+{payment.coins} moedas</p>
+                      <p className="text-[11px] text-[#4b4c6b]">
+                        R$ {payment.amount.toFixed(2)} &bull; {format(new Date(payment.createdAt), "dd/MM HH:mm", { locale: ptBR })}
                       </p>
                     </div>
-                    <Badge className={`border text-xs ${s.color}`}>{s.label}</Badge>
+                    <div
+                      className="px-2 py-1 rounded text-[11px] font-semibold border"
+                      style={{ color: cfg.color, backgroundColor: cfg.color + "15", borderColor: cfg.color + "30" }}
+                    >
+                      {cfg.label}
+                    </div>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Coins className="h-8 w-8 text-muted-foreground/30 mx-auto mb-2" />
-              <p className="text-muted-foreground text-sm">Nenhuma recarga realizada</p>
+            <div className="flex flex-col items-center justify-center py-16 gap-2">
+              <Coins className="h-6 w-6 text-[#2a2b3e]" />
+              <p className="text-[12px] text-[#4b4c6b]">Nenhuma recarga realizada</p>
             </div>
           )}
         </div>

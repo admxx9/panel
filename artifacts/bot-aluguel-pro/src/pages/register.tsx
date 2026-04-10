@@ -1,9 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "wouter";
-import { Bot, Phone, Lock, User, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Cpu, Phone, Lock, User, Loader2, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useRegister } from "@workspace/api-client-react";
@@ -12,6 +9,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
   const { login } = useAuth();
   const [, setLocation] = useLocation();
   const { toast } = useToast();
@@ -22,7 +20,6 @@ export default function RegisterPage() {
     try {
       const result = await registerMutation.mutateAsync({ data: { name, phone, password } });
       login(result.token, result.user);
-      toast({ title: "Conta criada!", description: "Voce ganhou 30 moedas de boas-vindas!" });
       setLocation("/dashboard");
     } catch (err: unknown) {
       const apiErr = err as { data?: { message?: string }; message?: string };
@@ -32,87 +29,94 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-primary/8 rounded-full blur-[100px]" />
-      </div>
-      <div className="relative w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="h-9 w-9 rounded-md bg-primary flex items-center justify-center">
-              <Bot className="h-5 w-5 text-white" />
-            </div>
-            <span className="font-bold text-xl text-white">BotAluguel<span className="text-primary">.Pro</span></span>
-          </Link>
-          <h1 className="text-2xl font-bold text-white">Criar sua conta</h1>
-          <p className="text-muted-foreground mt-1 text-sm">Ganhe 30 moedas gratis no cadastro</p>
+    <div className="min-h-screen bg-[#090A0F] flex flex-col items-center justify-center px-4">
+      <div className="w-full max-w-sm">
+        <div className="flex flex-col items-center mb-8">
+          <div className="h-14 w-14 rounded-xl bg-[#F97316] flex items-center justify-center mb-4 shadow-[0_0_32px_rgba(249,115,22,0.4)]">
+            <Cpu className="h-7 w-7 text-white" />
+          </div>
+          <h1 className="text-[22px] font-bold text-white tracking-tight">
+            BotAluguel<span className="text-[#F97316]">.Pro</span>
+          </h1>
+          <p className="text-[#4b4c6b] text-[12px] mt-1 tracking-wide">Crie sua conta grátis</p>
         </div>
 
-        <div className="bg-card border border-white/5 rounded-xl p-6">
+        <div className="bg-[#0d0e16] border border-[#1a1b28] rounded-lg p-6">
+          <h2 className="text-[15px] font-bold text-[#f1f2f6] mb-5">Criar conta</h2>
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="name" className="text-white/80 text-sm mb-1.5 block">Nome</Label>
+              <label className="block text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-1.5">Nome</label>
               <div className="relative">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="name"
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#4b4c6b]" />
+                <input
+                  type="text"
                   placeholder="Seu nome"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="pl-9 bg-background border-white/10 text-white placeholder:text-muted-foreground/50"
                   required
+                  className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors"
                 />
               </div>
             </div>
+
             <div>
-              <Label htmlFor="phone" className="text-white/80 text-sm mb-1.5 block">Telefone</Label>
+              <label className="block text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-1.5">Telefone</label>
               <div className="relative">
-                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="phone"
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#4b4c6b]" />
+                <input
                   type="tel"
-                  placeholder="Ex: 11999887766"
+                  placeholder="55 11 99999-9999"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="pl-9 bg-background border-white/10 text-white placeholder:text-muted-foreground/50"
                   required
+                  className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-3 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors"
                 />
               </div>
             </div>
+
             <div>
-              <Label htmlFor="password" className="text-white/80 text-sm mb-1.5 block">Senha</Label>
+              <label className="block text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-1.5">Senha</label>
               <div className="relative">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type="password"
-                  placeholder="Crie uma senha"
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-[#4b4c6b]" />
+                <input
+                  type={showPass ? "text" : "password"}
+                  placeholder="Mínimo 6 caracteres"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-9 bg-background border-white/10 text-white placeholder:text-muted-foreground/50"
                   required
-                  minLength={6}
+                  className="w-full bg-[#131420] border border-[#1e1f2e] rounded-md pl-9 pr-9 py-2.5 text-[14px] text-white placeholder-[#4b4c6b] outline-none focus:border-[#F97316] transition-colors"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(v => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-[#4b4c6b] hover:text-[#8b8ea0] transition-colors"
+                >
+                  {showPass ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+                </button>
               </div>
             </div>
-            <Button
+
+            <button
               type="submit"
-              className="w-full bg-primary hover:bg-primary/90 text-white mt-2"
               disabled={registerMutation.isPending}
+              className="w-full bg-[#F97316] hover:bg-[#ea6a00] text-white font-bold text-[14px] py-2.5 rounded-md transition-colors flex items-center justify-center gap-2 mt-2 disabled:opacity-70"
             >
-              {registerMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Criar conta gratis
-            </Button>
+              {registerMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Criar conta
+            </button>
           </form>
         </div>
 
-        <p className="text-center text-muted-foreground text-sm mt-6">
-          Ja tem conta?{" "}
-          <Link href="/login" className="text-primary hover:text-primary/80 font-medium">
+        <p className="text-center text-[#4b4c6b] text-[12px] mt-5">
+          Já tem conta?{" "}
+          <Link href="/login" className="text-[#F97316] hover:text-[#ea6a00] font-semibold transition-colors">
             Entrar
           </Link>
         </p>
       </div>
+
+      <p className="text-[#1a1b28] text-[11px] mt-10">BotAluguel Pro © 2025</p>
     </div>
   );
 }

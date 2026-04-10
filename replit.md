@@ -14,7 +14,7 @@
 - **Database**: PostgreSQL + Drizzle ORM
 - **Validation**: Zod (`zod/v4`), `drizzle-zod`
 - **API client**: Orval (gerado de OpenAPI spec)
-- **Frontend**: React + Vite, Tailwind CSS, Framer Motion, shadcn/ui, Wouter
+- **Frontend**: React + Vite, Tailwind CSS, Framer Motion, Wouter (shadcn/ui existente mas NÃO usado nas páginas — design Pterodactyl manual)
 - **Auth**: JWT (`jsonwebtoken` + `bcryptjs`), token em `localStorage` como `bot_token`
 - **Build**: esbuild (CJS bundle)
 - **Image processing**: sharp (WebP conversion for stickers)

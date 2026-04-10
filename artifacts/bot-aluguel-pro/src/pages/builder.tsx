@@ -6,12 +6,6 @@ import {
   Gamepad2, Crown, Lock, Heart, Sparkles, Send, Eye, Copy, MousePointerClick, Phone, List,
 } from "lucide-react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   useListBots, useGetBotCommands, useSaveBotCommands, getGetBotCommandsQueryKey,
   useUpdateBotSettings, useGetBot, getGetBotQueryKey,
@@ -733,22 +727,31 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
               </label>
             ) : (
               <>
-                <Label className="text-white/70 text-xs mb-1.5 block">{field.label}</Label>
+                <label className="block text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-1">{field.label}</label>
                 {field.type === "select" && field.options ? (
-                  <Select value={String(localConfig[field.key] ?? "")} onValueChange={(v) => setLocalConfig((c) => ({ ...c, [field.key]: v }))}>
-                    <SelectTrigger className="bg-background border-white/10 text-white h-9 text-sm"><SelectValue placeholder="Selecionar..." /></SelectTrigger>
-                    <SelectContent className="bg-card border-white/10">
-                      {field.options.map((opt) => <SelectItem key={opt.value} value={opt.value} className="text-white hover:bg-white/5 text-sm">{opt.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <select
+                    value={String(localConfig[field.key] ?? "")}
+                    onChange={(e) => setLocalConfig((c) => ({ ...c, [field.key]: e.target.value }))}
+                    className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 outline-none focus:border-[#F97316] transition-colors"
+                  >
+                    <option value="" disabled>Selecionar...</option>
+                    {field.options.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                  </select>
                 ) : field.type === "textarea" ? (
-                  <Textarea value={String(localConfig[field.key] ?? "")}
+                  <textarea
+                    value={String(localConfig[field.key] ?? "")}
                     onChange={(e) => setLocalConfig((c) => ({ ...c, [field.key]: e.target.value }))}
-                    placeholder={field.placeholder} className="bg-background border-white/10 text-white text-sm min-h-[80px] resize-none" />
+                    placeholder={field.placeholder}
+                    className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 min-h-[80px] resize-none outline-none focus:border-[#F97316] transition-colors"
+                  />
                 ) : (
-                  <Input value={String(localConfig[field.key] ?? "")}
+                  <input
+                    type="text"
+                    value={String(localConfig[field.key] ?? "")}
                     onChange={(e) => setLocalConfig((c) => ({ ...c, [field.key]: e.target.value }))}
-                    placeholder={field.placeholder} className="bg-background border-white/10 text-white h-9 text-sm" />
+                    placeholder={field.placeholder}
+                    className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 h-9 outline-none focus:border-[#F97316] transition-colors"
+                  />
                 )}
               </>
             )}
@@ -901,10 +904,10 @@ function EditFormContent({ node, onUpdate, onClose, prefix }: {
           </div>
         )}
       </div>
-      <div className="p-4 border-t border-white/5">
-        <Button onClick={handleSave} size="sm" className="w-full bg-primary hover:bg-primary/90 text-white">
-          <ChevronRight className="h-3.5 w-3.5 mr-1.5" />Salvar Bloco
-        </Button>
+      <div className="p-4 border-t border-[#1a1b28]">
+        <button onClick={handleSave} className="w-full bg-[#F97316] hover:bg-[#ea6a00] text-white text-[13px] font-bold py-2 rounded-md transition-colors flex items-center justify-center gap-1.5">
+          <ChevronRight className="h-3.5 w-3.5" />Salvar Bloco
+        </button>
       </div>
     </div>
   );
@@ -943,17 +946,17 @@ function SettingsFormContent({ botId, onClose }: { botId: string; onClose: () =>
     <div className="flex flex-col h-full">
       <div className="flex-1 overflow-auto p-4 space-y-4">
         <div>
-          <Label className="text-white/70 text-xs mb-1.5 block">Nome do Bot</Label>
-          <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: MeuBot" className="bg-background border-white/10 text-white h-9 text-sm" />
+          <label className="block text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-1">Nome do Bot</label>
+          <input type="text" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: MeuBot" className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 h-9 outline-none focus:border-[#F97316] transition-colors" />
         </div>
         <div>
-          <Label className="text-white/70 text-xs mb-1.5 block">Prefixo dos comandos</Label>
-          <Input value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="." maxLength={3} className="bg-background border-white/10 text-white h-9 text-sm font-mono" />
-          <p className="text-muted-foreground text-xs mt-1">Ex: <span className="font-mono text-white/60">{prefix || "."}sticker</span></p>
+          <label className="block text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-1">Prefixo dos comandos</label>
+          <input type="text" value={prefix} onChange={(e) => setPrefix(e.target.value)} placeholder="." maxLength={3} className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 h-9 outline-none focus:border-[#F97316] transition-colors font-mono" />
+          <p className="text-[#4b4c6b] text-xs mt-1">Ex: <span className="font-mono text-white/60">{prefix || "."}sticker</span></p>
         </div>
         <div>
-          <Label className="text-white/70 text-xs mb-1.5 block">Número do Dono</Label>
-          <Input value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} placeholder="5511999999999" className="bg-background border-white/10 text-white h-9 text-sm" />
+          <label className="block text-[10px] font-semibold text-[#4b4c6b] tracking-[1px] uppercase mb-1">Número do Dono</label>
+          <input type="text" value={ownerPhone} onChange={(e) => setOwnerPhone(e.target.value)} placeholder="5511999999999" className="w-full bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 h-9 outline-none focus:border-[#F97316] transition-colors" />
           <p className="text-muted-foreground text-xs mt-1">DDD + número, sem espaços</p>
         </div>
         <div className="rounded-lg bg-primary/5 border border-primary/20 p-3 text-xs text-muted-foreground">
@@ -965,11 +968,11 @@ function SettingsFormContent({ botId, onClose }: { botId: string; onClose: () =>
           </ul>
         </div>
       </div>
-      <div className="p-4 border-t border-white/5">
-        <Button onClick={handleSave} disabled={updateSettings.isPending} size="sm" className="w-full bg-primary hover:bg-primary/90 text-white">
-          {updateSettings.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Save className="h-3.5 w-3.5 mr-1.5" />}
+      <div className="p-4 border-t border-[#1a1b28]">
+        <button onClick={handleSave} disabled={updateSettings.isPending} className="w-full bg-[#F97316] hover:bg-[#ea6a00] disabled:opacity-50 text-white text-[13px] font-bold py-2 rounded-md transition-colors flex items-center justify-center gap-1.5">
+          {updateSettings.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
           Salvar Configurações
-        </Button>
+        </button>
       </div>
     </div>
   );
@@ -1582,9 +1585,9 @@ export default function BuilderPage() {
               <MessageSquare className="h-12 w-12 text-primary/30 mx-auto mb-4" />
               <p className="text-white text-base font-semibold mb-1">Comece criando um comando</p>
               <p className="text-muted-foreground/60 text-xs mb-5">Clique no botao abaixo para adicionar seu primeiro bloco</p>
-              <Button onClick={() => handleAddNode("command")} size="lg" className="bg-primary hover:bg-primary/90 text-white px-6 py-3 text-sm font-semibold shadow-xl shadow-primary/20">
-                <Plus className="h-5 w-5 mr-2" /> Adicionar Bloco Comando
-              </Button>
+              <button onClick={() => handleAddNode("command")} className="bg-[#F97316] hover:bg-[#ea6a00] text-white px-6 py-3 text-sm font-bold rounded-md shadow-xl shadow-[#F97316]/20 transition-colors flex items-center gap-2">
+                <Plus className="h-5 w-5" /> Adicionar Bloco Comando
+              </button>
             </div>
           </div>
         )}
@@ -1674,43 +1677,45 @@ export default function BuilderPage() {
           </p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
-          <Select onValueChange={handleBotSelect} value={selectedBotId}>
-            <SelectTrigger className="w-44 bg-background border-white/10 text-white text-sm">
-              <SelectValue placeholder="Selecionar bot" />
-            </SelectTrigger>
-            <SelectContent className="bg-card border-white/10">
-              {bots?.map((bot: { id: string; name: string }) => (
-                <SelectItem key={bot.id} value={bot.id} className="text-white hover:bg-white/5">{bot.name}</SelectItem>
-              ))}
-              {(!bots || bots.length === 0) && (
-                <SelectItem value="none" disabled className="text-muted-foreground">Crie um bot primeiro</SelectItem>
-              )}
-            </SelectContent>
-          </Select>
-          
-          <Button variant="outline" size="sm"
+          <select
+            value={selectedBotId}
+            onChange={(e) => handleBotSelect(e.target.value)}
+            className="w-44 bg-[#131420] border border-[#1e1f2e] text-white text-sm rounded-md px-3 py-2 outline-none focus:border-[#F97316] transition-colors"
+          >
+            <option value="" disabled>Selecionar bot</option>
+            {bots?.map((bot: { id: string; name: string }) => (
+              <option key={bot.id} value={bot.id}>{bot.name}</option>
+            ))}
+            {(!bots || bots.length === 0) && (
+              <option value="none" disabled>Crie um bot primeiro</option>
+            )}
+          </select>
+
+          <button
             onClick={() => { setShowSettings((v) => !v); setEditingNodeId(null); }}
             disabled={!selectedBotId}
-            className="border-white/10 text-white/70 hover:text-white hover:bg-white/5">
+            className="w-9 h-9 flex items-center justify-center rounded-md border border-[#1e1f2e] bg-[#131420] text-[#4b4c6b] hover:text-white hover:border-[#F97316] disabled:opacity-40 transition-colors"
+          >
             <Settings2 className="h-4 w-4" />
-          </Button>
+          </button>
           {nodes.length > 0 && (
-            <Button variant="outline" size="sm"
+            <button
               onClick={() => {
                 if (confirm(`Remover todos os ${nodes.length} blocos? Isso não pode ser desfeito.`)) {
                   setNodes([]); setEdges([]); setSelectedNode(null); setEditingNodeId(null);
                   toast({ title: "Todos os blocos foram removidos!" });
                 }
               }}
-              className="border-red-500/30 text-red-400 hover:text-red-300 hover:bg-red-500/10">
-              <Trash2 className="h-4 w-4 mr-1.5" />
-              <span className="hidden sm:inline">Limpar Tudo</span>
-            </Button>
+              className="flex items-center gap-1.5 px-3 py-2 rounded-md border border-red-500/30 bg-[#131420] text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors text-sm"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span className="hidden sm:inline text-[13px] font-semibold">Limpar Tudo</span>
+            </button>
           )}
-          <Button onClick={handleSave} disabled={saveCommands.isPending || !selectedBotId} size="sm" className="bg-primary hover:bg-primary/90 text-white">
-            {saveCommands.isPending ? <Loader2 className="mr-1.5 h-4 w-4 animate-spin" /> : <Save className="mr-1.5 h-4 w-4" />}
+          <button onClick={handleSave} disabled={saveCommands.isPending || !selectedBotId} className="flex items-center gap-1.5 bg-[#F97316] hover:bg-[#ea6a00] disabled:opacity-50 text-white text-sm font-bold px-4 py-2 rounded-md transition-colors">
+            {saveCommands.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
             Salvar
-          </Button>
+          </button>
         </div>
       </div>
 
@@ -1760,52 +1765,46 @@ export default function BuilderPage() {
         </div>
       )}
 
-      {/* MOBILE ONLY: edit + settings bottom sheets — NOT rendered on desktop */}
+      {/* MOBILE ONLY: edit + settings bottom drawers */}
       {isMobile && (
         <>
-          <Sheet open={!!editingNode} onOpenChange={(open) => { if (!open) setEditingNodeId(null); }}>
-            <SheetContent
-              side="bottom"
-              className="bg-card border-t border-white/10 rounded-t-2xl p-0 max-h-[80dvh] flex flex-col"
-              onInteractOutside={(e) => e.preventDefault()}
-              onPointerDownOutside={(e) => e.preventDefault()}
-            >
-              {editingNode && (
-                <>
-                  <SheetHeader className={`p-4 border-b border-white/5 flex-shrink-0 ${nodeConfig[editingNode.type].color}`}>
-                    <SheetTitle className="text-white text-sm flex items-center gap-2">
-                      {(() => { const Icon = nodeConfig[editingNode.type].icon; return <Icon className="h-4 w-4 text-white/70" />; })()}
-                      Editar — {nodeConfig[editingNode.type].label}
-                      <ChevronDown className="h-4 w-4 ml-auto text-white/40" />
-                    </SheetTitle>
-                  </SheetHeader>
-                  <div className="flex-1 min-h-0 overflow-auto">
-                    <EditFormContent node={editingNode} onUpdate={handleUpdateNode} onClose={() => setEditingNodeId(null)} prefix={currentPrefix} />
-                  </div>
-                </>
-              )}
-            </SheetContent>
-          </Sheet>
-
-          <Sheet open={showSettings} onOpenChange={setShowSettings}>
-            <SheetContent
-              side="bottom"
-              className="bg-card border-t border-white/10 rounded-t-2xl p-0 max-h-[80dvh] flex flex-col"
-              onInteractOutside={(e) => e.preventDefault()}
-              onPointerDownOutside={(e) => e.preventDefault()}
-            >
-              <SheetHeader className="p-4 border-b border-white/5 flex-shrink-0 bg-violet-500/10">
-                <SheetTitle className="text-white text-sm flex items-center gap-2">
-                  <Settings2 className="h-4 w-4 text-violet-400" />
-                  Configurações do Bot
-                  <ChevronDown className="h-4 w-4 ml-auto text-white/40" />
-                </SheetTitle>
-              </SheetHeader>
-              <div className="flex-1 min-h-0 overflow-auto">
-                {selectedBotId && <SettingsFormContent botId={selectedBotId} onClose={() => setShowSettings(false)} />}
+          {/* Edit node drawer */}
+          {!!editingNode && (
+            <div className="fixed inset-0 z-50 flex flex-col justify-end">
+              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setEditingNodeId(null)} />
+              <div className="relative bg-[#0d0e16] border-t border-[#1a1b28] rounded-t-2xl max-h-[80dvh] flex flex-col">
+                <div className={`p-4 border-b border-[#1a1b28] flex-shrink-0 flex items-center gap-2 ${nodeConfig[editingNode.type].color} rounded-t-2xl`}>
+                  {(() => { const Icon = nodeConfig[editingNode.type].icon; return <Icon className="h-4 w-4 text-white/70" />; })()}
+                  <span className="text-white text-sm font-semibold flex-1">Editar — {nodeConfig[editingNode.type].label}</span>
+                  <button onClick={() => setEditingNodeId(null)} className="text-white/40 hover:text-white transition-colors">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="flex-1 min-h-0 overflow-auto">
+                  <EditFormContent node={editingNode} onUpdate={handleUpdateNode} onClose={() => setEditingNodeId(null)} prefix={currentPrefix} />
+                </div>
               </div>
-            </SheetContent>
-          </Sheet>
+            </div>
+          )}
+
+          {/* Settings drawer */}
+          {showSettings && (
+            <div className="fixed inset-0 z-50 flex flex-col justify-end">
+              <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowSettings(false)} />
+              <div className="relative bg-[#0d0e16] border-t border-[#1a1b28] rounded-t-2xl max-h-[80dvh] flex flex-col">
+                <div className="p-4 border-b border-[#1a1b28] flex-shrink-0 flex items-center gap-2 bg-violet-500/10 rounded-t-2xl">
+                  <Settings2 className="h-4 w-4 text-violet-400" />
+                  <span className="text-white text-sm font-semibold flex-1">Configurações do Bot</span>
+                  <button onClick={() => setShowSettings(false)} className="text-white/40 hover:text-white transition-colors">
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+                <div className="flex-1 min-h-0 overflow-auto">
+                  {selectedBotId && <SettingsFormContent botId={selectedBotId} onClose={() => setShowSettings(false)} />}
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </DashboardLayout>
