@@ -12,3 +12,9 @@ id = "1un9-qZCismq_Sea7_eWo"
 uri = "file://artifacts/mockup-sandbox/public/images/avatar.png"
 type = "image"
 title = "User Avatar"
+
+[[generated]]
+id = "CgtadFv9-nVApC2RA4mtY"
+uri = "file://artifacts/mockup-sandbox/public/images/bot-studio-create.png"
+type = "image"
+title = "Bot studio create bot"

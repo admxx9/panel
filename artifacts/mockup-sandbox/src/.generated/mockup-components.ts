@@ -4,5 +4,9 @@ export const modules: ModuleMap = {
   "./components/mockups/dashboard-layouts/ActivityFeed.tsx": () => import("../components/mockups/dashboard-layouts/ActivityFeed.tsx"),
   "./components/mockups/dashboard-layouts/CardGrid.tsx": () => import("../components/mockups/dashboard-layouts/CardGrid.tsx"),
   "./components/mockups/dashboard-layouts/CommandCenter.tsx": () => import("../components/mockups/dashboard-layouts/CommandCenter.tsx"),
-  "./components/mockups/dashboard-layouts/MinimalClean.tsx": () => import("../components/mockups/dashboard-layouts/MinimalClean.tsx")
+  "./components/mockups/dashboard-layouts/MinimalClean.tsx": () => import("../components/mockups/dashboard-layouts/MinimalClean.tsx"),
+  "./components/mockups/dashboard-saas/BotStudio.tsx": () => import("../components/mockups/dashboard-saas/BotStudio.tsx"),
+  "./components/mockups/dashboard-saas/ControlPanel.tsx": () => import("../components/mockups/dashboard-saas/ControlPanel.tsx"),
+  "./components/mockups/dashboard-saas/HubPlatform.tsx": () => import("../components/mockups/dashboard-saas/HubPlatform.tsx"),
+  "./components/mockups/dashboard-saas/Workspace.tsx": () => import("../components/mockups/dashboard-saas/Workspace.tsx")
 };
