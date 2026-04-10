@@ -29,7 +29,7 @@ function MiniBarChart({ data }: { data: number[] }) {
           <View key={i} style={ch.col}>
             <View style={ch.barBg}>
               <LinearGradient
-                colors={["#7C3AED", "#6D28D9"]}
+                colors={["#6D28D9", "#4C1D95"]}
                 style={[ch.barFill, { height: `${Math.max((v / max) * 100, 4)}%` }]}
               />
             </View>
@@ -70,11 +70,11 @@ export default function DashboardScreen() {
         contentContainerStyle={{ paddingBottom }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#7C3AED" />
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#6D28D9" />
         }
       >
         <LinearGradient
-          colors={["#7C3AED", "#6D28D9", "#5B21B6"]}
+          colors={["#6D28D9", "#4C1D95", "#3B0764"]}
           style={[s.header, { paddingTop: insets.top + 16 }]}
         >
           <View style={s.headerRow}>
@@ -106,14 +106,14 @@ export default function DashboardScreen() {
 
         {isLoading ? (
           <View style={s.loader}>
-            <ActivityIndicator color="#7C3AED" size="large" />
+            <ActivityIndicator color="#6D28D9" size="large" />
           </View>
         ) : (
           <>
             <View style={s.statsGrid}>
               <View style={s.statCard}>
-                <View style={[s.statIcon, { backgroundColor: "#1E1635" }]}>
-                  <Feather name="cpu" size={18} color="#A78BFA" />
+                <View style={[s.statIcon, { backgroundColor: "#150F2A" }]}>
+                  <Feather name="cpu" size={18} color="#8B5CF6" />
                 </View>
                 <Text style={s.statValue}>{totalBots}</Text>
                 <Text style={s.statLabel}>Total Bots</Text>
@@ -161,7 +161,7 @@ export default function DashboardScreen() {
                 style={({ pressed }) => [s.actionCard, pressed && { opacity: 0.8 }]}
                 onPress={() => router.push("/(tabs)/bots")}
               >
-                <LinearGradient colors={["#7C3AED", "#6D28D9"]} style={s.actionIconGrad}>
+                <LinearGradient colors={["#6D28D9", "#4C1D95"]} style={s.actionIconGrad}>
                   <Feather name="plus" size={20} color="#FFF" />
                 </LinearGradient>
                 <Text style={s.actionLabel}>Criar Bot</Text>
@@ -194,8 +194,8 @@ export default function DashboardScreen() {
                 style={({ pressed }) => [s.actionCard, pressed && { opacity: 0.8 }]}
                 onPress={() => router.push("/(tabs)/plans")}
               >
-                <View style={[s.actionIconWrap, { backgroundColor: "#1E1635" }]}>
-                  <Feather name="star" size={20} color="#A78BFA" />
+                <View style={[s.actionIconWrap, { backgroundColor: "#150F2A" }]}>
+                  <Feather name="star" size={20} color="#8B5CF6" />
                 </View>
                 <Text style={s.actionLabel}>Planos</Text>
                 <Text style={s.actionSub}>Upgrade</Text>
@@ -246,7 +246,7 @@ export default function DashboardScreen() {
                           <Feather
                             name={item.type === "topup" ? "arrow-up-circle" : "zap"}
                             size={16}
-                            color={item.type === "topup" ? "#22C55E" : "#7C3AED"}
+                            color={item.type === "topup" ? "#22C55E" : "#6D28D9"}
                           />
                         </View>
                         <View style={{ flex: 1 }}>
@@ -386,7 +386,7 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
   sectionTitle: { fontSize: 16, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
-  seeAll: { fontSize: 13, color: "#7C3AED", fontFamily: "Inter_600SemiBold" },
+  seeAll: { fontSize: 13, color: "#6D28D9", fontFamily: "Inter_600SemiBold" },
 
   actionsGrid: {
     flexDirection: "row",

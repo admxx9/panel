@@ -151,7 +151,7 @@ export default function BotsScreen() {
 
   return (
     <View style={s.root}>
-      <LinearGradient colors={["#7C3AED", "#6D28D9"]} style={[s.header, { paddingTop: insets.top + 12 }]}>
+      <LinearGradient colors={["#6D28D9", "#4C1D95"]} style={[s.header, { paddingTop: insets.top + 12 }]}>
         <View style={s.headerRow}>
           <View>
             <Text style={s.headerTitle}>Meus Bots</Text>
@@ -161,7 +161,7 @@ export default function BotsScreen() {
             style={({ pressed }) => [s.addBtn, pressed && { opacity: 0.8 }]}
             onPress={() => setShowCreate(true)}
           >
-            <Feather name="plus" size={18} color="#7C3AED" />
+            <Feather name="plus" size={18} color="#6D28D9" />
           </Pressable>
         </View>
       </LinearGradient>
@@ -173,12 +173,12 @@ export default function BotsScreen() {
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
         refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#7C3AED" />
+          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#6D28D9" />
         }
         ListEmptyComponent={
           isLoading ? (
             <View style={s.empty}>
-              <ActivityIndicator color="#7C3AED" size="large" />
+              <ActivityIndicator color="#6D28D9" size="large" />
               <Text style={s.emptyText}>Carregando bots...</Text>
             </View>
           ) : (
@@ -331,7 +331,7 @@ const row = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
   },
   btnPrimary: {
-    backgroundColor: "#7C3AED",
+    backgroundColor: "#6D28D9",
   },
   btnPrimaryText: {
     fontSize: 12,
@@ -399,7 +399,7 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: "#7C3AED",
+    backgroundColor: "#6D28D9",
     borderRadius: 12,
     paddingHorizontal: 20,
     paddingVertical: 12,
@@ -449,7 +449,7 @@ const s = StyleSheet.create({
   confirmBtn: {
     flex: 1,
     borderRadius: 12,
-    backgroundColor: "#7C3AED",
+    backgroundColor: "#6D28D9",
     paddingVertical: 14,
     alignItems: "center",
   },

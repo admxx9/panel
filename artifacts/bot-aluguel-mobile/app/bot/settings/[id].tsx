@@ -65,7 +65,7 @@ export default function BotSettingsScreen() {
 
   return (
     <View style={s.root}>
-      <LinearGradient colors={["#7C3AED", "#6D28D9"]} style={[s.nav, { paddingTop: insets.top + 8 }]}>
+      <LinearGradient colors={["#6D28D9", "#4C1D95"]} style={[s.nav, { paddingTop: insets.top + 8 }]}>
         <Pressable style={s.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={20} color="#FFF" />
         </Pressable>
@@ -80,7 +80,7 @@ export default function BotSettingsScreen() {
           showsVerticalScrollIndicator={false}
         >
           {!bot ? (
-            <View style={s.loader}><ActivityIndicator color="#7C3AED" size="large" /></View>
+            <View style={s.loader}><ActivityIndicator color="#6D28D9" size="large" /></View>
           ) : (
             <>
               <View style={s.card}>
@@ -143,8 +143,8 @@ export default function BotSettingsScreen() {
               <View style={s.card}>
                 <Text style={s.cardSectionLabel}>COMO OS COMANDOS FUNCIONAM</Text>
                 {[
-                  { badge: `${settings.prefix !== "nenhum" ? settings.prefix : ""}sticker`, badgeColor: "#7C3AED", desc: "Com o prefixo e gatilho definidos, o bot responde ao comando em grupos." },
-                  { badge: "Builder", badgeColor: "#7C3AED", desc: "Use o Construtor Visual para montar o fluxo: Comando → Ação → Resposta." },
+                  { badge: `${settings.prefix !== "nenhum" ? settings.prefix : ""}sticker`, badgeColor: "#6D28D9", desc: "Com o prefixo e gatilho definidos, o bot responde ao comando em grupos." },
+                  { badge: "Builder", badgeColor: "#6D28D9", desc: "Use o Construtor Visual para montar o fluxo: Comando → Ação → Resposta." },
                   { badge: "Live", badgeColor: "#22C55E", desc: "O bot precisa estar conectado ao WhatsApp para processar comandos." },
                 ].map((tip) => (
                   <View key={tip.badge} style={s.tipRow}>
@@ -211,9 +211,9 @@ const s = StyleSheet.create({
     paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10,
     backgroundColor: "#1E1E28",
   },
-  prefixBtnActive: { backgroundColor: "#1E1635" },
+  prefixBtnActive: { backgroundColor: "#150F2A" },
   prefixText: { fontSize: 14, fontWeight: "600", color: "#9CA3AF", fontFamily: "Inter_600SemiBold" },
-  prefixTextActive: { color: "#7C3AED" },
+  prefixTextActive: { color: "#6D28D9" },
 
   tipRow: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
   tipBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4, marginTop: 2 },
@@ -221,9 +221,9 @@ const s = StyleSheet.create({
   tipText: { flex: 1, fontSize: 13, color: "#6B7280", fontFamily: "Inter_400Regular", lineHeight: 20 },
 
   saveBtn: {
-    backgroundColor: "#7C3AED", borderRadius: 12, paddingVertical: 15,
+    backgroundColor: "#6D28D9", borderRadius: 12, paddingVertical: 15,
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    shadowColor: "#7C3AED", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
+    shadowColor: "#6D28D9", shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.25, shadowRadius: 6, elevation: 4,
   },
   saveBtnText: { color: "#FFF", fontSize: 15, fontWeight: "700", fontFamily: "Inter_700Bold" },
 });

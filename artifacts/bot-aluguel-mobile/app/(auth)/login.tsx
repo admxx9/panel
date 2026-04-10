@@ -51,10 +51,10 @@ export default function LoginScreen() {
 
   return (
     <View style={s.root}>
-      <LinearGradient colors={["#7C3AED", "#6D28D9", "#5B21B6"]} style={[s.headerGradient, { paddingTop: insets.top + 40 }]}>
+      <LinearGradient colors={["#6D28D9", "#4C1D95", "#3B0764"]} style={[s.headerGradient, { paddingTop: insets.top + 40 }]}>
         <View style={s.logoWrap}>
           <View style={s.logoBox}>
-            <Feather name="cpu" size={28} color="#7C3AED" />
+            <Feather name="cpu" size={28} color="#6D28D9" />
           </View>
         </View>
         <Text style={s.brandName}>BotAluguel<Text style={s.brandDot}>.Pro</Text></Text>
@@ -76,7 +76,7 @@ export default function LoginScreen() {
             <View style={s.field}>
               <Text style={s.label}>TELEFONE</Text>
               <View style={[s.inputRow, focusPhone && s.inputFocused]}>
-                <Feather name="phone" size={16} color={focusPhone ? "#7C3AED" : "#9CA3AF"} style={s.inputIcon} />
+                <Feather name="phone" size={16} color={focusPhone ? "#6D28D9" : "#9CA3AF"} style={s.inputIcon} />
                 <TextInput
                   style={s.input}
                   placeholder="55 11 99999-9999"
@@ -94,7 +94,7 @@ export default function LoginScreen() {
             <View style={s.field}>
               <Text style={s.label}>SENHA</Text>
               <View style={[s.inputRow, focusPass && s.inputFocused]}>
-                <Feather name="lock" size={16} color={focusPass ? "#7C3AED" : "#9CA3AF"} style={s.inputIcon} />
+                <Feather name="lock" size={16} color={focusPass ? "#6D28D9" : "#9CA3AF"} style={s.inputIcon} />
                 <TextInput
                   style={s.input}
                   placeholder="Sua senha"
@@ -228,7 +228,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
   },
   inputFocused: {
-    borderColor: "#7C3AED",
+    borderColor: "#6D28D9",
     backgroundColor: "#FAFAFF",
   },
   inputIcon: {
@@ -261,13 +261,13 @@ const s = StyleSheet.create({
     fontFamily: "Inter_500Medium",
   },
   btn: {
-    backgroundColor: "#7C3AED",
+    backgroundColor: "#6D28D9",
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",
     justifyContent: "center",
     marginTop: 4,
-    shadowColor: "#7C3AED",
+    shadowColor: "#6D28D9",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 6,
@@ -290,7 +290,7 @@ const s = StyleSheet.create({
     fontFamily: "Inter_400Regular",
   },
   registerLink: {
-    color: "#7C3AED",
+    color: "#6D28D9",
     fontSize: 14,
     fontWeight: "700",
     fontFamily: "Inter_700Bold",

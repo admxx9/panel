@@ -16,7 +16,7 @@ interface Props {
 
 const BAR_H = 64;
 const DOT = 56;
-const ACTIVE = "#7C3AED";
+const ACTIVE = "#6D28D9";
 const INACTIVE = "#6B7280";
 
 export default function BottomNav({ tabs }: Props) {

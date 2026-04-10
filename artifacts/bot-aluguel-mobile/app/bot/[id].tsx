@@ -99,14 +99,14 @@ export default function BotDetailScreen() {
   if (!bot) {
     return (
       <View style={s.center}>
-        <ActivityIndicator color="#7C3AED" size="large" />
+        <ActivityIndicator color="#6D28D9" size="large" />
       </View>
     );
   }
 
   return (
     <View style={s.root}>
-      <LinearGradient colors={["#7C3AED", "#6D28D9"]} style={[s.nav, { paddingTop: insets.top + 8 }]}>
+      <LinearGradient colors={["#6D28D9", "#4C1D95"]} style={[s.nav, { paddingTop: insets.top + 8 }]}>
         <Pressable style={s.backBtn} onPress={() => router.back()}>
           <Feather name="arrow-left" size={20} color="#FFF" />
         </Pressable>
@@ -132,11 +132,11 @@ export default function BotDetailScreen() {
 
         <View style={s.quickRow}>
           <Pressable
-            style={({ pressed }) => [s.quickBtn, { backgroundColor: "#1E1635" }, pressed && { opacity: 0.75 }]}
+            style={({ pressed }) => [s.quickBtn, { backgroundColor: "#150F2A" }, pressed && { opacity: 0.75 }]}
             onPress={() => router.push(`/builder/${id}` as any)}
           >
-            <Feather name="git-branch" size={16} color="#7C3AED" />
-            <Text style={[s.quickBtnText, { color: "#7C3AED" }]}>Construtor</Text>
+            <Feather name="git-branch" size={16} color="#6D28D9" />
+            <Text style={[s.quickBtnText, { color: "#6D28D9" }]}>Construtor</Text>
           </Pressable>
           <Pressable
             style={({ pressed }) => [s.quickBtn, { backgroundColor: "#1E1E28" }, pressed && { opacity: 0.75 }]}
@@ -220,7 +220,7 @@ export default function BotDetailScreen() {
                   <Image source={{ uri: bot.qrCode }} style={s.qrImage} contentFit="contain" />
                 </View>
                 <View style={s.waitRow}>
-                  <ActivityIndicator color="#7C3AED" size="small" />
+                  <ActivityIndicator color="#6D28D9" size="small" />
                   <Text style={s.waitText}>Aguardando leitura...</Text>
                 </View>
               </View>
@@ -232,13 +232,13 @@ export default function BotDetailScreen() {
                   <Text style={s.pairCode}>{bot.pairCode}</Text>
                 </View>
                 <View style={s.waitRow}>
-                  <ActivityIndicator color="#7C3AED" size="small" />
+                  <ActivityIndicator color="#6D28D9" size="small" />
                   <Text style={s.waitText}>Aguardando confirmação...</Text>
                 </View>
               </View>
             ) : (
               <View style={s.waitingCenter}>
-                <ActivityIndicator color="#7C3AED" size="large" />
+                <ActivityIndicator color="#6D28D9" size="large" />
                 <Text style={s.waitText}>Iniciando conexão...</Text>
               </View>
             )}
@@ -338,7 +338,7 @@ const s = StyleSheet.create({
     flexDirection: "row", backgroundColor: "#1E1E28", borderRadius: 10, padding: 3, gap: 3,
   },
   toggleBtn: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 10, borderRadius: 8 },
-  toggleBtnActive: { backgroundColor: "#7C3AED" },
+  toggleBtnActive: { backgroundColor: "#6D28D9" },
   toggleText: { fontSize: 14, fontWeight: "600", color: "#9CA3AF", fontFamily: "Inter_600SemiBold" },
   toggleTextActive: { color: "#FFF" },
   phoneBox: {
@@ -348,7 +348,7 @@ const s = StyleSheet.create({
   phoneInput: { flex: 1, color: "#F0F0F5", fontSize: 15, paddingVertical: 14, fontFamily: "Inter_400Regular" },
   connectHint: { fontSize: 13, color: "#9CA3AF", fontFamily: "Inter_400Regular", lineHeight: 20 },
   connectBtn: {
-    backgroundColor: "#7C3AED", borderRadius: 12, paddingVertical: 14,
+    backgroundColor: "#6D28D9", borderRadius: 12, paddingVertical: 14,
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
   },
   connectBtnText: { color: "#FFF", fontSize: 15, fontWeight: "700", fontFamily: "Inter_700Bold" },
@@ -365,10 +365,10 @@ const s = StyleSheet.create({
   qrImage: { width: 200, height: 200 },
   pairContainer: { alignItems: "center", gap: 12 },
   pairBox: {
-    backgroundColor: "#1E1635", borderRadius: 12, borderWidth: 2,
+    backgroundColor: "#150F2A", borderRadius: 12, borderWidth: 2,
     borderColor: "#7C3AED40", paddingHorizontal: 30, paddingVertical: 18,
   },
-  pairCode: { fontSize: 32, fontWeight: "800", color: "#7C3AED", fontFamily: "Inter_700Bold", letterSpacing: 6 },
+  pairCode: { fontSize: 32, fontWeight: "800", color: "#6D28D9", fontFamily: "Inter_700Bold", letterSpacing: 6 },
   waitRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   waitText: { fontSize: 14, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
   waitingCenter: { alignItems: "center", gap: 14, paddingVertical: 24 },

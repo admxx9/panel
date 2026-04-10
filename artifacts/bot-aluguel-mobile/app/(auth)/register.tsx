@@ -45,9 +45,9 @@ export default function RegisterScreen() {
 
   return (
     <View style={s.root}>
-      <LinearGradient colors={["#7C3AED", "#6D28D9", "#5B21B6"]} style={[s.headerGradient, { paddingTop: insets.top + 32 }]}>
+      <LinearGradient colors={["#6D28D9", "#4C1D95", "#3B0764"]} style={[s.headerGradient, { paddingTop: insets.top + 32 }]}>
         <View style={s.logoBox}>
-          <Feather name="cpu" size={26} color="#7C3AED" />
+          <Feather name="cpu" size={26} color="#6D28D9" />
         </View>
         <Text style={s.brandName}>BotAluguel<Text style={{ color: "#E9D5FF" }}>.Pro</Text></Text>
         <Text style={s.brandSub}>Crie sua conta grátis</Text>
@@ -68,7 +68,7 @@ export default function RegisterScreen() {
             <View style={s.field}>
               <Text style={s.label}>NOME</Text>
               <View style={[s.inputRow, nameFocus && s.inputFocus]}>
-                <Feather name="user" size={16} color={nameFocus ? "#7C3AED" : "#9CA3AF"} />
+                <Feather name="user" size={16} color={nameFocus ? "#6D28D9" : "#9CA3AF"} />
                 <TextInput
                   style={s.input}
                   placeholder="Seu nome"
@@ -85,7 +85,7 @@ export default function RegisterScreen() {
             <View style={s.field}>
               <Text style={s.label}>TELEFONE</Text>
               <View style={[s.inputRow, phoneFocus && s.inputFocus]}>
-                <Feather name="phone" size={16} color={phoneFocus ? "#7C3AED" : "#9CA3AF"} />
+                <Feather name="phone" size={16} color={phoneFocus ? "#6D28D9" : "#9CA3AF"} />
                 <TextInput
                   style={s.input}
                   placeholder="55 11 99999-9999"
@@ -102,7 +102,7 @@ export default function RegisterScreen() {
             <View style={s.field}>
               <Text style={s.label}>SENHA</Text>
               <View style={[s.inputRow, pwFocus && s.inputFocus]}>
-                <Feather name="lock" size={16} color={pwFocus ? "#7C3AED" : "#9CA3AF"} />
+                <Feather name="lock" size={16} color={pwFocus ? "#6D28D9" : "#9CA3AF"} />
                 <TextInput
                   style={[s.input, { flex: 1 }]}
                   placeholder="Mínimo 6 caracteres"
@@ -134,7 +134,7 @@ export default function RegisterScreen() {
 
           <Pressable style={s.loginLink} onPress={() => router.push("/(auth)/login")}>
             <Text style={s.loginLinkText}>
-              Já tem conta? <Text style={{ color: "#7C3AED", fontWeight: "700" }}>Entrar</Text>
+              Já tem conta? <Text style={{ color: "#6D28D9", fontWeight: "700" }}>Entrar</Text>
             </Text>
           </Pressable>
         </ScrollView>
@@ -195,16 +195,16 @@ const s = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 12,
   },
-  inputFocus: { borderColor: "#7C3AED", backgroundColor: "#FAFAFF" },
+  inputFocus: { borderColor: "#6D28D9", backgroundColor: "#FAFAFF" },
   input: { flex: 1, fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_400Regular" },
 
   btn: {
-    backgroundColor: "#7C3AED",
+    backgroundColor: "#6D28D9",
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: "center",
     marginTop: 4,
-    shadowColor: "#7C3AED",
+    shadowColor: "#6D28D9",
     shadowOffset: { width: 0, height: 3 },
     shadowOpacity: 0.25,
     shadowRadius: 6,

@@ -29,8 +29,8 @@ const STATUS_LABELS: Record<string, { label: string; color: string; bg: string }
 type Tab = "users" | "payments";
 
 const STAT_ITEMS = (stats: any) => [
-  { label: "Usuários",   value: stats.totalUsers,                      icon: "users",       color: "#7C3AED" },
-  { label: "Total Bots", value: stats.totalBots,                       icon: "cpu",         color: "#7C3AED" },
+  { label: "Usuários",   value: stats.totalUsers,                      icon: "users",       color: "#6D28D9" },
+  { label: "Total Bots", value: stats.totalBots,                       icon: "cpu",         color: "#6D28D9" },
   { label: "Bots Ativ.", value: stats.activeBots,                      icon: "zap",         color: "#22C55E" },
   { label: "Receita",    value: `R$${stats.totalRevenue.toFixed(0)}`,  icon: "dollar-sign", color: "#3B82F6" },
   { label: "PIX Pend.",  value: stats.pendingPayments,                 icon: "clock",       color: "#F59E0B" },
@@ -67,7 +67,7 @@ export default function AdminScreen() {
 
   return (
     <View style={s.root}>
-      <LinearGradient colors={["#7C3AED", "#6D28D9"]} style={[s.header, { paddingTop: insets.top + 12 }]}>
+      <LinearGradient colors={["#6D28D9", "#4C1D95"]} style={[s.header, { paddingTop: insets.top + 12 }]}>
         <Text style={s.headerTitle}>Painel Admin</Text>
         <Text style={s.headerSub}>Gerenciar plataforma</Text>
       </LinearGradient>
@@ -75,10 +75,10 @@ export default function AdminScreen() {
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={false} onRefresh={refetchAll} tintColor="#7C3AED" />}
+        refreshControl={<RefreshControl refreshing={false} onRefresh={refetchAll} tintColor="#6D28D9" />}
       >
         {statsLoading ? (
-          <View style={s.loader}><ActivityIndicator color="#7C3AED" /></View>
+          <View style={s.loader}><ActivityIndicator color="#6D28D9" /></View>
         ) : stats && (
           <View style={s.statsGrid}>
             {STAT_ITEMS(stats).map((item) => (
@@ -109,7 +109,7 @@ export default function AdminScreen() {
 
         {tab === "users" && (
           usersLoading ? (
-            <View style={s.loader}><ActivityIndicator color="#7C3AED" /></View>
+            <View style={s.loader}><ActivityIndicator color="#6D28D9" /></View>
           ) : (
             <View style={s.listCard}>
               {userList.length === 0 ? (
@@ -136,7 +136,7 @@ export default function AdminScreen() {
 
         {tab === "payments" && (
           paymentsLoading ? (
-            <View style={s.loader}><ActivityIndicator color="#7C3AED" /></View>
+            <View style={s.loader}><ActivityIndicator color="#6D28D9" /></View>
           ) : (
             <View style={s.listCard}>
               {paymentList.length === 0 ? (
@@ -147,7 +147,7 @@ export default function AdminScreen() {
                 return (
                   <View key={p.id} style={[s.listRow, i < paymentList.length - 1 && s.listRowBorder]}>
                     <View style={s.payIcon}>
-                      <Feather name="dollar-sign" size={14} color="#7C3AED" />
+                      <Feather name="dollar-sign" size={14} color="#6D28D9" />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={s.rowTitle}>+{p.coins} moedas</Text>
@@ -220,7 +220,7 @@ const s = StyleSheet.create({
     elevation: 2,
   },
   tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, alignItems: "center" },
-  tabBtnActive: { backgroundColor: "#7C3AED" },
+  tabBtnActive: { backgroundColor: "#6D28D9" },
   tabText: { fontSize: 14, fontWeight: "600", color: "#9CA3AF", fontFamily: "Inter_600SemiBold" },
   tabTextActive: { color: "#FFF" },
 
@@ -239,19 +239,19 @@ const s = StyleSheet.create({
 
   userAvatar: {
     width: 36, height: 36, borderRadius: 12,
-    backgroundColor: "#1E1635",
+    backgroundColor: "#150F2A",
     alignItems: "center", justifyContent: "center",
   },
-  userInitial: { fontSize: 15, fontWeight: "700", color: "#7C3AED", fontFamily: "Inter_700Bold" },
+  userInitial: { fontSize: 15, fontWeight: "700", color: "#6D28D9", fontFamily: "Inter_700Bold" },
   payIcon: {
     width: 36, height: 36, borderRadius: 12,
-    backgroundColor: "#1E1635",
+    backgroundColor: "#150F2A",
     alignItems: "center", justifyContent: "center",
   },
   rowTitle: { fontSize: 14, fontWeight: "600", color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
   rowSub: { fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular", marginTop: 2 },
-  adminBadge: { backgroundColor: "#1E1635", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  adminBadgeText: { fontSize: 11, fontWeight: "700", color: "#7C3AED", fontFamily: "Inter_700Bold" },
+  adminBadge: { backgroundColor: "#150F2A", borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
+  adminBadgeText: { fontSize: 11, fontWeight: "700", color: "#6D28D9", fontFamily: "Inter_700Bold" },
   statusBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5 },
   statusText: { fontSize: 12, fontWeight: "600", fontFamily: "Inter_600SemiBold" },
   emptyBox: { paddingVertical: 30, alignItems: "center" },

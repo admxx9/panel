@@ -74,7 +74,7 @@ export default function PaymentsScreen() {
 
   return (
     <View style={s.root}>
-      <LinearGradient colors={["#7C3AED", "#6D28D9"]} style={[s.header, { paddingTop: insets.top + 12 }]}>
+      <LinearGradient colors={["#6D28D9", "#4C1D95"]} style={[s.header, { paddingTop: insets.top + 12 }]}>
         <Text style={s.headerTitle}>Comprar Moedas</Text>
         <Text style={s.headerSub}>R$ 1,00 = 100 moedas</Text>
       </LinearGradient>
@@ -82,7 +82,7 @@ export default function PaymentsScreen() {
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={historyLoading} onRefresh={refetch} tintColor="#7C3AED" />}
+        refreshControl={<RefreshControl refreshing={historyLoading} onRefresh={refetch} tintColor="#6D28D9" />}
       >
         <View style={s.card}>
           <Text style={s.cardTitle}>Gerar PIX</Text>
@@ -114,9 +114,9 @@ export default function PaymentsScreen() {
 
           {amount && parseFloat(amount) > 0 && (
             <View style={s.preview}>
-              <Feather name="dollar-sign" size={14} color="#7C3AED" />
+              <Feather name="dollar-sign" size={14} color="#6D28D9" />
               <Text style={s.previewText}>
-                Você receberá <Text style={{ color: "#7C3AED", fontWeight: "700" }}>{Math.round(parseFloat(amount) * 100)} moedas</Text>
+                Você receberá <Text style={{ color: "#6D28D9", fontWeight: "700" }}>{Math.round(parseFloat(amount) * 100)} moedas</Text>
               </Text>
             </View>
           )}
@@ -160,7 +160,7 @@ export default function PaymentsScreen() {
                   <Text style={s.codeText} numberOfLines={3}>{pixData.copyPaste ?? "—"}</Text>
                 </View>
                 <Pressable style={[s.copyBtn, copied && s.copyBtnDone]} onPress={handleCopy}>
-                  <Feather name={copied ? "check" : "copy"} size={13} color={copied ? "#22C55E" : "#7C3AED"} />
+                  <Feather name={copied ? "check" : "copy"} size={13} color={copied ? "#22C55E" : "#6D28D9"} />
                   <Text style={[s.copyText, copied && { color: "#22C55E" }]}>
                     {copied ? "Copiado!" : "Copiar código PIX"}
                   </Text>
@@ -173,7 +173,7 @@ export default function PaymentsScreen() {
 
         <Text style={s.sectionTitle}>Histórico</Text>
         {historyLoading ? (
-          <View style={s.loader}><ActivityIndicator color="#7C3AED" /></View>
+          <View style={s.loader}><ActivityIndicator color="#6D28D9" /></View>
         ) : historyList.length === 0 ? (
           <View style={s.emptyHistory}>
             <Feather name="inbox" size={28} color="#D1D5DB" />
@@ -186,7 +186,7 @@ export default function PaymentsScreen() {
               return (
                 <View key={item.id} style={[s.historyRow, i < historyList.length - 1 && s.historyRowBorder]}>
                   <View style={s.historyIconWrap}>
-                    <Feather name="dollar-sign" size={16} color="#7C3AED" />
+                    <Feather name="dollar-sign" size={16} color="#6D28D9" />
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={s.historyAmount}>R$ {parseFloat(item.amount ?? 0).toFixed(2)}</Text>
@@ -238,9 +238,9 @@ const s = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: "#1E1E28",
   },
-  presetActive: { backgroundColor: "#1E1635" },
+  presetActive: { backgroundColor: "#150F2A" },
   presetText: { fontSize: 14, color: "#6B7280", fontFamily: "Inter_600SemiBold" },
-  presetTextActive: { color: "#7C3AED" },
+  presetTextActive: { color: "#6D28D9" },
 
   label: { fontSize: 11, color: "#9CA3AF", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
   inputRow: {
@@ -257,7 +257,7 @@ const s = StyleSheet.create({
   previewText: { fontSize: 14, color: "#6B7280", fontFamily: "Inter_400Regular" },
 
   btn: {
-    backgroundColor: "#7C3AED",
+    backgroundColor: "#6D28D9",
     borderRadius: 12,
     paddingVertical: 14,
     alignItems: "center",
@@ -300,11 +300,11 @@ const s = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
     borderRadius: 12,
-    backgroundColor: "#1E1635",
+    backgroundColor: "#150F2A",
     paddingVertical: 12,
   },
   copyBtnDone: { backgroundColor: "#0D2818" },
-  copyText: { fontSize: 14, fontWeight: "600", color: "#7C3AED", fontFamily: "Inter_600SemiBold" },
+  copyText: { fontSize: 14, fontWeight: "600", color: "#6D28D9", fontFamily: "Inter_600SemiBold" },
   waitText: { textAlign: "center", fontSize: 12, color: "#9CA3AF", fontFamily: "Inter_400Regular" },
   paidBadge: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#0D2818", borderRadius: 12, padding: 14 },
   paidText: { fontSize: 14, color: "#22C55E", fontFamily: "Inter_600SemiBold" },
@@ -327,7 +327,7 @@ const s = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: "#1E1635",
+    backgroundColor: "#150F2A",
     alignItems: "center",
     justifyContent: "center",
   },

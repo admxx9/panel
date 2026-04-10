@@ -37,8 +37,8 @@ function Row({
       onPress={onPress}
       disabled={!onPress}
     >
-      <View style={[s.rowIcon, { backgroundColor: destructive ? "#2D0A0A" : "#1E1635" }]}>
-        <Feather name={icon as any} size={16} color={destructive ? "#EF4444" : "#7C3AED"} />
+      <View style={[s.rowIcon, { backgroundColor: destructive ? "#2D0A0A" : "#150F2A" }]}>
+        <Feather name={icon as any} size={16} color={destructive ? "#EF4444" : "#6D28D9"} />
       </View>
       <Text style={[s.rowLabel, destructive && { color: "#EF4444" }]}>{label}</Text>
       {value ? (
@@ -74,7 +74,7 @@ export default function SettingsScreen() {
 
   return (
     <View style={s.root}>
-      <LinearGradient colors={["#7C3AED", "#6D28D9"]} style={[s.header, { paddingTop: insets.top + 16 }]}>
+      <LinearGradient colors={["#6D28D9", "#4C1D95"]} style={[s.header, { paddingTop: insets.top + 16 }]}>
         <View style={s.profileRow}>
           <View style={s.avatar}>
             <Text style={s.avatarText}>{initial}</Text>
