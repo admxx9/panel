@@ -84,6 +84,17 @@ export default function BotDetailScreen() {
     }
   }
 
+  async function handleCancelConnection() {
+    if (!id) return;
+    try {
+      await disconnectBot.mutateAsync({ botId: id });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      refetch();
+    } catch {
+      Alert.alert("Erro", "Não foi possível cancelar a conexão.");
+    }
+  }
+
   async function handleDisconnect() {
     if (!id) return;
     Alert.alert("Desconectar", "Deseja desconectar este bot do WhatsApp?", [
@@ -288,6 +299,17 @@ export default function BotDetailScreen() {
                 </Text>
               </View>
             )}
+
+            <Pressable
+              style={({ pressed }) => [
+                styles.cancelBtn,
+                { backgroundColor: colors.destructive + "15", borderColor: colors.destructive + "40", opacity: pressed ? 0.7 : 1 },
+              ]}
+              onPress={handleCancelConnection}
+            >
+              <Feather name="x-circle" size={16} color={colors.destructive} />
+              <Text style={[styles.cancelBtnText, { color: colors.destructive }]}>Cancelar conexão</Text>
+            </Pressable>
           </View>
         )}
 
@@ -399,7 +421,17 @@ const styles = StyleSheet.create({
     paddingVertical: 15,
   },
   connectBtnText: { color: "#FFF", fontSize: 16, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
-  connectingSection: {},
+  connectingSection: { gap: 20 },
+  cancelBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1,
+  },
+  cancelBtnText: { fontSize: 15, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
   qrContainer: { gap: 12, alignItems: "center" },
   qrHint: { fontSize: 13, fontFamily: "Inter_400Regular", textAlign: "center" as const, paddingHorizontal: 16 },
   qrBox: {
