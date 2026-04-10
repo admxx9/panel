@@ -17,6 +17,8 @@ interface Props {
 const ACTIVE_COLOR = "#F0F0F5";
 const INACTIVE_COLOR = "#6B7280";
 const ACCENT = "#6D28D9";
+const BAR_BG = "#0F0F14";
+const BORDER_COLOR = "#2A2A35";
 
 export default function BottomNav({ tabs }: Props) {
   const pathname = usePathname();
@@ -29,8 +31,10 @@ export default function BottomNav({ tabs }: Props) {
   const leftTabs = tabs.slice(0, midIndex);
   const rightTabs = tabs.slice(midIndex);
 
+  const pb = Math.max(insets.bottom, Platform.OS === "android" ? 6 : 0);
+
   return (
-    <View style={[s.wrap, { paddingBottom: Math.max(insets.bottom, Platform.OS === "android" ? 6 : 0) }]}>
+    <View style={[s.wrap, { paddingBottom: pb }]}>
       <View style={s.bar}>
         {leftTabs.map((tab) => {
           const on = active(tab.href);
@@ -49,11 +53,11 @@ export default function BottomNav({ tabs }: Props) {
 
         <View style={s.fabSlot}>
           <Pressable
-            style={({ pressed }) => [s.fab, pressed && { transform: [{ scale: 0.95 }] }]}
-            onPress={() => router.push("/(tabs)/bots")}
-            accessibilityLabel="Criar Bot"
+            style={({ pressed }) => [s.fab, pressed && { transform: [{ scale: 0.92 }] }]}
+            onPress={() => router.push("/builder-picker" as any)}
+            accessibilityLabel="Builder"
           >
-            <Feather name="plus" size={24} color="#FFF" />
+            <Feather name="plus" size={26} color="#FFF" />
           </Pressable>
         </View>
 
@@ -78,24 +82,24 @@ export default function BottomNav({ tabs }: Props) {
 
 const s = StyleSheet.create({
   wrap: {
-    backgroundColor: "#1A1A2490",
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#2A2A35",
+    backgroundColor: BAR_BG,
+    borderTopWidth: 1,
+    borderTopColor: BORDER_COLOR,
     overflow: "visible",
   },
   bar: {
-    height: 64,
+    height: 60,
     flexDirection: "row",
     alignItems: "center",
     overflow: "visible",
-    paddingHorizontal: 8,
+    paddingHorizontal: 4,
   },
   item: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: 3,
-    height: 64,
+    height: 60,
   },
   itemLabel: {
     fontSize: 10,
@@ -106,25 +110,25 @@ const s = StyleSheet.create({
     color: ACTIVE_COLOR,
   },
   fabSlot: {
-    width: 64,
+    width: 68,
     alignItems: "center",
     justifyContent: "center",
     overflow: "visible",
   },
   fab: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: ACCENT,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: -28,
+    marginTop: -32,
     borderWidth: 4,
-    borderColor: "#0F0F14",
+    borderColor: BAR_BG,
     shadowColor: "#6D28D9",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 14,
+    elevation: 12,
   },
 });

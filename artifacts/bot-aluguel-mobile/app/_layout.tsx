@@ -42,6 +42,7 @@ function RootLayoutNav() {
       <Stack.Screen name="bot/[id]" />
       <Stack.Screen name="bot/settings/[id]" />
       <Stack.Screen name="builder/[id]" />
+      <Stack.Screen name="builder-picker" />
     </Stack>
   );
 }
