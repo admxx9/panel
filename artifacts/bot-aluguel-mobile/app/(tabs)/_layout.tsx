@@ -1,45 +1,39 @@
 import { Tabs } from "expo-router";
-import { Feather } from "@expo/vector-icons";
 import React from "react";
 import { useAuth } from "@/context/AuthContext";
+import BottomNav, { type NavTab } from "@/components/BottomNav";
 
-const TABS = [
-  { name: "index", title: "Início", icon: "home" },
-  { name: "bots", title: "Bots", icon: "cpu" },
-  { name: "payments", title: "Moedas", icon: "dollar-sign" },
-  { name: "plans", title: "Planos", icon: "shopping-bag" },
-  { name: "settings", title: "Menu", icon: "menu" },
-  { name: "admin", title: "Admin", icon: "shield", adminOnly: true },
-] as const;
+const ALL_TABS: (NavTab & { name: string; adminOnly?: boolean })[] = [
+  { name: "index",    href: "/",        icon: "home",         label: "Início" },
+  { name: "bots",     href: "/bots",    icon: "cpu",          label: "Bots" },
+  { name: "payments", href: "/payments",icon: "credit-card",  label: "Moedas" },
+  { name: "plans",    href: "/plans",   icon: "shopping-bag", label: "Planos" },
+  { name: "settings", href: "/settings",icon: "menu",         label: "Menu" },
+  { name: "admin",    href: "/admin",   icon: "shield",       label: "Admin", adminOnly: true },
+];
 
 export default function TabLayout() {
   const { user } = useAuth();
 
+  const visibleTabs = ALL_TABS.filter(
+    (t) => !(t.adminOnly && !user?.isAdmin)
+  );
+
   return (
     <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: "#7C3AED",
-        tabBarInactiveTintColor: "#9CA3AF",
-        tabBarStyle: {
-          backgroundColor: "#FFFFFF",
-          borderTopColor: "#F0F0F0",
-        },
-      }}
+      tabBar={() => <BottomNav tabs={visibleTabs} />}
+      screenOptions={{ headerShown: false }}
     >
-      {TABS.map((route) => (
+      {ALL_TABS.map((route) => (
         <Tabs.Screen
           key={route.name}
           name={route.name}
           options={{
-            title: route.title,
+            title: route.label,
             tabBarItemStyle:
-              "adminOnly" in route && route.adminOnly && !user?.isAdmin
+              route.adminOnly && !user?.isAdmin
                 ? { display: "none" }
                 : undefined,
-            tabBarIcon: ({ color, size }) => (
-              <Feather name={route.icon as any} size={size} color={color} />
-            ),
           }}
         />
       ))}
