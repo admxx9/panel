@@ -1051,7 +1051,12 @@ export default function BuilderPage() {
   useEffect(() => {
     if (!selectedBotId) { setNodes([]); setEdges([]); return; }
     if (commandsData) {
-      setNodes((commandsData.nodes as FlowNode[]) ?? []);
+      const rawNodes: any[] = (commandsData.nodes as any[]) ?? [];
+      const normalizedNodes: FlowNode[] = rawNodes.map((n) => ({
+        ...n,
+        position: n.position ?? { x: n.x ?? 100, y: n.y ?? 100 },
+      }));
+      setNodes(normalizedNodes);
       setEdges((commandsData.edges as FlowEdge[]) ?? []);
     }
   }, [selectedBotId, commandsData]);

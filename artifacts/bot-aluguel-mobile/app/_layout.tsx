@@ -22,6 +22,15 @@ if (process.env.EXPO_PUBLIC_DOMAIN) {
 
 SplashScreen.preventAutoHideAsync();
 
+// Suppress non-fatal expo-keep-awake error in development
+if (typeof global !== "undefined" && (global as any).ErrorUtils) {
+  const origHandler = (global as any).ErrorUtils.getGlobalHandler?.();
+  (global as any).ErrorUtils.setGlobalHandler?.((err: any, isFatal?: boolean) => {
+    if (typeof err?.message === "string" && err.message.includes("keep awake")) return;
+    origHandler?.(err, isFatal);
+  });
+}
+
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {

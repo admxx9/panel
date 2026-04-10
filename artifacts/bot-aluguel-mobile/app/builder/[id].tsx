@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, {
-  useSharedValue, useAnimatedStyle, runOnJS, makeMutable, type SharedValue,
+  useSharedValue, useAnimatedStyle, runOnJS, type SharedValue,
 } from "react-native-reanimated";
 import Svg, { Path, Circle, Defs, Pattern, Rect } from "react-native-svg";
 import { Feather } from "@expo/vector-icons";
@@ -247,8 +247,8 @@ interface NodeCardProps {
 
 function NodeCard({ node, canvasScale, selected, connectingFrom, isConnectable, onTap, onPortTap, onInputTap, onDragEnd, colors }: NodeCardProps) {
   const cfg = NODE_CFG[node.type];
-  const [sharedX] = useState(() => makeMutable(node.x));
-  const [sharedY] = useState(() => makeMutable(node.y));
+  const sharedX = useSharedValue(node.x);
+  const sharedY = useSharedValue(node.y);
   const savedX = useSharedValue(0);
   const savedY = useSharedValue(0);
 
@@ -354,7 +354,13 @@ export default function BuilderScreen() {
 
   useEffect(() => {
     if (commandData) {
-      setNodes((commandData as any).nodes ?? []);
+      const rawNodes: any[] = (commandData as any).nodes ?? [];
+      const normalizedNodes: FlowNode[] = rawNodes.map((n: any) => ({
+        ...n,
+        x: n.x ?? n.position?.x ?? 100,
+        y: n.y ?? n.position?.y ?? 100,
+      }));
+      setNodes(normalizedNodes);
       setEdges((commandData as any).edges ?? []);
     }
   }, [commandData]);
@@ -473,7 +479,8 @@ export default function BuilderScreen() {
   const handleSave = useCallback(async () => {
     if (!botId) return;
     try {
-      await saveMutation.mutateAsync({ botId, data: { nodes, edges } as any });
+      const nodesToSave = nodes.map((n) => ({ ...n, position: { x: n.x, y: n.y } }));
+      await saveMutation.mutateAsync({ botId, data: { nodes: nodesToSave, edges } as any });
       setHasUnsaved(false);
     } catch {
       Alert.alert("Erro", "Não foi possível salvar o fluxo.");
@@ -818,7 +825,7 @@ const s = StyleSheet.create({
   },
   connectingText: { flex: 1, fontSize: 13, fontFamily: "Inter_500Medium" },
   canvasContainer: { flex: 1, overflow: "hidden" },
-  canvas: { width: SW, height: "100%" as const },
+  canvas: { width: SW, flex: 1 },
   node: {
     width: NODE_W,
     borderRadius: 12, borderWidth: 1.5,

@@ -2,89 +2,73 @@ import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
-import { Platform, StyleSheet, View } from "react-native";
+import { Platform, StyleSheet, Text, View } from "react-native";
 
 import { useAuth } from "@/context/AuthContext";
-import { useColors } from "@/hooks/useColors";
+
+const TABS = [
+  { name: "index", title: "Início", icon: "home" },
+  { name: "bots", title: "Bots", icon: "cpu" },
+  { name: "payments", title: "Moedas", icon: "dollar-sign" },
+  { name: "plans", title: "Planos", icon: "star" },
+  { name: "settings", title: "Conta", icon: "user" },
+  { name: "admin", title: "Admin", icon: "shield", adminOnly: true },
+] as const;
 
 export default function TabLayout() {
-  const colors = useColors();
   const isIOS = Platform.OS === "ios";
   const { user } = useAuth();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.mutedForeground,
         headerShown: false,
-        tabBarStyle: {
-          position: "absolute",
-          backgroundColor: isIOS ? "transparent" : colors.card,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
-          elevation: 0,
-          height: Platform.OS === "web" ? 70 : undefined,
-        },
+        tabBarActiveTintColor: "#8B3FFF",
+        tabBarInactiveTintColor: "#6B7280",
+        tabBarStyle: styles.tabBar,
+        tabBarLabelStyle: styles.label,
         tabBarBackground: () =>
           isIOS ? (
-            <BlurView intensity={80} tint="dark" style={StyleSheet.absoluteFill} />
+            <BlurView intensity={95} tint="dark" style={StyleSheet.absoluteFill} />
           ) : (
-            <View style={[StyleSheet.absoluteFill, { backgroundColor: colors.card }]} />
+            <View style={[StyleSheet.absoluteFill, { backgroundColor: "#0A0B12" }]} />
           ),
-        tabBarLabelStyle: {
-          fontFamily: "Inter_500Medium",
-          fontSize: 10,
-          marginBottom: Platform.OS === "web" ? 8 : 0,
-        },
-        tabBarIconStyle: {
-          marginTop: Platform.OS === "web" ? 8 : 0,
-        },
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: "Início",
-          tabBarIcon: ({ color, size }) => <Feather name="home" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="bots"
-        options={{
-          title: "Bots",
-          tabBarIcon: ({ color, size }) => <Feather name="cpu" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="payments"
-        options={{
-          title: "Moedas",
-          tabBarIcon: ({ color, size }) => <Feather name="dollar-sign" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="plans"
-        options={{
-          title: "Planos",
-          tabBarIcon: ({ color, size }) => <Feather name="star" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="settings"
-        options={{
-          title: "Conta",
-          tabBarIcon: ({ color, size }) => <Feather name="user" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="admin"
-        options={{
-          title: "Admin",
-          tabBarIcon: ({ color, size }) => <Feather name="shield" size={size} color={color} />,
-          tabBarItemStyle: user?.isAdmin ? {} : { display: "none" },
-        }}
-      />
+      {TABS.map((route) => (
+        <Tabs.Screen
+          key={route.name}
+          name={route.name}
+          options={{
+            title: route.title,
+            tabBarItemStyle:
+              "adminOnly" in route && route.adminOnly && !user?.isAdmin
+                ? { display: "none" }
+                : undefined,
+            tabBarIcon: ({ color, size }) => (
+              <Feather name={route.icon as any} size={size} color={color} />
+            ),
+          }}
+        />
+      ))}
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  tabBar: {
+    position: "absolute" as const,
+    backgroundColor: "transparent",
+    borderTopWidth: 1,
+    borderTopColor: "#1A1B28",
+    elevation: 0,
+    height: Platform.OS === "web" ? 70 : undefined,
+    paddingBottom: Platform.OS === "android" ? 4 : undefined,
+  },
+  label: {
+    fontSize: 10,
+    fontFamily: "Inter_500Medium",
+    letterSpacing: 0.2,
+    marginBottom: Platform.OS === "web" ? 8 : 0,
+  },
+});
