@@ -16,8 +16,8 @@ interface Props {
 
 const BAR_H = 64;
 const DOT = 56;
-const GREEN = "#2FAE8F";
-const DARK = "#D1D1DB";
+const ACTIVE = "#7C3AED";
+const INACTIVE = "#6B7280";
 
 export default function BottomNav({ tabs }: Props) {
   const pathname = usePathname();
@@ -43,7 +43,7 @@ export default function BottomNav({ tabs }: Props) {
                   <Feather name={tab.icon as any} size={24} color="#fff" />
                 </View>
               ) : (
-                <Feather name={tab.icon as any} size={22} color={DARK} />
+                <Feather name={tab.icon as any} size={22} color={INACTIVE} />
               )}
             </Pressable>
           );
@@ -82,7 +82,7 @@ const s = StyleSheet.create({
     width: DOT,
     height: DOT,
     borderRadius: DOT / 2,
-    backgroundColor: GREEN,
+    backgroundColor: ACTIVE,
     alignItems: "center",
     justifyContent: "center",
     marginTop: -20,
