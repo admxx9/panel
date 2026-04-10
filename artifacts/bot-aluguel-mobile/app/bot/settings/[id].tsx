@@ -29,7 +29,7 @@ export default function BotSettingsScreen() {
   const [settings, setSettings] = useState({ name: "", prefix: ".", ownerPhone: "" });
   const [saving, setSaving] = useState(false);
 
-  const { data: bot } = useGetBot({ botId: id ?? "" }, { enabled: !!id });
+  const { data: bot } = useGetBot(id ?? "", { query: { enabled: !!id } });
   const { data: bots } = useListBots();
 
   useEffect(() => {

@@ -40,7 +40,7 @@ export default function BotDetailScreen() {
   const [connecting, setConnecting] = useState(false);
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const { data: bot, refetch } = useGetBot({ botId: id ?? "" }, { enabled: !!id });
+  const { data: bot, refetch } = useGetBot(id ?? "", { query: { enabled: !!id } });
   const connectBot = useConnectBot();
   const disconnectBot = useDisconnectBot();
 

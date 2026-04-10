@@ -367,7 +367,7 @@ export default function BuilderScreen() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [hasUnsaved, setHasUnsaved] = useState(false);
 
-  const { data: commandData, isLoading } = useGetBotCommands({ botId: botId ?? "" }, { enabled: !!botId });
+  const { data: commandData, isLoading } = useGetBotCommands(botId ?? "", { query: { enabled: !!botId } });
   const saveMutation = useSaveBotCommands();
 
   useEffect(() => {
