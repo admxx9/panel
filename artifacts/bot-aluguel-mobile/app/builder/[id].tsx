@@ -1,358 +1,339 @@
+import React, { useState, useCallback, useRef, useEffect } from "react";
 import {
-  useGetBotCommands,
-  useListBots,
-  useSaveBotCommands,
-} from "@workspace/api-client-react";
-import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
-import { router, useLocalSearchParams } from "expo-router";
-import { Feather } from "@expo/vector-icons";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  ActivityIndicator,
-  Alert,
-  KeyboardAvoidingView,
-  Modal,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  Text,
-  TextInput,
-  View,
+  View, Text, StyleSheet, Pressable, Alert, Modal,
+  ScrollView, TextInput, Switch, Dimensions, KeyboardAvoidingView, Platform,
 } from "react-native";
+import { GestureDetector, Gesture } from "react-native-gesture-handler";
+import Animated, {
+  useSharedValue, useAnimatedStyle, runOnJS, makeMutable, type SharedValue,
+} from "react-native-reanimated";
+import Svg, { Path, Circle, Defs, Pattern, Rect } from "react-native-svg";
+import { Feather } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
+import { useGetBotCommands, useSaveBotCommands } from "@workspace/api-client-react";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
 import { useColors } from "@/hooks/useColors";
 
+const { width: SW, height: SH } = Dimensions.get("window");
+const NODE_W = 180;
+const NODE_H = 82;
+const GRID = 28;
+const CANVAS_SIZE = 6000;
+
 type NodeType = "command" | "action" | "condition" | "response" | "buttons";
+interface FlowNode { id: string; type: NodeType; label: string; config: Record<string, unknown>; x: number; y: number; }
+interface FlowEdge { id: string; source: string; target: string; sourceHandle?: "true" | "false"; }
 
-interface FlowNode {
-  id: string;
-  type: NodeType;
-  label: string;
-  config: Record<string, unknown>;
-  position: { x: number; y: number };
-}
-
-interface FlowEdge {
-  id: string;
-  source: string;
-  target: string;
-  sourceHandle?: "true" | "false";
-}
-
-const NODE_COLORS: Record<NodeType, { bg: string; border: string; icon: string }> = {
-  command: { bg: "#8B3FFF20", border: "#8B3FFF60", icon: "message-square" },
-  action: { bg: "#7C3AED20", border: "#7C3AED60", icon: "zap" },
-  condition: { bg: "#F59E0B20", border: "#F59E0B60", icon: "git-branch" },
-  response: { bg: "#22C55E20", border: "#22C55E60", icon: "message-circle" },
-  buttons: { bg: "#06B6D420", border: "#06B6D460", icon: "list" },
+const NODE_CFG: Record<NodeType, { color: string; dim: string; label: string; icon: string }> = {
+  command:   { color: "#8B3FFF", dim: "#8B3FFF30", label: "Comando",  icon: "message-square" },
+  action:    { color: "#A855F7", dim: "#A855F730", label: "Ação",     icon: "zap" },
+  condition: { color: "#F59E0B", dim: "#F59E0B30", label: "Condição", icon: "git-branch" },
+  response:  { color: "#22C55E", dim: "#22C55E30", label: "Resposta", icon: "message-circle" },
+  buttons:   { color: "#06B6D4", dim: "#06B6D430", label: "Botões",   icon: "layout" },
 };
 
-const NODE_LABELS: Record<NodeType, string> = {
-  command: "Comando",
-  action: "Ação",
-  condition: "Condição",
-  response: "Resposta",
-  buttons: "Botões",
+const CFG: Record<NodeType, { key: string; label: string; type: "text" | "textarea" | "select" | "toggle"; options?: { value: string; label: string }[]; placeholder?: string; showWhen?: (c: Record<string, unknown>) => boolean }[]> = {
+  command: [
+    { key: "name", label: "Nome do comando", type: "text", placeholder: "menu" },
+    { key: "prefix", label: "Prefixo", type: "select", options: [{ value: ".", label: "." }, { value: "!", label: "!" }, { value: "/", label: "/" }, { value: "#", label: "#" }, { value: "nenhum", label: "Nenhum" }] },
+    { key: "caseSensitive", label: "Diferencia maiúsculas", type: "toggle" },
+    { key: "apenasGrupos", label: "Apenas grupos", type: "toggle" },
+    { key: "apenasPrivado", label: "Apenas privado", type: "toggle" },
+    { key: "requerAdmin", label: "Requer admin", type: "toggle" },
+    { key: "requerPlano", label: "Requer plano ativo", type: "toggle" },
+  ],
+  action: [
+    { key: "action", label: "Tipo de Ação", type: "select", options: [
+      { value: "make_sticker", label: "🖼️ Criar Figurinha" },
+      { value: "send_image", label: "🖼️ Enviar Imagem" },
+      { value: "hidetag", label: "📢 Marcar Todos (Hidetag)" },
+      { value: "kick_member", label: "🚪 Remover Membro" },
+      { value: "ban_member", label: "🔨 Banir Membro" },
+      { value: "warn_member", label: "⚠️ Dar Aviso (Warn)" },
+      { value: "mute_member", label: "🔇 Mutar Membro" },
+      { value: "unmute_member", label: "🔊 Desmutar Membro" },
+      { value: "delete_message", label: "🗑️ Apagar Mensagem" },
+      { value: "promote_member", label: "⬆️ Promover a Admin" },
+      { value: "demote_member", label: "⬇️ Rebaixar Admin" },
+      { value: "mute_group", label: "🔇 Silenciar Grupo" },
+      { value: "unmute_group", label: "🔊 Liberar Grupo" },
+      { value: "close_group", label: "🔒 Fechar Grupo" },
+      { value: "open_group", label: "🔓 Abrir Grupo" },
+      { value: "get_group_link", label: "🔗 Link do Grupo" },
+      { value: "show_menu", label: "📋 Menu Principal" },
+      { value: "show_menu_admin", label: "📋 Menu Admin" },
+      { value: "show_menu_owner", label: "📋 Menu Dono" },
+      { value: "send_poll", label: "📊 Enviar Enquete" },
+      { value: "react_message", label: "😀 Reagir à Mensagem" },
+      { value: "coin_flip", label: "🪙 Cara ou Coroa" },
+      { value: "dice_roll", label: "🎲 Rolar Dado" },
+      { value: "pick_random", label: "🎯 Sortear Membro" },
+      { value: "love_meter", label: "💕 Medidor de Amor" },
+      { value: "rate", label: "⭐ Nota de 0 a 10" },
+      { value: "fortune", label: "🥠 Biscoito da Sorte" },
+      { value: "roulette", label: "🔫 Roleta Russa" },
+      { value: "top5", label: "🏆 Top 5 do Grupo" },
+      { value: "rank", label: "📊 Ranking de Mensagens" },
+      { value: "joke", label: "😂 Piada Aleatória" },
+      { value: "bot_on", label: "✅ Ligar Bot (Dono)" },
+      { value: "bot_off", label: "❌ Desligar Bot (Dono)" },
+      { value: "give_coins", label: "💰 Dar Moedas (Dono)" },
+      { value: "add_coins", label: "💰 Adicionar Moedas" },
+      { value: "remove_coins", label: "💸 Remover Moedas" },
+      { value: "broadcast", label: "📢 Broadcast (Dono)" },
+      { value: "antilink", label: "🚫 Anti-Link" },
+      { value: "antispam", label: "🛡️ Anti-Spam" },
+      { value: "antiflood", label: "💧 Anti-Flood" },
+      { value: "antifake", label: "🎭 Anti-Fake" },
+      { value: "antitoxic", label: "🤬 Anti-Palavrão" },
+      { value: "antidelete", label: "👁️ Anti-Delete" },
+      { value: "set_welcome", label: "👋 Boas-Vindas" },
+      { value: "set_goodbye", label: "👋 Despedida" },
+      { value: "set_auto_reply", label: "💬 Auto-Resposta" },
+      { value: "group_info", label: "📋 Info do Grupo" },
+      { value: "member_list", label: "👥 Lista de Membros" },
+      { value: "admin_list", label: "👑 Lista de Admins" },
+      { value: "translate", label: "🌐 Traduzir Texto" },
+      { value: "calc", label: "🧮 Calculadora" },
+      { value: "qrcode_gen", label: "📱 Gerar QR Code" },
+      { value: "typing", label: "⌨️ Simular Digitando" },
+      { value: "delay", label: "⏳ Aguardar (Pausa)" },
+      { value: "http_request", label: "🌐 Requisição HTTP (Webhook)" },
+      { value: "send_log", label: "📝 Enviar Log (Debug)" },
+      { value: "join_group_link", label: "🔗 Entrar no Grupo (Link)" },
+      { value: "leave_group", label: "🚪 Sair do Grupo" },
+    ]},
+    { key: "message", label: "Mensagem (variáveis: {nome}, {grupo}...)", type: "textarea", placeholder: "Olá {nome}!" },
+    { key: "emoji", label: "Emoji (react)", type: "text", placeholder: "👍", showWhen: (c) => c.action === "react_message" },
+    { key: "image_url", label: "URL da imagem", type: "text", placeholder: "https://...", showWhen: (c) => c.action === "send_image" },
+    { key: "coins_amount", label: "Quantidade de moedas", type: "text", placeholder: "100", showWhen: (c) => ["give_coins","add_coins","remove_coins"].includes(String(c.action)) },
+    { key: "menu_title", label: "Título do menu", type: "text", placeholder: "🤖 Menu do Bot", showWhen: (c) => String(c.action).startsWith("show_menu") },
+    { key: "menu_text", label: "Texto do menu", type: "textarea", placeholder: "👤 {nome}\n🪙 Moedas: {moedas}\n\n📋 Comandos:\n🖼️ {prefix}sticker", showWhen: (c) => String(c.action).startsWith("show_menu") },
+    { key: "http_url", label: "URL da requisição", type: "text", placeholder: "https://api.exemplo.com/webhook", showWhen: (c) => c.action === "http_request" },
+    { key: "http_method", label: "Método HTTP", type: "select", options: [{ value: "GET", label: "GET" }, { value: "POST", label: "POST" }, { value: "PUT", label: "PUT" }, { value: "DELETE", label: "DELETE" }], showWhen: (c) => c.action === "http_request" },
+    { key: "delay_ms", label: "Tempo de espera (ms)", type: "text", placeholder: "1500", showWhen: (c) => c.action === "delay" },
+    { key: "welcome_text", label: "Mensagem de boas-vindas", type: "textarea", placeholder: "👋 Bem-vindo(a) {nome}!", showWhen: (c) => c.action === "set_welcome" },
+    { key: "goodbye_text", label: "Mensagem de despedida", type: "textarea", placeholder: "👋 {nome} saiu!", showWhen: (c) => c.action === "set_goodbye" },
+    { key: "flood_max", label: "Máx. msgs por intervalo", type: "text", placeholder: "5", showWhen: (c) => c.action === "antiflood" },
+    { key: "broadcast_text", label: "Mensagem do broadcast", type: "textarea", placeholder: "📢 Aviso para todos os grupos!", showWhen: (c) => c.action === "broadcast" },
+  ],
+  condition: [
+    { key: "condition", label: "Condição", type: "select", options: [
+      { value: "is_group", label: "👥 É grupo" },
+      { value: "is_private", label: "💬 É privado" },
+      { value: "is_admin", label: "👑 Remetente é admin" },
+      { value: "is_not_admin", label: "🚫 Remetente NÃO é admin" },
+      { value: "is_owner", label: "👑 É o dono do bot" },
+      { value: "is_bot_admin", label: "🤖 Bot é admin" },
+      { value: "has_image", label: "📷 Tem imagem" },
+      { value: "has_video", label: "🎥 Tem vídeo" },
+      { value: "has_sticker", label: "🏷️ Tem figurinha" },
+      { value: "contains_text", label: "🔍 Contém texto..." },
+      { value: "has_mention", label: "📌 Menciona alguém" },
+      { value: "is_reply", label: "↩️ É reply" },
+      { value: "contains_link", label: "🔗 Contém link" },
+      { value: "sender_has_plan", label: "📦 Remetente tem plano ativo" },
+      { value: "time_between", label: "🕐 Horário entre X e Y" },
+      { value: "member_count_gt", label: "👥 Grupo tem + de N membros" },
+      { value: "bot_is_on", label: "✅ Bot está ligado" },
+    ]},
+    { key: "value", label: "Valor / Palavra-chave", type: "text", placeholder: "ex: palavra", showWhen: (c) => c.condition === "contains_text" },
+    { key: "time_start", label: "Hora início (HH:MM)", type: "text", placeholder: "08:00", showWhen: (c) => c.condition === "time_between" },
+    { key: "time_end", label: "Hora fim (HH:MM)", type: "text", placeholder: "22:00", showWhen: (c) => c.condition === "time_between" },
+    { key: "min_members", label: "Mínimo de membros", type: "text", placeholder: "10", showWhen: (c) => c.condition === "member_count_gt" },
+  ],
+  response: [
+    { key: "tipoResposta", label: "Tipo", type: "select", options: [{ value: "texto", label: "Texto simples" }, { value: "imagem", label: "Imagem" }, { value: "audio", label: "Áudio" }, { value: "localizacao", label: "Localização" }, { value: "contato", label: "Contato" }] },
+    { key: "texto", label: "Texto ({nome}, {numero}, {moedas}, {plano})", type: "textarea", placeholder: "Olá {nome}! Seu saldo é {moedas} moedas.", showWhen: (c) => !c.tipoResposta || c.tipoResposta === "texto" },
+    { key: "imagemUrl", label: "URL da imagem", type: "text", placeholder: "https://...", showWhen: (c) => c.tipoResposta === "imagem" },
+    { key: "legenda", label: "Legenda", type: "textarea", placeholder: "Legenda da imagem", showWhen: (c) => c.tipoResposta === "imagem" },
+    { key: "audioUrl", label: "URL do áudio", type: "text", placeholder: "https://...", showWhen: (c) => c.tipoResposta === "audio" },
+    { key: "mention", label: "Mencionar usuário", type: "toggle" },
+    { key: "quote", label: "Citar mensagem", type: "toggle" },
+    { key: "temBotoes", label: "Adicionar botões", type: "toggle", showWhen: (c) => !c.tipoResposta || c.tipoResposta === "texto" || c.tipoResposta === "imagem" },
+    { key: "botoes", label: "Botões (id | texto, max 3 por linha)", type: "textarea", placeholder: ".sim | ✅ Sim\n.nao | ❌ Não", showWhen: (c) => !!c.temBotoes },
+  ],
+  buttons: [
+    { key: "tipoBotao", label: "Tipo", type: "select", options: [{ value: "normal", label: "Botões normais (max 3)" }, { value: "lista", label: "Lista interativa" }] },
+    { key: "botoes", label: "Botões (id | texto, um por linha)", type: "textarea", placeholder: ".sim | Sim\n.nao | Não" },
+    { key: "titulo", label: "Título", type: "text", placeholder: "Escolha uma opção:" },
+    { key: "rodape", label: "Rodapé", type: "text", placeholder: "BotAluguel Pro" },
+  ],
 };
 
-const PREFIX_OPTIONS = [".", "!", "/", "#", "@", "$", "nenhum"];
-const ACTION_OPTIONS = [
-  { value: "make_sticker", label: "🖼️ Criar Figurinha" },
-  { value: "send_image", label: "🖼️ Enviar Imagem" },
-  { value: "send_audio", label: "🎵 Enviar Áudio" },
-  { value: "send_video", label: "🎥 Enviar Vídeo" },
-  { value: "kick_member", label: "🚪 Remover Membro" },
-  { value: "ban_member", label: "🔨 Banir Membro" },
-  { value: "warn_member", label: "⚠️ Dar Aviso" },
-  { value: "mute_member", label: "🔇 Mutar Membro" },
-  { value: "delete_message", label: "🗑️ Apagar Mensagem" },
-  { value: "promote_member", label: "⬆️ Promover Admin" },
-  { value: "demote_member", label: "⬇️ Rebaixar Admin" },
-  { value: "mute_group", label: "🔇 Silenciar Grupo" },
-  { value: "unmute_group", label: "🔊 Liberar Grupo" },
-  { value: "hidetag", label: "📢 Marcar Todos" },
-  { value: "show_menu", label: "📋 Menu Principal" },
-  { value: "coin_flip", label: "🪙 Cara ou Coroa" },
-  { value: "dice_roll", label: "🎲 Rolar Dado" },
-  { value: "love_meter", label: "💕 Medidor de Amor" },
-  { value: "joke", label: "😂 Piada Aleatória" },
-  { value: "antilink", label: "🚫 Anti-Link" },
-  { value: "antispam", label: "🛡️ Anti-Spam" },
-  { value: "bot_on", label: "✅ Ligar Bot" },
-  { value: "bot_off", label: "❌ Desligar Bot" },
-  { value: "http_request", label: "🌐 Requisição HTTP" },
-  { value: "typing", label: "⌨️ Simular Digitando" },
-  { value: "delay", label: "⏳ Aguardar" },
-  { value: "broadcast", label: "📢 Broadcast" },
-  { value: "set_welcome", label: "👋 Boas-Vindas" },
-  { value: "send_poll", label: "📊 Enquete" },
-  { value: "translate", label: "🌐 Traduzir" },
-];
-const CONDITION_OPTIONS = [
-  { value: "is_group", label: "👥 É grupo" },
-  { value: "is_private", label: "💬 É privado" },
-  { value: "is_admin", label: "👑 Remetente é admin" },
-  { value: "is_owner", label: "👑 É o dono do bot" },
-  { value: "has_image", label: "📷 Tem imagem" },
-  { value: "has_media", label: "📎 Tem mídia" },
-  { value: "contains_text", label: "🔍 Contém texto" },
-  { value: "is_reply", label: "↩️ É resposta" },
-  { value: "sender_has_plan", label: "📦 Remetente tem plano" },
-  { value: "time_between", label: "🕐 Horário entre X e Y" },
-];
-
-function uid() {
-  return Math.random().toString(36).slice(2, 10);
+function uid() { return Math.random().toString(36).slice(2, 9); }
+function makeNode(type: NodeType, x: number, y: number): FlowNode {
+  const cfg = NODE_CFG[type];
+  return { id: uid(), type, label: cfg.label, config: {}, x, y };
 }
 
-function nodeLabel(node: FlowNode): string {
-  if (node.type === "command") {
-    const p = String(node.config.prefix ?? ".");
-    const n = String(node.config.name ?? "");
-    return `${p !== "nenhum" ? p : ""}${n}`;
+const TEMPLATES: { name: string; icon: string; nodes: Partial<FlowNode>[]; edges: Partial<FlowEdge>[] }[] = [
+  {
+    name: "Menu Principal", icon: "list",
+    nodes: [
+      { type: "command", label: "Comando", config: { name: "menu", prefix: "." }, x: 60, y: 240 },
+      { type: "response", label: "Resposta", config: { texto: "🤖 *Menu do Bot*\n\n🖼️ .sticker — Criar figurinha\n📋 .menu — Ver opções\n💰 .saldo — Ver moedas", tipoResposta: "texto" }, x: 320, y: 240 },
+    ],
+    edges: [{ source: "0", target: "1" }],
+  },
+  {
+    name: "Figurinha", icon: "image",
+    nodes: [
+      { type: "command", label: "Comando", config: { name: "sticker", prefix: "." }, x: 60, y: 240 },
+      { type: "action", label: "Ação", config: { action: "make_sticker" }, x: 320, y: 240 },
+    ],
+    edges: [{ source: "0", target: "1" }],
+  },
+  {
+    name: "Marcar Todos", icon: "at-sign",
+    nodes: [
+      { type: "command", label: "Comando", config: { name: "marcar", prefix: ".", requerAdmin: true }, x: 60, y: 240 },
+      { type: "condition", label: "Condição", config: { condition: "is_admin" }, x: 320, y: 240 },
+      { type: "action", label: "Ação (Sim)", config: { action: "hidetag", message: "📢 Atenção a todos!" }, x: 580, y: 140 },
+      { type: "response", label: "Negado (Não)", config: { texto: "❌ Apenas admins podem usar este comando!", tipoResposta: "texto" }, x: 580, y: 340 },
+    ],
+    edges: [{ source: "0", target: "1" }, { source: "1", target: "2", sourceHandle: "true" }, { source: "1", target: "3", sourceHandle: "false" }],
+  },
+  {
+    name: "Saldo de Moedas", icon: "dollar-sign",
+    nodes: [
+      { type: "command", label: "Comando", config: { name: "saldo", prefix: "." }, x: 60, y: 240 },
+      { type: "response", label: "Resposta", config: { texto: "💰 *Saldo*\n\n👤 Usuário: {nome}\n🪙 Moedas: {moedas}\n📦 Plano: {plano}", tipoResposta: "texto" }, x: 320, y: 240 },
+    ],
+    edges: [{ source: "0", target: "1" }],
+  },
+  {
+    name: "Cara ou Coroa", icon: "circle",
+    nodes: [
+      { type: "command", label: "Comando", config: { name: "cara", prefix: "." }, x: 60, y: 240 },
+      { type: "action", label: "Jogo", config: { action: "coin_flip" }, x: 320, y: 240 },
+    ],
+    edges: [{ source: "0", target: "1" }],
+  },
+];
+
+function getNodeLabel(node: FlowNode): string {
+  const cfg = node.config;
+  if (node.type === "command" && cfg.name) return `.${cfg.prefix ?? ""}${cfg.name}`;
+  if (node.type === "action" && cfg.action) {
+    const opt = CFG.action.find(f => f.key === "action")?.options?.find(o => o.value === cfg.action);
+    return opt ? opt.label.replace(/[^\w\s]/gu, "").trim() : String(cfg.action);
   }
-  if (node.type === "action") return String(node.config.action ?? "Ação");
-  if (node.type === "condition") return String(node.config.condition ?? "Condição");
-  if (node.type === "response") {
-    const t = String(node.config.texto ?? node.config.tipoResposta ?? "Resposta");
-    return t.length > 40 ? t.slice(0, 40) + "..." : t;
+  if (node.type === "condition" && cfg.condition) {
+    const opt = CFG.condition.find(f => f.key === "condition")?.options?.find(o => o.value === cfg.condition);
+    return opt ? opt.label.replace(/[^\w\s]/gu, "").trim() : String(cfg.condition);
   }
-  if (node.type === "buttons") return `Botões (${node.config.tipoBotao ?? "normal"})`;
+  if (node.type === "response" && cfg.texto) return String(cfg.texto).slice(0, 28) + (String(cfg.texto).length > 28 ? "…" : "");
   return node.label;
 }
 
-function buildChain(
-  startId: string,
-  nodes: FlowNode[],
-  edges: FlowEdge[]
-): FlowNode[] {
-  const chain: FlowNode[] = [];
-  const visited = new Set<string>();
-  let cur: string | undefined = startId;
-  while (cur && !visited.has(cur)) {
-    const node = nodes.find((n) => n.id === cur);
-    if (!node) break;
-    chain.push(node);
-    visited.add(cur);
-    const edge = edges.find((e) => e.source === cur && !e.sourceHandle);
-    cur = edge?.target;
-  }
-  return chain;
+function bezier(sx: number, sy: number, tx: number, ty: number): string {
+  const cp = Math.max(80, Math.abs(tx - sx) * 0.5);
+  return `M ${sx} ${sy} C ${sx + cp} ${sy} ${tx - cp} ${ty} ${tx} ${ty}`;
 }
 
-function buildConditionBranches(
-  condId: string,
-  nodes: FlowNode[],
-  edges: FlowEdge[]
-): { trueBranch: FlowNode[]; falseBranch: FlowNode[] } {
-  const trueEdge = edges.find((e) => e.source === condId && e.sourceHandle === "true");
-  const falseEdge = edges.find((e) => e.source === condId && e.sourceHandle === "false");
-  return {
-    trueBranch: trueEdge ? buildChain(trueEdge.target, nodes, edges) : [],
-    falseBranch: falseEdge ? buildChain(falseEdge.target, nodes, edges) : [],
-  };
-}
-
-function getCommandFlows(nodes: FlowNode[], edges: FlowEdge[]) {
-  return nodes
-    .filter((n) => n.type === "command")
-    .map((cmd) => ({ command: cmd, chain: buildChain(cmd.id, nodes, edges).slice(1) }));
-}
-
-function FieldEditor({
-  fields,
-  config,
-  onChange,
-  colors,
-}: {
-  fields: { key: string; label: string; type: string; placeholder?: string; options?: { value: string; label: string }[]; showWhen?: (c: Record<string, unknown>) => boolean }[];
-  config: Record<string, unknown>;
-  onChange: (key: string, val: unknown) => void;
+interface NodeCardProps {
+  node: FlowNode;
+  canvasScale: SharedValue<number>;
+  selected: boolean;
+  connectingFrom: string | null;
+  isConnectable: boolean;
+  onTap: () => void;
+  onPortTap: (handle?: "true" | "false") => void;
+  onInputTap: () => void;
+  onDragEnd: (id: string, x: number, y: number) => void;
   colors: ReturnType<typeof useColors>;
-}) {
+}
+
+function NodeCard({ node, canvasScale, selected, connectingFrom, isConnectable, onTap, onPortTap, onInputTap, onDragEnd, colors }: NodeCardProps) {
+  const cfg = NODE_CFG[node.type];
+  const [sharedX] = useState(() => makeMutable(node.x));
+  const [sharedY] = useState(() => makeMutable(node.y));
+  const savedX = useSharedValue(0);
+  const savedY = useSharedValue(0);
+
+  useEffect(() => {
+    sharedX.value = node.x;
+    sharedY.value = node.y;
+  }, [node.x, node.y]);
+
+  const animStyle = useAnimatedStyle(() => ({
+    position: "absolute" as const,
+    left: sharedX.value,
+    top: sharedY.value,
+  }));
+
+  const handleDragEnd = useCallback((id: string, x: number, y: number) => {
+    onDragEnd(id, x, y);
+  }, [onDragEnd]);
+
+  const nodeId = node.id;
+  const dragGesture = Gesture.Pan()
+    .minDistance(6)
+    .onStart(() => {
+      "worklet";
+      savedX.value = sharedX.value;
+      savedY.value = sharedY.value;
+    })
+    .onUpdate((e) => {
+      "worklet";
+      sharedX.value = savedX.value + e.translationX / canvasScale.value;
+      sharedY.value = savedY.value + e.translationY / canvasScale.value;
+    })
+    .onEnd(() => {
+      "worklet";
+      runOnJS(handleDragEnd)(nodeId, sharedX.value, sharedY.value);
+    });
+
+  const isConnecting = !!connectingFrom && connectingFrom !== node.id;
+
   return (
-    <View style={{ gap: 16 }}>
-      {fields.map((f) => {
-        if (f.showWhen && !f.showWhen(config)) return null;
-        if (f.type === "checkbox") {
-          return (
-            <View key={f.key} style={styles.checkRow}>
-              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>{f.label}</Text>
-              <Switch
-                value={!!config[f.key]}
-                onValueChange={(v) => onChange(f.key, v)}
-                trackColor={{ false: colors.border, true: colors.primary }}
-                thumbColor="#FFF"
-              />
-            </View>
-          );
-        }
-        if (f.type === "select" && f.options) {
-          return (
-            <View key={f.key}>
-              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>{f.label}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
-                <View style={{ flexDirection: "row", gap: 8, paddingBottom: 4 }}>
-                  {f.options.map((opt) => {
-                    const sel = config[f.key] === opt.value;
-                    return (
-                      <Pressable
-                        key={opt.value}
-                        style={[
-                          styles.optionChip,
-                          {
-                            backgroundColor: sel ? colors.primary : colors.secondary,
-                            borderColor: sel ? colors.primary : colors.border,
-                          },
-                        ]}
-                        onPress={() => onChange(f.key, opt.value)}
-                      >
-                        <Text style={[styles.optionChipText, { color: sel ? "#FFF" : colors.mutedForeground }]}>
-                          {opt.label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </ScrollView>
-            </View>
-          );
-        }
-        if (f.type === "textarea") {
-          return (
-            <View key={f.key}>
-              <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>{f.label}</Text>
-              <TextInput
-                style={[
-                  styles.textarea,
-                  { backgroundColor: colors.secondary, borderColor: colors.border, color: colors.foreground },
-                ]}
-                placeholder={f.placeholder}
-                placeholderTextColor={colors.mutedForeground}
-                value={String(config[f.key] ?? "")}
-                onChangeText={(v) => onChange(f.key, v)}
-                multiline
-                numberOfLines={4}
-                textAlignVertical="top"
-              />
-            </View>
-          );
-        }
-        return (
-          <View key={f.key}>
-            <Text style={[styles.fieldLabel, { color: colors.mutedForeground }]}>{f.label}</Text>
-            <TextInput
-              style={[
-                styles.fieldInput,
-                { backgroundColor: colors.secondary, borderColor: colors.border, color: colors.foreground },
-              ]}
-              placeholder={f.placeholder}
-              placeholderTextColor={colors.mutedForeground}
-              value={String(config[f.key] ?? "")}
-              onChangeText={(v) => onChange(f.key, v)}
-            />
+    <GestureDetector gesture={dragGesture}>
+      <Animated.View style={[animStyle, { width: NODE_W }]}>
+        <Pressable
+          onPress={isConnecting ? onInputTap : onTap}
+          style={({ pressed }) => [
+            s.node,
+            { borderColor: selected ? cfg.color : isConnectable ? cfg.color + "80" : colors.border },
+            pressed && { opacity: 0.9 },
+          ]}
+        >
+          <View style={[s.nodeHeader, { backgroundColor: cfg.dim }]}>
+            <View style={[s.nodeTypeIndicator, { backgroundColor: cfg.color }]} />
+            <Feather name={cfg.icon as any} size={13} color={cfg.color} />
+            <Text style={[s.nodeType, { color: cfg.color }]}>{cfg.label}</Text>
           </View>
-        );
-      })}
-    </View>
+          <View style={s.nodeBody}>
+            <Text style={[s.nodeLabel, { color: colors.foreground }]} numberOfLines={2}>
+              {getNodeLabel(node)}
+            </Text>
+          </View>
+        </Pressable>
+
+        <Pressable style={[s.port, s.portLeft]} onPress={onInputTap}>
+          <View style={[s.portDot, { backgroundColor: colors.border, borderColor: colors.border }]} />
+        </Pressable>
+
+        {node.type === "condition" ? (
+          <>
+            <Pressable style={[s.port, s.portRightTrue]} onPress={() => onPortTap("true")}>
+              <View style={[s.portDot, { backgroundColor: "#22C55E", borderColor: "#22C55E" }]} />
+              <Text style={s.portLabel}>Sim</Text>
+            </Pressable>
+            <Pressable style={[s.port, s.portRightFalse]} onPress={() => onPortTap("false")}>
+              <View style={[s.portDot, { backgroundColor: "#EF4444", borderColor: "#EF4444" }]} />
+              <Text style={s.portLabel}>Não</Text>
+            </Pressable>
+          </>
+        ) : (
+          <Pressable style={[s.port, s.portRight]} onPress={() => onPortTap()}>
+            <View style={[s.portDot, { backgroundColor: cfg.color, borderColor: cfg.color }]} />
+          </Pressable>
+        )}
+      </Animated.View>
+    </GestureDetector>
   );
 }
-
-const CONFIG_FIELDS: Record<NodeType, any[]> = {
-  command: [
-    { key: "prefix", label: "Prefixo", type: "select", options: PREFIX_OPTIONS.map((p) => ({ value: p, label: p })) },
-    { key: "name", label: "Nome do comando", type: "text", placeholder: "menu" },
-    { key: "caseSensitive", label: "Diferenciar maiúsculas", type: "checkbox" },
-    { key: "apenasGrupos", label: "Apenas grupos", type: "checkbox" },
-    { key: "apenasPrivado", label: "Apenas privado", type: "checkbox" },
-    { key: "requerPlano", label: "Requer plano", type: "checkbox" },
-    { key: "requerAdmin", label: "Requer admin", type: "checkbox" },
-  ],
-  action: [
-    { key: "action", label: "Tipo de Ação", type: "select", options: ACTION_OPTIONS },
-    { key: "message", label: "Mensagem (use {nome}, {grupo}...)", type: "textarea", placeholder: "Olá {nome}!" },
-    { key: "image_url", label: "URL da imagem", type: "text", placeholder: "https://...", showWhen: (c: any) => ["send_image"].includes(c.action) },
-    { key: "audio_url", label: "URL do áudio", type: "text", placeholder: "https://...", showWhen: (c: any) => c.action === "send_audio" },
-    { key: "http_url", label: "URL da requisição", type: "text", placeholder: "https://...", showWhen: (c: any) => c.action === "http_request" },
-    { key: "http_method", label: "Método HTTP", type: "select", options: [{ value: "GET", label: "GET" }, { value: "POST", label: "POST" }], showWhen: (c: any) => c.action === "http_request" },
-    { key: "http_body", label: "Body (JSON)", type: "textarea", placeholder: '{"user": "{nome}"}', showWhen: (c: any) => c.action === "http_request" },
-    { key: "welcome_text", label: "Mensagem de boas-vindas", type: "textarea", placeholder: "👋 Bem-vindo(a) {nome}!", showWhen: (c: any) => c.action === "set_welcome" },
-    { key: "broadcast_text", label: "Mensagem do broadcast", type: "textarea", placeholder: "📢 Aviso para todos os grupos!", showWhen: (c: any) => c.action === "broadcast" },
-    { key: "delay_ms", label: "Tempo de espera (ms)", type: "text", placeholder: "1500", showWhen: (c: any) => c.action === "delay" },
-    { key: "typing_duration", label: "Duração do digitando (ms)", type: "text", placeholder: "2000", showWhen: (c: any) => c.action === "typing" },
-  ],
-  condition: [
-    { key: "condition", label: "Condição", type: "select", options: CONDITION_OPTIONS },
-    { key: "value", label: "Valor / Palavra-chave", type: "text", placeholder: "palavra", showWhen: (c: any) => c.condition === "contains_text" },
-    { key: "time_start", label: "Hora início (HH:MM)", type: "text", placeholder: "08:00", showWhen: (c: any) => c.condition === "time_between" },
-    { key: "time_end", label: "Hora fim (HH:MM)", type: "text", placeholder: "22:00", showWhen: (c: any) => c.condition === "time_between" },
-  ],
-  response: [
-    { key: "tipoResposta", label: "Tipo de Resposta", type: "select", options: [
-      { value: "texto", label: "Texto" },
-      { value: "lista", label: "Lista interativa" },
-      { value: "imagem", label: "Imagem" },
-      { value: "audio", label: "Áudio" },
-    ] },
-    { key: "texto", label: "Texto ({nome}, {numero}, {moedas}...)", type: "textarea", placeholder: "Olá {nome}! Seu saldo é {moedas} moedas.", showWhen: (c: any) => !c.tipoResposta || c.tipoResposta === "texto" },
-    { key: "imagemUrl", label: "URL da imagem", type: "text", placeholder: "https://...", showWhen: (c: any) => c.tipoResposta === "imagem" },
-    { key: "legenda", label: "Legenda da imagem", type: "textarea", placeholder: "Texto abaixo da imagem", showWhen: (c: any) => c.tipoResposta === "imagem" },
-    { key: "audioUrl", label: "URL do áudio", type: "text", placeholder: "https://...", showWhen: (c: any) => c.tipoResposta === "audio" },
-    { key: "tituloLista", label: "Título da lista", type: "text", placeholder: "Menu Principal", showWhen: (c: any) => c.tipoResposta === "lista" },
-    { key: "textoLista", label: "Texto da lista", type: "textarea", placeholder: "Escolha uma opção abaixo", showWhen: (c: any) => c.tipoResposta === "lista" },
-    { key: "secoes", label: "Seções (título | id | titulo_row | desc, por linha)", type: "textarea", placeholder: "Conta\n.saldo | Saldo | Ver moedas", showWhen: (c: any) => c.tipoResposta === "lista" },
-    { key: "temBotoes", label: "Adicionar botões abaixo", type: "checkbox", showWhen: (c: any) => c.tipoResposta === "texto" },
-    { key: "botoes", label: "Botões (id | título, por linha, max 3)", type: "textarea", placeholder: ".planos | Ver Planos\n.ajuda | Ajuda", showWhen: (c: any) => !!c.temBotoes },
-    { key: "linkPreview", label: "Mostrar prévia de links", type: "checkbox", showWhen: (c: any) => c.tipoResposta === "texto" },
-  ],
-  buttons: [
-    { key: "tipoBotao", label: "Tipo de Botão", type: "select", options: [
-      { value: "normal", label: "Botões normais (max 3)" },
-      { value: "lista", label: "Lista interativa" },
-    ] },
-    { key: "botoes", label: "Botões (id | texto, por linha, max 3)", type: "textarea", placeholder: ".sim | Sim\n.nao | Não", showWhen: (c: any) => !c.tipoBotao || c.tipoBotao === "normal" },
-    { key: "opcoes", label: "Opções (id | título | desc, por linha)", type: "textarea", placeholder: ".saldo | Saldo | Ver moedas", showWhen: (c: any) => c.tipoBotao === "lista" },
-    { key: "textoBotao", label: "Texto do botão da lista", type: "text", placeholder: "VER OPÇÕES", showWhen: (c: any) => c.tipoBotao === "lista" },
-  ],
-};
-
-const TEMPLATES = [
-  {
-    id: "menu",
-    name: "Menu Principal",
-    icon: "menu",
-    nodes: [
-      { id: uid(), type: "command" as NodeType, label: ".menu", position: { x: 0, y: 0 }, config: { prefix: ".", name: "menu" } },
-    ],
-    edges: [] as FlowEdge[],
-  },
-  {
-    id: "sticker",
-    name: "Figurinha",
-    icon: "image",
-    nodes: [
-      { id: uid(), type: "command" as NodeType, label: ".sticker", position: { x: 0, y: 0 }, config: { prefix: ".", name: "sticker" } },
-      { id: uid(), type: "action" as NodeType, label: "Criar figurinha", position: { x: 0, y: 1 }, config: { action: "make_sticker" } },
-    ],
-    edges: [] as FlowEdge[],
-  },
-  {
-    id: "hidetag",
-    name: "Marcar Todos",
-    icon: "at-sign",
-    nodes: [
-      { id: uid(), type: "command" as NodeType, label: ".todos", position: { x: 0, y: 0 }, config: { prefix: ".", name: "todos", requerAdmin: true } },
-      { id: uid(), type: "condition" as NodeType, label: "É admin?", position: { x: 0, y: 1 }, config: { condition: "is_admin" } },
-      { id: uid(), type: "action" as NodeType, label: "Hidetag", position: { x: 0, y: 2 }, config: { action: "hidetag" } },
-      { id: uid(), type: "response" as NodeType, label: "Sem permissão", position: { x: 0, y: 3 }, config: { tipoResposta: "texto", texto: "❌ Apenas admins podem usar este comando." } },
-    ],
-    edges: [] as FlowEdge[],
-  },
-];
 
 export default function BuilderScreen() {
   const { id: botId } = useLocalSearchParams<{ id: string }>();
@@ -361,561 +342,555 @@ export default function BuilderScreen() {
 
   const [nodes, setNodes] = useState<FlowNode[]>([]);
   const [edges, setEdges] = useState<FlowEdge[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingNode, setEditingNode] = useState<FlowNode | null>(null);
-  const [showAddModal, setShowAddModal] = useState(false);
-  const [addParentId, setAddParentId] = useState<string | null>(null);
+  const [connectingFrom, setConnectingFrom] = useState<{ nodeId: string; handle?: "true" | "false" } | null>(null);
+  const [showTypePicker, setShowTypePicker] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [hasUnsaved, setHasUnsaved] = useState(false);
 
-  const { data: commandData, isLoading } = useGetBotCommands(botId ?? "", { query: { enabled: !!botId } });
+  const { data: commandData } = useGetBotCommands(botId ?? "", { query: { enabled: !!botId } });
   const saveMutation = useSaveBotCommands();
 
   useEffect(() => {
     if (commandData) {
-      const raw = commandData as { nodes?: FlowNode[]; edges?: FlowEdge[] };
-      setNodes(raw.nodes ?? []);
-      setEdges(raw.edges ?? []);
+      setNodes((commandData as any).nodes ?? []);
+      setEdges((commandData as any).edges ?? []);
     }
   }, [commandData]);
 
-  const commandFlows = useMemo(() => getCommandFlows(nodes, edges), [nodes, edges]);
+  const canvasX = useSharedValue(0);
+  const canvasY = useSharedValue(0);
+  const canvasScale = useSharedValue(1);
+  const savedCX = useSharedValue(0);
+  const savedCY = useSharedValue(0);
+  const savedScale = useSharedValue(1);
 
-  const paddingTop = Platform.OS === "web" ? insets.top + 67 : insets.top;
-  const paddingBottom = Platform.OS === "web" ? 34 : insets.bottom + 20;
+  const canvasStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: canvasX.value },
+      { translateY: canvasY.value },
+      { scale: canvasScale.value },
+    ],
+  }));
 
-  async function handleSave() {
+  const panGesture = Gesture.Pan()
+    .minDistance(8)
+    .onStart(() => {
+      "worklet";
+      savedCX.value = canvasX.value;
+      savedCY.value = canvasY.value;
+    })
+    .onUpdate((e) => {
+      "worklet";
+      canvasX.value = savedCX.value + e.translationX;
+      canvasY.value = savedCY.value + e.translationY;
+    });
+
+  const pinchGesture = Gesture.Pinch()
+    .onStart(() => {
+      "worklet";
+      savedScale.value = canvasScale.value;
+    })
+    .onUpdate((e) => {
+      "worklet";
+      canvasScale.value = Math.max(0.25, Math.min(2.5, savedScale.value * e.scale));
+    });
+
+  const canvasGesture = Gesture.Simultaneous(panGesture, pinchGesture);
+
+  const handleDragEnd = useCallback((id: string, x: number, y: number) => {
+    setNodes(prev => prev.map(n => n.id === id ? { ...n, x, y } : n));
+    setHasUnsaved(true);
+  }, []);
+
+  const addNode = useCallback((type: NodeType) => {
+    const n = makeNode(type, 100 + nodes.length * 220 % 600, 180 + Math.floor(nodes.length / 3) * 140);
+    setNodes(prev => [...prev, n]);
+    setHasUnsaved(true);
+    setShowTypePicker(false);
+  }, [nodes.length]);
+
+  const deleteNode = useCallback((id: string) => {
+    setNodes(prev => prev.filter(n => n.id !== id));
+    setEdges(prev => prev.filter(e => e.source !== id && e.target !== id));
+    setSelectedId(null);
+    setHasUnsaved(true);
+  }, []);
+
+  const updateNode = useCallback((updated: FlowNode) => {
+    setNodes(prev => prev.map(n => n.id === updated.id ? updated : n));
+    setEditingNode(null);
+    setHasUnsaved(true);
+  }, []);
+
+  const handlePortTap = useCallback((nodeId: string, handle?: "true" | "false") => {
+    setConnectingFrom({ nodeId, handle });
+    setSelectedId(nodeId);
+  }, []);
+
+  const handleInputTap = useCallback((targetId: string) => {
+    if (!connectingFrom || connectingFrom.nodeId === targetId) {
+      setConnectingFrom(null);
+      return;
+    }
+    const already = edges.some(e => e.source === connectingFrom.nodeId && e.target === targetId && e.sourceHandle === connectingFrom.handle);
+    if (!already) {
+      setEdges(prev => [...prev, { id: uid(), source: connectingFrom.nodeId, target: targetId, sourceHandle: connectingFrom.handle }]);
+      setHasUnsaved(true);
+    }
+    setConnectingFrom(null);
+    setSelectedId(null);
+  }, [connectingFrom, edges]);
+
+  const handleNodeTap = useCallback((node: FlowNode) => {
+    if (connectingFrom) {
+      handleInputTap(node.id);
+    } else {
+      setSelectedId(node.id);
+      setEditingNode({ ...node });
+    }
+  }, [connectingFrom, handleInputTap]);
+
+  const applyTemplate = useCallback((tpl: typeof TEMPLATES[0]) => {
+    const ids: string[] = tpl.nodes.map(() => uid());
+    const newNodes: FlowNode[] = tpl.nodes.map((n, i) => ({
+      id: ids[i], type: n.type!, label: NODE_CFG[n.type!].label,
+      config: n.config ?? {}, x: n.x ?? 60 + i * 280, y: n.y ?? 240,
+    }));
+    const newEdges: FlowEdge[] = tpl.edges.map(e => ({
+      id: uid(),
+      source: ids[parseInt(e.source!)],
+      target: ids[parseInt(e.target!)],
+      sourceHandle: e.sourceHandle,
+    }));
+    setNodes(newNodes);
+    setEdges(newEdges);
+    setShowTemplates(false);
+    setHasUnsaved(true);
+  }, []);
+
+  const handleSave = useCallback(async () => {
     if (!botId) return;
     try {
-      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       await saveMutation.mutateAsync({ botId, data: { nodes, edges } as any });
       setHasUnsaved(false);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      Alert.alert("Salvo!", "Comandos do bot salvos com sucesso.");
     } catch {
-      Alert.alert("Erro", "Não foi possível salvar os comandos.");
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      Alert.alert("Erro", "Não foi possível salvar o fluxo.");
     }
-  }
+  }, [botId, nodes, edges, saveMutation]);
 
-  function handleNodeChange(nodeId: string, key: string, val: unknown) {
-    setNodes((prev) =>
-      prev.map((n) =>
-        n.id === nodeId ? { ...n, config: { ...n.config, [key]: val }, label: n.label } : n
-      )
-    );
-    if (editingNode?.id === nodeId) {
-      setEditingNode((prev) => prev ? { ...prev, config: { ...prev.config, [key]: val } } : prev);
-    }
-    setHasUnsaved(true);
-  }
+  const zoom = useCallback((factor: number) => {
+    canvasScale.value = Math.max(0.25, Math.min(2.5, canvasScale.value * factor));
+  }, [canvasScale]);
 
-  function addNode(type: NodeType, parentId: string | null) {
-    const newNode: FlowNode = {
-      id: uid(),
-      type,
-      label: NODE_LABELS[type],
-      config: type === "command" ? { prefix: ".", name: "" } : type === "response" ? { tipoResposta: "texto", texto: "" } : {},
-      position: { x: 0, y: nodes.length },
-    };
-    setNodes((prev) => [...prev, newNode]);
-    if (parentId) {
-      const newEdge: FlowEdge = { id: uid(), source: parentId, target: newNode.id };
-      setEdges((prev) => [...prev, newEdge]);
-    }
-    setHasUnsaved(true);
-    setShowAddModal(false);
-    setAddParentId(null);
-    setEditingNode(newNode);
-  }
+  const paddingTop = Platform.OS === "web" ? insets.top + 60 : insets.top;
 
-  function deleteNode(nodeId: string) {
-    Alert.alert("Excluir nó", "Deseja remover este bloco e suas conexões?", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Excluir",
-        style: "destructive",
-        onPress: () => {
-          setNodes((prev) => prev.filter((n) => n.id !== nodeId));
-          setEdges((prev) => prev.filter((e) => e.source !== nodeId && e.target !== nodeId));
-          setHasUnsaved(true);
-        },
-      },
-    ]);
-  }
-
-  function applyTemplate(t: typeof TEMPLATES[number]) {
-    const idMap: Record<string, string> = {};
-    const newNodes = t.nodes.map((n) => {
-      const newId = uid();
-      idMap[n.id] = newId;
-      return { ...n, id: newId, position: { x: 0, y: nodes.length + t.nodes.indexOf(n) } };
-    });
-    const newEdges = t.edges.map((e) => ({
-      ...e,
-      id: uid(),
-      source: idMap[e.source] ?? e.source,
-      target: idMap[e.target] ?? e.target,
-    }));
-
-    if (newNodes.length >= 2 && t.edges.length === 0) {
-      for (let i = 0; i < newNodes.length - 1; i++) {
-        newEdges.push({ id: uid(), source: newNodes[i].id, target: newNodes[i + 1].id });
-      }
-    }
-
-    setNodes((prev) => [...prev, ...newNodes]);
-    setEdges((prev) => [...prev, ...newEdges]);
-    setHasUnsaved(true);
-    setShowTemplates(false);
-  }
-
-  function FlowChainView({ chain, commandId }: { chain: FlowNode[]; commandId: string }) {
-    return (
-      <View style={{ gap: 4 }}>
-        {chain.map((node, idx) => {
-          const nc = NODE_COLORS[node.type];
-          const isCondition = node.type === "condition";
-          const { trueBranch, falseBranch } = isCondition
-            ? buildConditionBranches(node.id, nodes, edges)
-            : { trueBranch: [], falseBranch: [] };
-
-          return (
-            <View key={node.id}>
-              <View style={styles.chainConnector}>
-                <View style={[styles.chainLine, { backgroundColor: colors.border }]} />
-                <Feather name="arrow-down" size={12} color={colors.mutedForeground} />
-              </View>
-              <Pressable
-                style={[styles.chainNode, { backgroundColor: nc.bg, borderColor: nc.border }]}
-                onPress={() => setEditingNode(node)}
-                onLongPress={() => deleteNode(node.id)}
-              >
-                <Feather name={nc.icon as any} size={16} color={nc.border.slice(0, 7)} />
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.chainNodeType, { color: nc.border.slice(0, 7) }]}>
-                    {NODE_LABELS[node.type]}
-                  </Text>
-                  <Text style={[styles.chainNodeLabel, { color: colors.foreground }]} numberOfLines={2}>
-                    {nodeLabel(node)}
-                  </Text>
-                </View>
-                <Feather name="edit-2" size={14} color={colors.mutedForeground} />
-              </Pressable>
-
-              {isCondition && (trueBranch.length > 0 || falseBranch.length > 0) && (
-                <View style={styles.branchContainer}>
-                  <View style={styles.branchCol}>
-                    <View style={[styles.branchLabel, { backgroundColor: "#22C55E20" }]}>
-                      <Text style={{ color: "#22C55E", fontSize: 11, fontFamily: "Inter_600SemiBold" }}>✓ SIM</Text>
-                    </View>
-                    {trueBranch.map((bn) => (
-                      <Pressable
-                        key={bn.id}
-                        style={[styles.branchNode, { backgroundColor: NODE_COLORS[bn.type].bg, borderColor: NODE_COLORS[bn.type].border }]}
-                        onPress={() => setEditingNode(bn)}
-                        onLongPress={() => deleteNode(bn.id)}
-                      >
-                        <Feather name={NODE_COLORS[bn.type].icon as any} size={13} color={NODE_COLORS[bn.type].border.slice(0, 7)} />
-                        <Text style={[styles.branchNodeText, { color: colors.foreground }]} numberOfLines={2}>
-                          {nodeLabel(bn)}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                  <View style={styles.branchCol}>
-                    <View style={[styles.branchLabel, { backgroundColor: "#DC262620" }]}>
-                      <Text style={{ color: "#DC2626", fontSize: 11, fontFamily: "Inter_600SemiBold" }}>✗ NÃO</Text>
-                    </View>
-                    {falseBranch.map((bn) => (
-                      <Pressable
-                        key={bn.id}
-                        style={[styles.branchNode, { backgroundColor: NODE_COLORS[bn.type].bg, borderColor: NODE_COLORS[bn.type].border }]}
-                        onPress={() => setEditingNode(bn)}
-                        onLongPress={() => deleteNode(bn.id)}
-                      >
-                        <Feather name={NODE_COLORS[bn.type].icon as any} size={13} color={NODE_COLORS[bn.type].border.slice(0, 7)} />
-                        <Text style={[styles.branchNodeText, { color: colors.foreground }]} numberOfLines={2}>
-                          {nodeLabel(bn)}
-                        </Text>
-                      </Pressable>
-                    ))}
-                  </View>
-                </View>
-              )}
-            </View>
-          );
-        })}
-        <View style={styles.chainConnector}>
-          <View style={[styles.chainLine, { backgroundColor: colors.border }]} />
-        </View>
-        <Pressable
-          style={[styles.addNodeBtn, { borderColor: colors.border }]}
-          onPress={() => {
-            const lastNode = chain.length > 0 ? chain[chain.length - 1] : { id: commandId };
-            setAddParentId(lastNode.id);
-            setShowAddModal(true);
-          }}
-        >
-          <Feather name="plus" size={16} color={colors.primary} />
-          <Text style={[styles.addNodeText, { color: colors.primary }]}>Adicionar bloco</Text>
-        </Pressable>
-      </View>
-    );
-  }
+  const getNodeById = (id: string) => nodes.find(n => n.id === id);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
-      <View style={[styles.navBar, { paddingTop: paddingTop + 8, borderBottomColor: colors.border }]}>
-        <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={22} color={colors.foreground} />
+    <View style={[s.root, { backgroundColor: colors.background }]}>
+      <View style={[s.topBar, { paddingTop: paddingTop + 10, borderBottomColor: colors.border }]}>
+        <Pressable style={s.backBtn} onPress={() => router.back()}>
+          <Feather name="arrow-left" size={20} color={colors.foreground} />
         </Pressable>
-        <Text style={[styles.navTitle, { color: colors.foreground }]}>Constructor</Text>
-        <Pressable
-          style={[styles.saveNavBtn, { backgroundColor: hasUnsaved ? colors.primary : colors.secondary, opacity: saveMutation.isPending ? 0.7 : 1 }]}
-          onPress={handleSave}
-          disabled={saveMutation.isPending}
-        >
-          {saveMutation.isPending ? (
-            <ActivityIndicator color="#FFF" size="small" />
-          ) : (
-            <Text style={[styles.saveNavText, { color: hasUnsaved ? "#FFF" : colors.mutedForeground }]}>
-              Salvar
-            </Text>
+        <Text style={[s.title, { color: colors.foreground }]}>Construtor de Fluxo</Text>
+        <View style={s.topBarRight}>
+          {hasUnsaved && (
+            <View style={s.unsavedDot} />
           )}
-        </Pressable>
+          <Pressable style={[s.saveBtn, { backgroundColor: "#8B3FFF" }]} onPress={handleSave} disabled={saveMutation.isPending}>
+            <Feather name="save" size={14} color="#FFF" />
+            <Text style={s.saveBtnText}>{saveMutation.isPending ? "Salvando…" : "Salvar"}</Text>
+          </Pressable>
+        </View>
       </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.scroll, { paddingBottom }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {isLoading ? (
-          <View style={styles.loader}>
-            <ActivityIndicator color={colors.primary} size="large" />
-          </View>
-        ) : (
-          <>
-            <View style={styles.toolbarRow}>
-              <Pressable
-                style={[styles.toolBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
-                onPress={() => setShowTemplates(true)}
-              >
-                <Feather name="layout" size={16} color={colors.primary} />
-                <Text style={[styles.toolBtnText, { color: colors.foreground }]}>Templates</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.toolBtn, { backgroundColor: colors.primary + "20", borderColor: colors.primary + "40" }]}
-                onPress={() => {
-                  setAddParentId(null);
-                  setShowAddModal(true);
-                }}
-              >
-                <Feather name="plus" size={16} color={colors.primary} />
-                <Text style={[styles.toolBtnText, { color: colors.primary }]}>Novo comando</Text>
-              </Pressable>
-            </View>
+      {connectingFrom && (
+        <View style={[s.connectingBanner, { backgroundColor: "#F59E0B20", borderColor: "#F59E0B40" }]}>
+          <Feather name="link" size={14} color="#F59E0B" />
+          <Text style={[s.connectingText, { color: "#F59E0B" }]}>Toque em outro bloco para conectar</Text>
+          <Pressable onPress={() => setConnectingFrom(null)}>
+            <Feather name="x" size={16} color="#F59E0B" />
+          </Pressable>
+        </View>
+      )}
 
-            {commandFlows.length === 0 ? (
-              <View style={[styles.emptyState, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                <Feather name="git-branch" size={40} color={colors.mutedForeground} />
-                <Text style={[styles.emptyTitle, { color: colors.foreground }]}>Nenhum comando</Text>
-                <Text style={[styles.emptySubtitle, { color: colors.mutedForeground }]}>
-                  Crie seu primeiro fluxo usando um template ou o botão "Novo comando"
-                </Text>
-              </View>
-            ) : (
-              commandFlows.map(({ command, chain }) => {
-                const nc = NODE_COLORS.command;
-                return (
-                  <View key={command.id} style={[styles.commandCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
-                    <Pressable
-                      style={[styles.commandHeader, { backgroundColor: nc.bg, borderBottomColor: colors.border }]}
-                      onPress={() => setEditingNode(command)}
-                      onLongPress={() => deleteNode(command.id)}
-                    >
-                      <View style={[styles.commandIcon, { backgroundColor: nc.border.slice(0, 7) + "30" }]}>
-                        <Feather name="terminal" size={18} color={nc.border.slice(0, 7)} />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.commandName, { color: colors.foreground }]}>
-                          {nodeLabel(command)}
-                        </Text>
-                        <Text style={[styles.commandMeta, { color: colors.mutedForeground }]}>
-                          {chain.length} bloco{chain.length !== 1 ? "s" : ""} • toque para editar, segure para excluir
-                        </Text>
-                      </View>
-                      <Feather name="edit-2" size={16} color={colors.mutedForeground} />
-                    </Pressable>
-                    <View style={{ padding: 16 }}>
-                      <FlowChainView chain={chain} commandId={command.id} />
-                    </View>
-                  </View>
-                );
-              })
-            )}
-          </>
-        )}
-      </ScrollView>
+      <GestureDetector gesture={canvasGesture}>
+        <View style={s.canvasContainer}>
+          <Animated.View style={[s.canvas, canvasStyle]}>
+            <Svg
+              style={{ position: "absolute", top: -2000, left: -2000 }}
+              width={CANVAS_SIZE + SW}
+              height={CANVAS_SIZE + SH}
+            >
+              <Defs>
+                <Pattern id="dots" x="0" y="0" width={GRID} height={GRID} patternUnits="userSpaceOnUse">
+                  <Circle cx="0.5" cy="0.5" r="0.9" fill="#1E2040" opacity="1" />
+                </Pattern>
+              </Defs>
+              <Rect x="0" y="0" width={CANVAS_SIZE + SW} height={CANVAS_SIZE + SH} fill="url(#dots)" />
 
-      <Modal visible={showAddModal} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.foreground }]}>Adicionar bloco</Text>
-              <Pressable onPress={() => { setShowAddModal(false); setAddParentId(null); }}>
-                <Feather name="x" size={20} color={colors.mutedForeground} />
-              </Pressable>
-            </View>
-            <View style={{ gap: 10 }}>
-              {(["command", "action", "condition", "response", "buttons"] as NodeType[]).map((t) => {
-                const nc = NODE_COLORS[t];
+              {edges.map(edge => {
+                const src = getNodeById(edge.source);
+                const tgt = getNodeById(edge.target);
+                if (!src || !tgt) return null;
+                let sy = src.y + NODE_H / 2;
+                if (edge.sourceHandle === "true") sy = src.y + NODE_H / 3;
+                if (edge.sourceHandle === "false") sy = src.y + (NODE_H * 2) / 3;
+                const sx = src.x + NODE_W;
+                const tx = tgt.x;
+                const ty = tgt.y + NODE_H / 2;
+                const edgeColor = edge.sourceHandle === "true" ? "#22C55E" : edge.sourceHandle === "false" ? "#EF4444" : "#8B3FFF";
                 return (
-                  <Pressable
-                    key={t}
-                    style={[styles.blockTypeBtn, { backgroundColor: nc.bg, borderColor: nc.border }]}
-                    onPress={() => addNode(t, addParentId)}
-                  >
-                    <View style={[styles.blockTypeIcon, { backgroundColor: nc.border.slice(0, 7) + "30" }]}>
-                      <Feather name={nc.icon as any} size={18} color={nc.border.slice(0, 7)} />
-                    </View>
-                    <View>
-                      <Text style={[styles.blockTypeLabel, { color: colors.foreground }]}>{NODE_LABELS[t]}</Text>
-                      <Text style={[styles.blockTypeDesc, { color: colors.mutedForeground }]}>
-                        {{
-                          command: "Detecta mensagem com prefixo",
-                          action: "Executa uma ação no WhatsApp",
-                          condition: "Verifica uma condição (Se/Senão)",
-                          response: "Envia uma resposta ao usuário",
-                          buttons: "Adiciona botões interativos",
-                        }[t]}
-                      </Text>
-                    </View>
-                  </Pressable>
+                  <Path
+                    key={edge.id}
+                    d={bezier(sx, sy, tx, ty)}
+                    stroke={edgeColor}
+                    strokeWidth={2}
+                    fill="none"
+                    strokeOpacity={0.7}
+                  />
                 );
               })}
-            </View>
-          </View>
-        </View>
-      </Modal>
+            </Svg>
 
-      <Modal visible={showTemplates} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.foreground }]}>Templates</Text>
-              <Pressable onPress={() => setShowTemplates(false)}>
-                <Feather name="x" size={20} color={colors.mutedForeground} />
-              </Pressable>
-            </View>
-            <View style={{ gap: 10 }}>
-              {TEMPLATES.map((t) => (
-                <Pressable
-                  key={t.id}
-                  style={[styles.blockTypeBtn, { backgroundColor: colors.secondary, borderColor: colors.border }]}
-                  onPress={() => applyTemplate(t)}
-                >
-                  <View style={[styles.blockTypeIcon, { backgroundColor: colors.primary + "20" }]}>
-                    <Feather name={t.icon as any} size={18} color={colors.primary} />
-                  </View>
-                  <View>
-                    <Text style={[styles.blockTypeLabel, { color: colors.foreground }]}>{t.name}</Text>
-                    <Text style={[styles.blockTypeDesc, { color: colors.mutedForeground }]}>
-                      {t.nodes.length} bloco{t.nodes.length !== 1 ? "s" : ""} pré-configurados
-                    </Text>
-                  </View>
-                </Pressable>
-              ))}
-            </View>
-          </View>
+            {nodes.map(node => (
+              <NodeCard
+                key={node.id}
+                node={node}
+                canvasScale={canvasScale}
+                selected={selectedId === node.id}
+                connectingFrom={connectingFrom?.nodeId ?? null}
+                isConnectable={!!connectingFrom && connectingFrom.nodeId !== node.id}
+                onTap={() => handleNodeTap(node)}
+                onPortTap={(handle) => handlePortTap(node.id, handle)}
+                onInputTap={() => connectingFrom ? handleInputTap(node.id) : handleNodeTap(node)}
+                onDragEnd={handleDragEnd}
+                colors={colors}
+              />
+            ))}
+          </Animated.View>
         </View>
-      </Modal>
+      </GestureDetector>
 
-      <Modal visible={!!editingNode} transparent animationType="slide">
-        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-          <Pressable style={styles.modalOverlay} onPress={() => setEditingNode(null)}>
-            <Pressable
-              style={[styles.editorSheet, { backgroundColor: colors.card, borderColor: colors.border }]}
-              onPress={(e) => e.stopPropagation()}
-            >
-              {editingNode && (
-                <>
-                  <View style={styles.modalHeader}>
-                    <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                      <View style={[styles.editorIcon, { backgroundColor: NODE_COLORS[editingNode.type].bg }]}>
-                        <Feather name={NODE_COLORS[editingNode.type].icon as any} size={18} color={NODE_COLORS[editingNode.type].border.slice(0, 7)} />
-                      </View>
-                      <Text style={[styles.modalTitle, { color: colors.foreground }]}>
-                        Editar {NODE_LABELS[editingNode.type]}
-                      </Text>
-                    </View>
-                    <Pressable onPress={() => setEditingNode(null)}>
-                      <Feather name="x" size={20} color={colors.mutedForeground} />
-                    </Pressable>
-                  </View>
-                  <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 420 }}>
-                    <FieldEditor
-                      fields={CONFIG_FIELDS[editingNode.type]}
-                      config={editingNode.config}
-                      onChange={(k, v) => handleNodeChange(editingNode.id, k, v)}
-                      colors={colors}
-                    />
-                  </ScrollView>
-                  <Pressable
-                    style={[styles.editorDoneBtn, { backgroundColor: colors.primary, marginTop: 16 }]}
-                    onPress={() => setEditingNode(null)}
-                  >
-                    <Text style={styles.editorDoneText}>Confirmar</Text>
-                  </Pressable>
-                </>
-              )}
-            </Pressable>
+      <View style={[s.toolbar, { backgroundColor: colors.card, borderTopColor: colors.border, paddingBottom: insets.bottom + 8 }]}>
+        <Pressable style={[s.toolBtn, { backgroundColor: colors.secondary }]} onPress={() => setShowTemplates(true)}>
+          <Feather name="layout" size={18} color={colors.primary} />
+          <Text style={[s.toolBtnText, { color: colors.primary }]}>Templates</Text>
+        </Pressable>
+        <Pressable style={[s.toolBtnPrimary, { backgroundColor: colors.primary }]} onPress={() => setShowTypePicker(true)}>
+          <Feather name="plus" size={20} color="#FFF" />
+          <Text style={s.toolBtnPrimaryText}>Adicionar bloco</Text>
+        </Pressable>
+        <View style={s.zoomBtns}>
+          <Pressable style={[s.zoomBtn, { backgroundColor: colors.secondary }]} onPress={() => zoom(1.2)}>
+            <Feather name="zoom-in" size={16} color={colors.foreground} />
           </Pressable>
-        </KeyboardAvoidingView>
-      </Modal>
+          <Pressable style={[s.zoomBtn, { backgroundColor: colors.secondary }]} onPress={() => zoom(0.8)}>
+            <Feather name="zoom-out" size={16} color={colors.foreground} />
+          </Pressable>
+        </View>
+      </View>
+
+      <NodeEditor
+        node={editingNode}
+        colors={colors}
+        onSave={updateNode}
+        onDelete={deleteNode}
+        onClose={() => setEditingNode(null)}
+      />
+
+      <TypePickerModal
+        visible={showTypePicker}
+        colors={colors}
+        onSelect={addNode}
+        onClose={() => setShowTypePicker(false)}
+      />
+
+      <TemplatesModal
+        visible={showTemplates}
+        colors={colors}
+        onSelect={applyTemplate}
+        onClose={() => setShowTemplates(false)}
+      />
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  navBar: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 20,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
+function NodeEditor({ node, colors, onSave, onDelete, onClose }: { node: FlowNode | null; colors: ReturnType<typeof useColors>; onSave: (n: FlowNode) => void; onDelete: (id: string) => void; onClose: () => void }) {
+  const [draft, setDraft] = useState<FlowNode | null>(null);
+  const [selectOpen, setSelectOpen] = useState<string | null>(null);
+  const insets = useSafeAreaInsets();
+
+  useEffect(() => { setDraft(node ? { ...node, config: { ...node.config } } : null); setSelectOpen(null); }, [node]);
+
+  if (!draft) return null;
+
+  const fields = CFG[draft.type];
+  const visibleFields = fields.filter(f => !f.showWhen || f.showWhen(draft.config));
+
+  function setVal(key: string, val: unknown) {
+    setDraft(prev => prev ? { ...prev, config: { ...prev.config, [key]: val } } : null);
+  }
+
+  const cfg = NODE_CFG[draft.type];
+
+  return (
+    <Modal visible animationType="slide" transparent>
+      <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1 }}>
+        <Pressable style={s.editorOverlay} onPress={onClose} />
+        <View style={[s.editorSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 16 }]}>
+          <View style={[s.editorHandle, { backgroundColor: colors.border }]} />
+          <View style={[s.editorHeader, { borderBottomColor: colors.border }]}>
+            <View style={[s.editorTypeChip, { backgroundColor: cfg.dim }]}>
+              <Feather name={cfg.icon as any} size={14} color={cfg.color} />
+              <Text style={[s.editorTypeName, { color: cfg.color }]}>{cfg.label}</Text>
+            </View>
+            <View style={{ flex: 1 }} />
+            <Pressable onPress={() => { Alert.alert("Excluir bloco?", "Esta ação não pode ser desfeita.", [{ text: "Cancelar", style: "cancel" }, { text: "Excluir", style: "destructive", onPress: () => onDelete(draft.id) }]); }}>
+              <Feather name="trash-2" size={18} color={colors.destructive} />
+            </Pressable>
+            <Pressable onPress={onClose} style={{ marginLeft: 16 }}>
+              <Feather name="x" size={20} color={colors.mutedForeground} />
+            </Pressable>
+          </View>
+
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={s.editorBody} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            {visibleFields.map(field => (
+              <View key={field.key} style={s.formGroup}>
+                <Text style={[s.formLabel, { color: colors.mutedForeground }]}>{field.label}</Text>
+                {field.type === "text" && (
+                  <TextInput
+                    style={[s.formInput, { color: colors.foreground, backgroundColor: colors.secondary, borderColor: colors.border }]}
+                    value={String(draft.config[field.key] ?? "")}
+                    onChangeText={v => setVal(field.key, v)}
+                    placeholder={field.placeholder}
+                    placeholderTextColor={colors.mutedForeground}
+                  />
+                )}
+                {field.type === "textarea" && (
+                  <TextInput
+                    style={[s.formInput, s.formTextarea, { color: colors.foreground, backgroundColor: colors.secondary, borderColor: colors.border }]}
+                    value={String(draft.config[field.key] ?? "")}
+                    onChangeText={v => setVal(field.key, v)}
+                    placeholder={field.placeholder}
+                    placeholderTextColor={colors.mutedForeground}
+                    multiline
+                    numberOfLines={4}
+                  />
+                )}
+                {field.type === "toggle" && (
+                  <Switch
+                    value={!!draft.config[field.key]}
+                    onValueChange={v => setVal(field.key, v)}
+                    trackColor={{ false: colors.secondary, true: cfg.color + "80" }}
+                    thumbColor={draft.config[field.key] ? cfg.color : colors.mutedForeground}
+                  />
+                )}
+                {field.type === "select" && (
+                  <View>
+                    <Pressable
+                      style={[s.formInput, { backgroundColor: colors.secondary, borderColor: selectOpen === field.key ? cfg.color : colors.border, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }]}
+                      onPress={() => setSelectOpen(selectOpen === field.key ? null : field.key)}
+                    >
+                      <Text style={{ color: draft.config[field.key] ? colors.foreground : colors.mutedForeground, flex: 1, fontSize: 14 }} numberOfLines={1}>
+                        {field.options?.find(o => o.value === draft.config[field.key])?.label ?? "Selecione…"}
+                      </Text>
+                      <Feather name={selectOpen === field.key ? "chevron-up" : "chevron-down"} size={16} color={colors.mutedForeground} />
+                    </Pressable>
+                    {selectOpen === field.key && (
+                      <View style={[s.selectDropdown, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                        <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled>
+                          {field.options?.map(opt => (
+                            <Pressable
+                              key={opt.value}
+                              style={[s.selectOption, draft.config[field.key] === opt.value && { backgroundColor: cfg.dim }]}
+                              onPress={() => { setVal(field.key, opt.value); setSelectOpen(null); }}
+                            >
+                              <Text style={[s.selectOptionText, { color: draft.config[field.key] === opt.value ? cfg.color : colors.foreground }]}>{opt.label}</Text>
+                            </Pressable>
+                          ))}
+                        </ScrollView>
+                      </View>
+                    )}
+                  </View>
+                )}
+              </View>
+            ))}
+          </ScrollView>
+
+          <Pressable style={[s.editorSaveBtn, { backgroundColor: cfg.color }]} onPress={() => onSave(draft)}>
+            <Feather name="check" size={16} color="#FFF" />
+            <Text style={s.editorSaveBtnText}>Salvar bloco</Text>
+          </Pressable>
+        </View>
+      </KeyboardAvoidingView>
+    </Modal>
+  );
+}
+
+function TypePickerModal({ visible, colors, onSelect, onClose }: { visible: boolean; colors: ReturnType<typeof useColors>; onSelect: (t: NodeType) => void; onClose: () => void }) {
+  const insets = useSafeAreaInsets();
+  const types: NodeType[] = ["command", "action", "condition", "response", "buttons"];
+  const descriptions: Record<NodeType, string> = {
+    command: "Detecta um comando de WhatsApp (ex: .menu, .sticker)",
+    action: "Executa uma ação (figurinha, hidetag, banir, etc.)",
+    condition: "Bifurca o fluxo com lógica Sim/Não",
+    response: "Envia uma mensagem de resposta ao usuário",
+    buttons: "Envia botões interativos para o usuário clicar",
+  };
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <Pressable style={s.modalOverlay} onPress={onClose} />
+      <View style={[s.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }]}>
+        <View style={[s.editorHandle, { backgroundColor: colors.border }]} />
+        <Text style={[s.modalTitle, { color: colors.foreground }]}>Adicionar bloco</Text>
+        {types.map(type => {
+          const cfg = NODE_CFG[type];
+          return (
+            <Pressable
+              key={type}
+              style={({ pressed }) => [s.typeRow, { backgroundColor: pressed ? cfg.dim : "transparent", borderColor: colors.border }]}
+              onPress={() => onSelect(type)}
+            >
+              <View style={[s.typeIcon, { backgroundColor: cfg.dim }]}>
+                <Feather name={cfg.icon as any} size={20} color={cfg.color} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.typeName, { color: colors.foreground }]}>{cfg.label}</Text>
+                <Text style={[s.typeDesc, { color: colors.mutedForeground }]}>{descriptions[type]}</Text>
+              </View>
+              <Feather name="plus" size={18} color={cfg.color} />
+            </Pressable>
+          );
+        })}
+      </View>
+    </Modal>
+  );
+}
+
+function TemplatesModal({ visible, colors, onSelect, onClose }: { visible: boolean; colors: ReturnType<typeof useColors>; onSelect: (t: typeof TEMPLATES[0]) => void; onClose: () => void }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <Pressable style={s.modalOverlay} onPress={onClose} />
+      <View style={[s.modalSheet, { backgroundColor: colors.card, paddingBottom: insets.bottom + 20 }]}>
+        <View style={[s.editorHandle, { backgroundColor: colors.border }]} />
+        <Text style={[s.modalTitle, { color: colors.foreground }]}>Templates prontos</Text>
+        <Text style={[s.modalSubtitle, { color: colors.mutedForeground }]}>Substitui o fluxo atual</Text>
+        {TEMPLATES.map(tpl => (
+          <Pressable
+            key={tpl.name}
+            style={({ pressed }) => [s.typeRow, { backgroundColor: pressed ? "#8B3FFF18" : "transparent", borderColor: colors.border }]}
+            onPress={() => onSelect(tpl)}
+          >
+            <View style={[s.typeIcon, { backgroundColor: "#8B3FFF18" }]}>
+              <Feather name={tpl.icon as any} size={20} color="#8B3FFF" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[s.typeName, { color: colors.foreground }]}>{tpl.name}</Text>
+              <Text style={[s.typeDesc, { color: colors.mutedForeground }]}>{tpl.nodes.length} blocos · {tpl.edges.length} conexões</Text>
+            </View>
+            <Feather name="chevron-right" size={18} color={colors.mutedForeground} />
+          </Pressable>
+        ))}
+      </View>
+    </Modal>
+  );
+}
+
+const s = StyleSheet.create({
+  root: { flex: 1 },
+  topBar: {
+    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
+    paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1,
   },
-  backBtn: { width: 38, height: 38, alignItems: "center", justifyContent: "center" },
-  navTitle: { fontSize: 17, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold", flex: 1, textAlign: "center" as const },
-  saveNavBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
-  saveNavText: { fontSize: 14, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
-  scroll: { paddingHorizontal: 16, paddingTop: 16, gap: 16 },
-  loader: { paddingVertical: 60, alignItems: "center" },
-  toolbarRow: { flexDirection: "row", gap: 10 },
-  toolBtn: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
+  backBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
+  title: { flex: 1, textAlign: "center" as const, fontSize: 16, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
+  topBarRight: { flexDirection: "row", alignItems: "center", gap: 8 },
+  unsavedDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#F59E0B" },
+  saveBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
+  saveBtnText: { color: "#FFF", fontSize: 13, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
+  connectingBanner: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1,
   },
-  toolBtnText: { fontSize: 14, fontWeight: "500" as const, fontFamily: "Inter_500Medium" },
-  emptyState: { borderRadius: 16, borderWidth: 1, padding: 40, alignItems: "center", gap: 12 },
-  emptyTitle: { fontSize: 17, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
-  emptySubtitle: { fontSize: 14, fontFamily: "Inter_400Regular", textAlign: "center" as const },
-  commandCard: { borderRadius: 16, borderWidth: 1, overflow: "hidden" as const },
-  commandHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 16,
-    borderBottomWidth: 1,
+  connectingText: { flex: 1, fontSize: 13, fontFamily: "Inter_500Medium" },
+  canvasContainer: { flex: 1, overflow: "hidden" },
+  canvas: { width: SW, height: "100%" as const },
+  node: {
+    width: NODE_W,
+    borderRadius: 12, borderWidth: 1.5,
+    overflow: "hidden" as const,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
   },
-  commandIcon: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  commandName: { fontSize: 16, fontWeight: "700" as const, fontFamily: "Inter_700Bold" },
-  commandMeta: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
-  chainConnector: { alignItems: "center", paddingVertical: 2 },
-  chainLine: { width: 2, height: 8 },
-  chainNode: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    padding: 12,
-    borderRadius: 10,
-    borderWidth: 1,
+  nodeHeader: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    paddingHorizontal: 10, paddingVertical: 8,
   },
-  chainNodeType: { fontSize: 11, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
-  chainNodeLabel: { fontSize: 13, fontFamily: "Inter_400Regular", marginTop: 2 },
-  branchContainer: { flexDirection: "row", gap: 8, marginTop: 4 },
-  branchCol: { flex: 1, gap: 4 },
-  branchLabel: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, alignItems: "center" },
-  branchNode: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 8,
-    padding: 10,
-    borderRadius: 8,
-    borderWidth: 1,
+  nodeTypeIndicator: { width: 4, height: 20, borderRadius: 2, marginRight: 2 },
+  nodeType: { fontSize: 11, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const, letterSpacing: 0.5 },
+  nodeBody: { paddingHorizontal: 10, paddingVertical: 8, minHeight: 36 },
+  nodeLabel: { fontSize: 13, fontFamily: "Inter_500Medium", lineHeight: 18 },
+  port: { position: "absolute" as const, justifyContent: "center", alignItems: "center", zIndex: 10 },
+  portLeft: { left: -10, top: NODE_H / 2 - 9 },
+  portRight: { right: -10, top: NODE_H / 2 - 9 },
+  portRightTrue: { right: -28, top: NODE_H / 3 - 9, flexDirection: "row", alignItems: "center", gap: 2 },
+  portRightFalse: { right: -28, top: (NODE_H * 2) / 3 - 9, flexDirection: "row", alignItems: "center", gap: 2 },
+  portDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 2 },
+  portLabel: { fontSize: 9, color: "#888", fontFamily: "Inter_500Medium" },
+  toolbar: {
+    flexDirection: "row", alignItems: "center", gap: 10,
+    paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1,
   },
-  branchNodeText: { flex: 1, fontSize: 12, fontFamily: "Inter_400Regular" },
-  addNodeBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderStyle: "dashed" as const,
-  },
-  addNodeText: { fontSize: 14, fontWeight: "500" as const, fontFamily: "Inter_500Medium" },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-    justifyContent: "flex-end",
-  },
-  modalSheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: 1,
-    padding: 24,
-    paddingBottom: 32,
-    gap: 16,
-  },
+  toolBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10 },
+  toolBtnText: { fontSize: 13, fontWeight: "500" as const, fontFamily: "Inter_500Medium" },
+  toolBtnPrimary: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, paddingVertical: 12, borderRadius: 10 },
+  toolBtnPrimaryText: { color: "#FFF", fontSize: 14, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
+  zoomBtns: { flexDirection: "row", gap: 6 },
+  zoomBtn: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  editorOverlay: { flex: 1 },
   editorSheet: {
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    borderWidth: 1,
-    padding: 24,
-    paddingBottom: 32,
+    borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    maxHeight: SH * 0.82, minHeight: SH * 0.4,
+    shadowColor: "#000", shadowOffset: { width: 0, height: -4 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 20,
   },
-  modalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  modalTitle: { fontSize: 18, fontWeight: "700" as const, fontFamily: "Inter_700Bold" },
-  blockTypeBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
+  editorHandle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center" as const, marginTop: 12, marginBottom: 8 },
+  editorHeader: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingBottom: 12, borderBottomWidth: 1 },
+  editorTypeChip: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 20 },
+  editorTypeName: { fontSize: 12, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
+  editorBody: { padding: 20, gap: 18 },
+  formGroup: { gap: 6 },
+  formLabel: { fontSize: 12, fontFamily: "Inter_500Medium", textTransform: "uppercase" as const, letterSpacing: 0.6 },
+  formInput: {
+    borderRadius: 10, borderWidth: 1,
+    paddingHorizontal: 14, paddingVertical: 12,
+    fontSize: 14, fontFamily: "Inter_400Regular",
   },
-  blockTypeIcon: { width: 40, height: 40, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  blockTypeLabel: { fontSize: 15, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
-  blockTypeDesc: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
-  editorIcon: { width: 36, height: 36, borderRadius: 10, alignItems: "center", justifyContent: "center" },
-  editorDoneBtn: { borderRadius: 12, paddingVertical: 14, alignItems: "center" },
-  editorDoneText: { color: "#FFF", fontSize: 16, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
-  fieldLabel: { fontSize: 13, fontFamily: "Inter_500Medium", marginBottom: 6 },
-  fieldInput: {
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 15,
-    fontFamily: "Inter_400Regular",
+  formTextarea: { height: 100, textAlignVertical: "top" as const },
+  selectDropdown: {
+    borderRadius: 10, borderWidth: 1, marginTop: 4,
+    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 8,
+    overflow: "hidden" as const,
   },
-  textarea: {
-    borderRadius: 10,
-    borderWidth: 1,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    minHeight: 100,
+  selectOption: { paddingHorizontal: 14, paddingVertical: 12 },
+  selectOptionText: { fontSize: 14, fontFamily: "Inter_400Regular" },
+  editorSaveBtn: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginHorizontal: 20, marginTop: 12, paddingVertical: 14, borderRadius: 12 },
+  editorSaveBtnText: { color: "#FFF", fontSize: 15, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)" },
+  modalSheet: {
+    borderTopLeftRadius: 24, borderTopRightRadius: 24,
+    paddingHorizontal: 20, paddingTop: 8,
   },
-  checkRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+  modalTitle: { fontSize: 18, fontWeight: "700" as const, fontFamily: "Inter_700Bold", marginTop: 12, marginBottom: 4 },
+  modalSubtitle: { fontSize: 13, fontFamily: "Inter_400Regular", marginBottom: 16 },
+  typeRow: {
+    flexDirection: "row", alignItems: "center", gap: 14,
+    paddingVertical: 12, paddingHorizontal: 4,
+    borderBottomWidth: StyleSheet.hairlineWidth, borderRadius: 8,
   },
-  optionChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  optionChipText: { fontSize: 13, fontFamily: "Inter_400Regular" },
+  typeIcon: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
+  typeName: { fontSize: 15, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
+  typeDesc: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
 });
