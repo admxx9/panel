@@ -1,25 +1,15 @@
 /**
- * BottomNav — barra de navegação inferior com efeito de botão elevado (notch).
- *
- * Design:
- *  - Barra branca com cantos superiores arredondados e sombra
- *  - Item ativo sobe da barra (translateY) com círculo verde
- *  - "Notch" visual: arco de fundo (#F5F5F5) mascara a barra ao redor do botão ativo
- *  - Animações spring suaves via Reanimated
+ * BottomNav — barra integrada, item ativo embutido (não flutuante).
+ * O ícone ativo fica dentro de um "slot" circular dentro da barra.
+ * Animação suave via Reanimated, sem efeito de balão ou FAB solto.
  */
 import React from "react";
-import {
-  Platform,
-  Pressable,
-  StyleSheet,
-  View,
-} from "react-native";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
   withTiming,
-  interpolateColor,
 } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
 import { usePathname, router } from "expo-router";
@@ -35,16 +25,11 @@ interface Props {
   tabs: NavTab[];
 }
 
-const BAR_H = 72;
-const CIRCLE = 58;
-const LIFT = 24;
-const NOTCH_R = CIRCLE / 2 + 6;
-
-const GREEN = "#2FAE8F";
-const GRAY = "#9CA3AF";
-const BG = "#F5F5F5";
-
-const SPRING = { damping: 14, stiffness: 200, mass: 0.8 };
+const GREEN      = "#2FAE8F";
+const GREEN_LIGHT = "rgba(47,174,143,0.12)";
+const GRAY       = "#9CA3AF";
+const SLOT_SIZE  = 48;
+const SPRING_CFG = { damping: 18, stiffness: 260, mass: 0.7 };
 
 function TabItem({
   tab,
@@ -55,34 +40,28 @@ function TabItem({
   isActive: boolean;
   onPress: () => void;
 }) {
-  const active = useSharedValue(isActive ? 1 : 0);
+  const progress = useSharedValue(isActive ? 1 : 0);
 
   React.useEffect(() => {
-    active.value = withSpring(isActive ? 1 : 0, SPRING);
+    progress.value = withSpring(isActive ? 1 : 0, SPRING_CFG);
   }, [isActive]);
 
-  /* Circle: rises up and scales in when active */
+  /* Slot outer ring: light green bg fades in */
+  const slotStyle = useAnimatedStyle(() => ({
+    opacity: withTiming(progress.value, { duration: 200 }),
+    transform: [{ scale: withSpring(0.85 + 0.15 * progress.value, SPRING_CFG) }],
+  }));
+
+  /* Inner circle: scales up when active */
   const circleStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(active.value, { duration: 160 }),
-    transform: [
-      { translateY: withSpring(active.value === 1 ? -LIFT : 0, SPRING) },
-      { scale: withSpring(active.value === 1 ? 1 : 0.6, SPRING) },
-    ],
+    opacity: withTiming(progress.value, { duration: 180 }),
+    transform: [{ scale: withSpring(0.7 + 0.3 * progress.value, SPRING_CFG) }],
   }));
 
-  /* Notch mask: matches circle rise, hides the bar behind the button */
-  const notchStyle = useAnimatedStyle(() => ({
-    opacity: withTiming(active.value, { duration: 160 }),
-    transform: [
-      { translateY: withSpring(active.value === 1 ? -LIFT + CIRCLE / 2 : 0, SPRING) },
-    ],
-  }));
-
-  /* Icon inside circle (white when active) */
-  const iconContainerStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: withSpring(active.value === 1 ? -LIFT : 0, SPRING) },
-    ],
+  /* Inactive icon: fades out when active */
+  const inactiveStyle = useAnimatedStyle(() => ({
+    opacity: withTiming(1 - progress.value, { duration: 180 }),
+    transform: [{ scale: withSpring(1 - 0.1 * progress.value, SPRING_CFG) }],
   }));
 
   return (
@@ -93,32 +72,16 @@ function TabItem({
       accessibilityRole="tab"
       accessibilityState={{ selected: isActive }}
     >
-      {/* Notch background — same color as app bg, masks bar behind the circle */}
-      <Animated.View
-        style={[
-          styles.notchMask,
-          { width: NOTCH_R * 2, height: NOTCH_R * 2, borderRadius: NOTCH_R },
-          notchStyle,
-        ]}
-        pointerEvents="none"
-      />
-
-      {/* Green elevated circle */}
-      <Animated.View style={[styles.circle, circleStyle]}>
-        <Animated.View style={iconContainerStyle}>
-          <Feather name={tab.icon as any} size={22} color="#FFFFFF" />
+      {/* Outer slot — light green ring, embutido na barra */}
+      <Animated.View style={[styles.slot, slotStyle]}>
+        {/* Inner green circle */}
+        <Animated.View style={[styles.circle, circleStyle]}>
+          <Feather name={tab.icon as any} size={20} color="#fff" />
         </Animated.View>
       </Animated.View>
 
-      {/* Inactive icon (hidden when active via opacity) */}
-      <Animated.View
-        style={[
-          styles.inactiveIcon,
-          useAnimatedStyle(() => ({
-            opacity: withTiming(1 - active.value, { duration: 160 }),
-          })),
-        ]}
-      >
+      {/* Inactive icon — fica por baixo e some quando ativo */}
+      <Animated.View style={[StyleSheet.absoluteFill, styles.inactiveWrap, inactiveStyle]}>
         <Feather name={tab.icon as any} size={22} color={GRAY} />
       </Animated.View>
     </Pressable>
@@ -126,20 +89,16 @@ function TabItem({
 }
 
 export default function BottomNav({ tabs }: Props) {
-  const pathname = usePathname();
-  const insets = useSafeAreaInsets();
+  const pathname  = usePathname();
+  const insets    = useSafeAreaInsets();
 
-  function isActive(href: string) {
-    return href === "/"
-      ? pathname === "/" || pathname === ""
-      : pathname.startsWith(href);
-  }
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" || pathname === "" : pathname.startsWith(href);
 
-  const safeBottom = Math.max(insets.bottom, Platform.OS === "android" ? 6 : 0);
+  const safeBottom = Math.max(insets.bottom, Platform.OS === "android" ? 4 : 0);
 
   return (
     <View style={[styles.wrapper, { paddingBottom: safeBottom }]}>
-      {/* Bar */}
       <View style={styles.bar}>
         {tabs.map((tab) => (
           <TabItem
@@ -157,57 +116,47 @@ export default function BottomNav({ tabs }: Props) {
 const styles = StyleSheet.create({
   wrapper: {
     backgroundColor: "#FFFFFF",
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -6 },
-    shadowOpacity: 0.09,
-    shadowRadius: 20,
-    elevation: 24,
-    overflow: "visible",
+    shadowOffset: { width: 0, height: -3 },
+    shadowOpacity: 0.06,
+    shadowRadius: 12,
+    elevation: 14,
   },
   bar: {
-    height: BAR_H + LIFT, // extra top space for the elevated circle to live in
+    height: 68,
     flexDirection: "row",
-    alignItems: "flex-end",
-    paddingBottom: 10,
-    paddingHorizontal: 4,
-    overflow: "visible",
+    alignItems: "center",
+    paddingHorizontal: 6,
   },
   item: {
     flex: 1,
+    height: 68,
     alignItems: "center",
     justifyContent: "center",
-    height: BAR_H,
-    overflow: "visible",
   },
-  /* The green elevated circle */
+  /* Outer slot: light translucent green ring */
+  slot: {
+    width: SLOT_SIZE,
+    height: SLOT_SIZE,
+    borderRadius: SLOT_SIZE / 2,
+    backgroundColor: GREEN_LIGHT,
+    alignItems: "center",
+    justifyContent: "center",
+    borderWidth: 1.5,
+    borderColor: "rgba(47,174,143,0.2)",
+  },
+  /* Inner solid green circle */
   circle: {
-    position: "absolute",
-    width: CIRCLE,
-    height: CIRCLE,
-    borderRadius: CIRCLE / 2,
+    width: SLOT_SIZE - 14,
+    height: SLOT_SIZE - 14,
+    borderRadius: (SLOT_SIZE - 14) / 2,
     backgroundColor: GREEN,
     alignItems: "center",
     justifyContent: "center",
-    // Inner shadow / depth
-    shadowColor: GREEN,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45,
-    shadowRadius: 12,
-    elevation: 10,
-    // Card-like border for the "encaixe" feel
-    borderWidth: 3,
-    borderColor: "rgba(255,255,255,0.6)",
   },
-  /* Notch mask: #F5F5F5 circle that sits at bar top, "cutting" through bar bg */
-  notchMask: {
-    position: "absolute",
-    backgroundColor: BG,
-  },
-  /* Inactive icon sits at center of item */
-  inactiveIcon: {
-    position: "absolute",
+  inactiveWrap: {
     alignItems: "center",
     justifyContent: "center",
   },
