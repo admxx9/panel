@@ -282,78 +282,75 @@ function PulsingDot({ color, size = 14, icon }: { color: string; size?: number; 
   );
 }
 
-/* Dashed edge: rectangles rotated along the line + arrowhead at destination */
-function DashedEdge({ x1, y1, x2, y2, color, live = false }: {
+/* Bezier dashed edge with arrowhead — no SVG required */
+function BezierEdge({ x1, y1, x2, y2, color, live = false }: {
   x1: number; y1: number; x2: number; y2: number; color: string; live?: boolean;
 }) {
   const dx = x2 - x1;
   const dy = y2 - y1;
-  const length = Math.sqrt(dx * dx + dy * dy);
-  if (length < 4) return null;
+  if (Math.sqrt(dx * dx + dy * dy) < 4) return null;
 
-  const angleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
-  const DASH_LEN = 10;
-  const GAP = 7;
-  const STEP = DASH_LEN + GAP;
-  const THICKNESS = 2;
-  const ARROW_SIZE = 9;
-  const ARROW_OFFSET = ARROW_SIZE * 0.65;
-  const stopAt = length - ARROW_OFFSET - 4;
+  const bend = live ? 0 : Math.min(Math.abs(dx) * 0.55, 130);
+  const cp1x = x1 + bend; const cp1y = y1;
+  const cp2x = x2 - bend; const cp2y = y2;
 
-  const dashes: { cx: number; cy: number }[] = [];
-  let d = DASH_LEN / 2;
-  while (d + DASH_LEN / 2 <= stopAt) {
-    const t = d / length;
-    dashes.push({ cx: x1 + dx * t, cy: y1 + dy * t });
-    d += STEP;
+  const N = 48;
+  const pts = Array.from({ length: N + 1 }, (_, i) => {
+    const t = i / N;
+    const mt = 1 - t;
+    return {
+      x: mt ** 3 * x1 + 3 * mt ** 2 * t * cp1x + 3 * mt * t ** 2 * cp2x + t ** 3 * x2,
+      y: mt ** 3 * y1 + 3 * mt ** 2 * t * cp1y + 3 * mt * t ** 2 * cp2y + t ** 3 * y2,
+    };
+  });
+
+  const THICK = 2;
+  const DASH = 9;
+  const GAP = 6;
+  const STEP = DASH + GAP;
+  const opacity = live ? 0.95 : 0.82;
+  let arc = 0;
+  const segs: React.ReactElement[] = [];
+
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i]; const p1 = pts[i + 1];
+    const sdx = p1.x - p0.x; const sdy = p1.y - p0.y;
+    const segLen = Math.sqrt(sdx * sdx + sdy * sdy);
+    const mid = arc + segLen / 2;
+    arc += segLen;
+    if (mid % STEP > DASH) continue;
+    const cx = (p0.x + p1.x) / 2;
+    const cy = (p0.y + p1.y) / 2;
+    const angle = Math.atan2(sdy, sdx) * (180 / Math.PI);
+    segs.push(
+      <View key={i} style={{
+        position: "absolute",
+        left: cx - segLen / 2,
+        top: cy - THICK / 2,
+        width: segLen,
+        height: THICK,
+        borderRadius: THICK / 2,
+        backgroundColor: color,
+        opacity,
+        transform: [{ rotate: `${angle}deg` }],
+      }} />
+    );
   }
 
-  const axBase = x2 - (dx / length) * ARROW_OFFSET;
-  const ayBase = y2 - (dy / length) * ARROW_OFFSET;
-  const opacity = live ? 0.92 : 0.75;
+  const last2 = pts[pts.length - 2];
+  const last1 = pts[pts.length - 1];
+  const endAngle = Math.atan2(last1.y - last2.y, last1.x - last2.x) * (180 / Math.PI);
+  const ARROW = 9;
+  const cosA = Math.cos(endAngle * Math.PI / 180);
+  const sinA = Math.sin(endAngle * Math.PI / 180);
+  const ax = x2 - cosA * 5;
+  const ay = y2 - sinA * 5;
 
   return (
     <>
-      {dashes.map((pt, i) => (
-        <View
-          key={i}
-          style={{
-            position: "absolute",
-            left: pt.cx - DASH_LEN / 2,
-            top: pt.cy - THICKNESS / 2,
-            width: DASH_LEN,
-            height: THICKNESS,
-            borderRadius: THICKNESS / 2,
-            backgroundColor: color,
-            opacity,
-            transform: [{ rotate: `${angleDeg}deg` }],
-          }}
-        />
-      ))}
-      {/* Arrowhead wing 1 */}
-      <View style={{
-        position: "absolute",
-        left: axBase - ARROW_SIZE / 2,
-        top: ayBase - THICKNESS / 2,
-        width: ARROW_SIZE,
-        height: THICKNESS,
-        borderRadius: THICKNESS / 2,
-        backgroundColor: color,
-        opacity,
-        transform: [{ rotate: `${angleDeg - 38}deg` }],
-      }} />
-      {/* Arrowhead wing 2 */}
-      <View style={{
-        position: "absolute",
-        left: axBase - ARROW_SIZE / 2,
-        top: ayBase - THICKNESS / 2,
-        width: ARROW_SIZE,
-        height: THICKNESS,
-        borderRadius: THICKNESS / 2,
-        backgroundColor: color,
-        opacity,
-        transform: [{ rotate: `${angleDeg + 38}deg` }],
-      }} />
+      {segs}
+      <View style={{ position: "absolute", left: ax - ARROW / 2, top: ay - THICK / 2, width: ARROW, height: THICK, borderRadius: THICK / 2, backgroundColor: color, opacity, transform: [{ rotate: `${endAngle - 38}deg` }] }} />
+      <View style={{ position: "absolute", left: ax - ARROW / 2, top: ay - THICK / 2, width: ARROW, height: THICK, borderRadius: THICK / 2, backgroundColor: color, opacity, transform: [{ rotate: `${endAngle + 38}deg` }] }} />
     </>
   );
 }
@@ -375,6 +372,7 @@ interface NodeCardProps {
   onPortDragStart: (portX: number, portY: number, color: string, nodeId: string, handle?: "true" | "false") => void;
   onPortDragUpdate: (absX: number, absY: number) => void;
   onPortDragEnd: (absX: number, absY: number) => void;
+  onDragMove: (id: string, x: number, y: number) => void;
   onDragEnd: (id: string, x: number, y: number) => void;
 }
 
@@ -382,17 +380,20 @@ function NodeCard({
   node, canvasScale, canvasX, canvasY, canvasOX, canvasOY,
   selected, hoverHighlight, isConnecting,
   onSelect, onEditNode, onDeleteNode, onInputTap,
-  onPortDragStart, onPortDragUpdate, onPortDragEnd, onDragEnd,
+  onPortDragStart, onPortDragUpdate, onPortDragEnd, onDragMove, onDragEnd,
 }: NodeCardProps) {
   const cfg = NODE_CFG[node.type];
   const sharedX = useSharedValue(node.x);
   const sharedY = useSharedValue(node.y);
   const savedX = useSharedValue(0);
   const savedY = useSharedValue(0);
+  const isDragging = useSharedValue(false);
 
   useEffect(() => {
-    sharedX.value = node.x;
-    sharedY.value = node.y;
+    if (!isDragging.value) {
+      sharedX.value = node.x;
+      sharedY.value = node.y;
+    }
   }, [node.x, node.y]);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -408,6 +409,7 @@ function NodeCard({
     .minDistance(8)
     .onStart(() => {
       "worklet";
+      isDragging.value = true;
       savedX.value = sharedX.value;
       savedY.value = sharedY.value;
     })
@@ -415,9 +417,11 @@ function NodeCard({
       "worklet";
       sharedX.value = savedX.value + e.translationX / canvasScale.value;
       sharedY.value = savedY.value + e.translationY / canvasScale.value;
+      runOnJS(onDragMove)(nodeId, sharedX.value, sharedY.value);
     })
     .onEnd(() => {
       "worklet";
+      isDragging.value = false;
       runOnJS(onDragEnd)(nodeId, sharedX.value, sharedY.value);
     });
 
@@ -464,7 +468,7 @@ function NodeCard({
         {/* Node body */}
         <Pressable
           onPress={() => isConnecting ? onInputTap(nodeId) : onSelect(nodeId)}
-          style={[s.node, { borderColor, borderWidth: hoverHighlight ? 2 : 1.5 }]}
+          style={[s.node, { borderColor, borderWidth: hoverHighlight ? 2 : 1.5, backgroundColor: cfg.dim }]}
         >
           {/* Header */}
           <View style={s.nodeHeader}>
@@ -541,6 +545,7 @@ export default function BuilderScreen() {
   const [showTypePicker, setShowTypePicker] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [hasUnsaved, setHasUnsaved] = useState(false);
+  const [draggingPos, setDraggingPos] = useState<{ id: string; x: number; y: number } | null>(null);
 
   const { data: commandData } = useGetBotCommands(botId ?? "", { query: { enabled: !!botId } });
   const saveMutation = useSaveBotCommands();
@@ -635,10 +640,22 @@ export default function BuilderScreen() {
   }, [absToCanvas, nodes, connectingFrom, edges]);
 
   /* --- Node handlers --- */
+  const handleDragMove = useCallback((id: string, x: number, y: number) => {
+    setDraggingPos({ id, x, y });
+  }, []);
+
   const handleDragEnd = useCallback((id: string, x: number, y: number) => {
     setNodes(prev => prev.map(n => n.id === id ? { ...n, x, y } : n));
+    setDraggingPos(null);
     setHasUnsaved(true);
   }, []);
+
+  const getEffectivePos = (node: FlowNode) => {
+    if (draggingPos && draggingPos.id === node.id) {
+      return { x: draggingPos.x, y: draggingPos.y };
+    }
+    return { x: node.x, y: node.y };
+  };
 
   const handleSelectNode = useCallback((id: string) => {
     if (connectingFrom) {
@@ -784,21 +801,23 @@ export default function BuilderScreen() {
                 const src = getNodeById(edge.source);
                 const tgt = getNodeById(edge.target);
                 if (!src || !tgt) return null;
-                let sy = src.y + NODE_H / 2;
-                if (edge.sourceHandle === "true")  sy = src.y + NODE_H / 3;
-                if (edge.sourceHandle === "false") sy = src.y + (NODE_H * 2) / 3;
-                const sx = src.x + NODE_W;
-                const tx = tgt.x;
-                const ty = tgt.y + NODE_H / 2;
+                const srcPos = getEffectivePos(src);
+                const tgtPos = getEffectivePos(tgt);
+                let sy = srcPos.y + NODE_H / 2;
+                if (edge.sourceHandle === "true")  sy = srcPos.y + NODE_H / 3;
+                if (edge.sourceHandle === "false") sy = srcPos.y + (NODE_H * 2) / 3;
+                const sx = srcPos.x + NODE_W;
+                const tx = tgtPos.x;
+                const ty = tgtPos.y + NODE_H / 2;
                 const edgeColor = edge.sourceHandle === "true" ? "#22C55E" : edge.sourceHandle === "false" ? "#EF4444" : "#7C3AED";
                 return (
-                  <DashedEdge key={edge.id} x1={sx} y1={sy} x2={tx} y2={ty} color={edgeColor} />
+                  <BezierEdge key={edge.id} x1={sx} y1={sy} x2={tx} y2={ty} color={edgeColor} />
                 );
               })}
 
               {/* Live dragging line */}
               {liveLine && (
-                <DashedEdge
+                <BezierEdge
                   x1={liveLine.x1} y1={liveLine.y1}
                   x2={liveLine.x2} y2={liveLine.y2}
                   color={liveLine.color}
@@ -827,6 +846,7 @@ export default function BuilderScreen() {
                 onPortDragStart={handlePortDragStart}
                 onPortDragUpdate={handlePortDragUpdate}
                 onPortDragEnd={handlePortDragEnd}
+                onDragMove={handleDragMove}
                 onDragEnd={handleDragEnd}
               />
             ))}
@@ -1083,7 +1103,6 @@ const s = StyleSheet.create({
     width: NODE_W,
     borderRadius: 14,
     borderWidth: 1.5,
-    backgroundColor: "#1A1530",
     paddingBottom: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
