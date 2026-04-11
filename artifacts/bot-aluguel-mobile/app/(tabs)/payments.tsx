@@ -199,15 +199,15 @@ export default function PaymentsScreen() {
       >
         {/* Saldo atual */}
         <View style={s.balanceCard}>
-          <View>
-            <Text style={s.balanceLabel}>Saldo atual</Text>
-            <View style={s.balanceRow}>
-              <Text style={s.balanceValue}>{coins}</Text>
-              <Text style={s.balanceCoin}> moedas</Text>
+          <View style={s.balanceCardInner}>
+            <View>
+              <Text style={s.balanceLabel}>Saldo atual</Text>
+              <View style={s.balanceRow}>
+                <Text style={s.balanceValue}>{coins}</Text>
+                <Text style={s.balanceCoin}> moedas</Text>
+              </View>
             </View>
-          </View>
-          <View style={s.zapWrap}>
-            <Feather name="zap" size={22} color="#6D28D9" />
+            <Feather name="zap" size={32} color="#7C3AED" style={s.zapIcon} />
           </View>
         </View>
 
@@ -425,9 +425,6 @@ const s = StyleSheet.create({
   headerSub: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 4 },
 
   balanceCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
     backgroundColor: "#1A1A24",
     borderRadius: 16,
     borderWidth: 1,
@@ -435,20 +432,16 @@ const s = StyleSheet.create({
     padding: 20,
     marginBottom: 24,
   },
+  balanceCardInner: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
   balanceLabel: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginBottom: 6 },
   balanceRow: { flexDirection: "row", alignItems: "baseline" },
   balanceValue: { fontSize: 32, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
   balanceCoin: { fontSize: 16, color: "#A78BFA", fontFamily: "Inter_600SemiBold" },
-  zapWrap: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: "#6D28D915",
-    borderWidth: 1,
-    borderColor: "#6D28D930",
-    alignItems: "center",
-    justifyContent: "center",
-  },
+  zapIcon: { opacity: 0.9 },
 
   sectionLabel: {
     fontSize: 11,
