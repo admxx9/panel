@@ -34,12 +34,12 @@ type NodeType = "command" | "action" | "condition" | "response" | "buttons";
 interface FlowNode { id: string; type: NodeType; label: string; config: Record<string, unknown>; x: number; y: number; }
 interface FlowEdge { id: string; source: string; target: string; sourceHandle?: "true" | "false"; }
 
-const NODE_CFG: Record<NodeType, { color: string; dim: string; label: string; icon: string }> = {
-  command:   { color: "#6D28D9", dim: "#6D28D930", label: "Comando",  icon: "message-square" },
-  action:    { color: "#7C3AED", dim: "#7C3AED30", label: "Ação",     icon: "zap" },
-  condition: { color: "#F59E0B", dim: "#F59E0B30", label: "Condição", icon: "git-branch" },
-  response:  { color: "#22C55E", dim: "#22C55E30", label: "Resposta", icon: "message-circle" },
-  buttons:   { color: "#06B6D4", dim: "#06B6D430", label: "Botões",   icon: "layout" },
+const NODE_CFG: Record<NodeType, { color: string; dim: string; label: string; icon: string; desc: string }> = {
+  command:   { color: "#6D28D9", dim: "#6D28D930", label: "Comando",  icon: "message-square", desc: "Recebe mensagem" },
+  action:    { color: "#7C3AED", dim: "#7C3AED30", label: "Ação",     icon: "zap",            desc: "Executa algo" },
+  condition: { color: "#F59E0B", dim: "#F59E0B30", label: "Condição", icon: "git-branch",     desc: "Ramificação" },
+  response:  { color: "#22C55E", dim: "#22C55E30", label: "Resposta", icon: "message-circle", desc: "Envia mensagem" },
+  buttons:   { color: "#06B6D4", dim: "#06B6D430", label: "Botões",   icon: "layout",         desc: "Menu de botões" },
 };
 
 const CFG: Record<NodeType, { key: string; label: string; type: "text" | "textarea" | "select" | "toggle"; options?: { value: string; label: string }[]; placeholder?: string; showWhen?: (c: Record<string, unknown>) => boolean }[]> = {
@@ -237,73 +237,123 @@ function getNodeLabel(node: FlowNode): string {
   return node.label;
 }
 
-/* Pulsing animated dot for output ports */
-function PulsingDot({ color, size = 14 }: { color: string; size?: number }) {
+/* Pulsing animated dot for output ports — with optional icon inside */
+function PulsingDot({ color, size = 14, icon }: { color: string; size?: number; icon?: string }) {
   const scale = useSharedValue(1);
   useEffect(() => {
     scale.value = withRepeat(
       withSequence(
-        withTiming(1.45, { duration: 750 }),
-        withTiming(1,    { duration: 750 }),
+        withTiming(1.5, { duration: 800 }),
+        withTiming(1,   { duration: 800 }),
       ),
       -1,
     );
   }, []);
   const ring = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
-    opacity: 2 - scale.value,
+    opacity: 2.2 - scale.value,
   }));
   return (
-    <View style={{ width: size + 10, height: size + 10, alignItems: "center", justifyContent: "center" }}>
+    <View style={{ width: size + 12, height: size + 12, alignItems: "center", justifyContent: "center" }}>
       <Animated.View style={[{
         position: "absolute",
-        width: size,
-        height: size,
-        borderRadius: size / 2,
-        borderWidth: 2,
-        borderColor: color,
+        width: size + 4,
+        height: size + 4,
+        borderRadius: (size + 4) / 2,
+        borderWidth: 1.5,
+        borderColor: color + "70",
       }, ring]} />
       <View style={{
         width: size,
         height: size,
         borderRadius: size / 2,
         backgroundColor: color,
-        borderWidth: 2,
-        borderColor: "#000",
-      }} />
+        alignItems: "center",
+        justifyContent: "center",
+        shadowColor: color,
+        shadowOffset: { width: 0, height: 0 },
+        shadowOpacity: 0.9,
+        shadowRadius: 6,
+        elevation: 6,
+      }}>
+        {icon && <Feather name={icon as any} size={Math.floor(size * 0.52)} color="#fff" />}
+      </View>
     </View>
   );
 }
 
-/* Dashed edge drawn as a series of small circles — no SVG required */
-function DashedEdge({ x1, y1, x2, y2, color, live = false }: { x1: number; y1: number; x2: number; y2: number; color: string; live?: boolean }) {
+/* Dashed edge: rectangles rotated along the line + arrowhead at destination */
+function DashedEdge({ x1, y1, x2, y2, color, live = false }: {
+  x1: number; y1: number; x2: number; y2: number; color: string; live?: boolean;
+}) {
   const dx = x2 - x1;
   const dy = y2 - y1;
   const length = Math.sqrt(dx * dx + dy * dy);
-  if (length < 2) return null;
-  const STEP = 14;
-  const count = Math.max(1, Math.floor(length / STEP));
-  const dots = Array.from({ length: count }, (_, i) => {
-    const t = count === 1 ? 0.5 : i / (count - 1);
-    return { x: x1 + dx * t, y: y1 + dy * t };
-  });
+  if (length < 4) return null;
+
+  const angleDeg = Math.atan2(dy, dx) * (180 / Math.PI);
+  const DASH_LEN = 10;
+  const GAP = 7;
+  const STEP = DASH_LEN + GAP;
+  const THICKNESS = 2;
+  const ARROW_SIZE = 9;
+  const ARROW_OFFSET = ARROW_SIZE * 0.65;
+  const stopAt = length - ARROW_OFFSET - 4;
+
+  const dashes: { cx: number; cy: number }[] = [];
+  let d = DASH_LEN / 2;
+  while (d + DASH_LEN / 2 <= stopAt) {
+    const t = d / length;
+    dashes.push({ cx: x1 + dx * t, cy: y1 + dy * t });
+    d += STEP;
+  }
+
+  const axBase = x2 - (dx / length) * ARROW_OFFSET;
+  const ayBase = y2 - (dy / length) * ARROW_OFFSET;
+  const opacity = live ? 0.92 : 0.75;
+
   return (
     <>
-      {dots.map((d, i) => (
+      {dashes.map((pt, i) => (
         <View
           key={i}
           style={{
             position: "absolute",
-            left: d.x - 3,
-            top: d.y - 3,
-            width: live ? 5 : 4,
-            height: live ? 5 : 4,
-            borderRadius: live ? 2.5 : 2,
+            left: pt.cx - DASH_LEN / 2,
+            top: pt.cy - THICKNESS / 2,
+            width: DASH_LEN,
+            height: THICKNESS,
+            borderRadius: THICKNESS / 2,
             backgroundColor: color,
-            opacity: live ? 0.9 - i * 0.015 : 0.7,
+            opacity,
+            transform: [{ rotate: `${angleDeg}deg` }],
           }}
         />
       ))}
+      {/* Arrowhead wing 1 */}
+      <View style={{
+        position: "absolute",
+        left: axBase - ARROW_SIZE / 2,
+        top: ayBase - THICKNESS / 2,
+        width: ARROW_SIZE,
+        height: THICKNESS,
+        borderRadius: THICKNESS / 2,
+        backgroundColor: color,
+        opacity,
+        transform: [{ rotate: `${angleDeg - 38}deg` }],
+      }} />
+      {/* Arrowhead wing 2 */}
+      <View style={{
+        position: "absolute",
+        left: axBase - ARROW_SIZE / 2,
+        top: ayBase - THICKNESS / 2,
+        width: ARROW_SIZE,
+        height: THICKNESS,
+        borderRadius: THICKNESS / 2,
+        backgroundColor: color,
+        opacity,
+        transform: [{ rotate: `${angleDeg + 38}deg` }],
+      }} />
     </>
   );
 }
@@ -431,20 +481,22 @@ function NodeCard({
 
           {/* Body */}
           <View style={s.nodeBody}>
-            <Feather name={cfg.icon as any} size={22} color={cfg.color + "55"} style={{ marginBottom: 4 }} />
-            <Text style={[s.nodeLabel, { color: "rgba(255,255,255,0.9)" }]} numberOfLines={2}>
+            <Text style={[s.nodeLabel, { color: "rgba(255,255,255,0.92)" }]} numberOfLines={2}>
               {getNodeLabel(node)}
+            </Text>
+            <Text style={[s.nodeSubLabel, { color: "rgba(255,255,255,0.38)" }]}>
+              {cfg.desc}
             </Text>
           </View>
         </Pressable>
 
-        {/* Left input port */}
+        {/* Left input port — tap always calls onInputTap (connects or disconnects) */}
         <Pressable
           style={s.portLeftWrap}
-          onPress={() => isConnecting ? onInputTap(nodeId) : undefined}
+          onPress={() => onInputTap(nodeId)}
           hitSlop={16}
         >
-          <View style={s.inputDot} />
+          <View style={[s.inputDot, isConnecting && { borderColor: "#22C55E", borderWidth: 2 }]} />
         </Pressable>
 
         {/* Right output port(s) */}
@@ -453,20 +505,20 @@ function NodeCard({
             <GestureDetector gesture={truePortGesture}>
               <Pressable style={s.portRightTrue} hitSlop={16}>
                 <Text style={[s.portLabel, { color: "#22C55E" }]}>SIM</Text>
-                <PulsingDot color="#22C55E" size={13} />
+                <PulsingDot color="#22C55E" size={13} icon="check" />
               </Pressable>
             </GestureDetector>
             <GestureDetector gesture={falsePortGesture}>
               <Pressable style={s.portRightFalse} hitSlop={16}>
                 <Text style={[s.portLabel, { color: "#EF4444" }]}>NÃO</Text>
-                <PulsingDot color="#EF4444" size={13} />
+                <PulsingDot color="#EF4444" size={13} icon="x" />
               </Pressable>
             </GestureDetector>
           </>
         ) : (
           <GestureDetector gesture={mainPortGesture}>
             <Pressable style={s.portRightSingle} hitSlop={20}>
-              <PulsingDot color={cfg.color} size={14} />
+              <PulsingDot color={cfg.color} size={14} icon="chevron-right" />
             </Pressable>
           </GestureDetector>
         )}
@@ -606,20 +658,25 @@ export default function BuilderScreen() {
   }, [connectingFrom, edges]);
 
   const handleInputTap = useCallback((targetId: string) => {
-    if (!connectingFrom || connectingFrom.nodeId === targetId) {
+    if (connectingFrom) {
+      if (connectingFrom.nodeId !== targetId) {
+        const already = edges.some(e => e.source === connectingFrom.nodeId && e.target === targetId && e.sourceHandle === connectingFrom.handle);
+        if (!already) {
+          setEdges(prev => [...prev, { id: uid(), source: connectingFrom.nodeId, target: targetId, sourceHandle: connectingFrom.handle }]);
+          setHasUnsaved(true);
+        }
+      }
       setConnectingFrom(null);
       setLiveLine(null);
-      return;
+      setHoverNodeId(null);
+      setSelectedId(null);
+    } else {
+      const incoming = edges.filter(e => e.target === targetId);
+      if (incoming.length > 0) {
+        setEdges(prev => prev.filter(e => e.target !== targetId));
+        setHasUnsaved(true);
+      }
     }
-    const already = edges.some(e => e.source === connectingFrom.nodeId && e.target === targetId && e.sourceHandle === connectingFrom.handle);
-    if (!already) {
-      setEdges(prev => [...prev, { id: uid(), source: connectingFrom.nodeId, target: targetId, sourceHandle: connectingFrom.handle }]);
-      setHasUnsaved(true);
-    }
-    setConnectingFrom(null);
-    setLiveLine(null);
-    setHoverNodeId(null);
-    setSelectedId(null);
   }, [connectingFrom, edges]);
 
   const handleEditNode = useCallback((node: FlowNode) => {
@@ -1026,11 +1083,11 @@ const s = StyleSheet.create({
     width: NODE_W,
     borderRadius: 14,
     borderWidth: 1.5,
-    backgroundColor: "rgba(12,12,22,0.82)",
+    backgroundColor: "#1A1530",
     paddingBottom: 10,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5,
+    shadowOpacity: 0.55,
     shadowRadius: 12,
     elevation: 8,
   },
@@ -1068,9 +1125,14 @@ const s = StyleSheet.create({
     alignItems: "flex-start" as const,
   },
   nodeLabel: {
-    fontSize: 12,
-    fontFamily: "Inter_500Medium",
-    lineHeight: 17,
+    fontSize: 13,
+    fontFamily: "Inter_600SemiBold",
+    lineHeight: 18,
+  },
+  nodeSubLabel: {
+    fontSize: 10,
+    fontFamily: "Inter_400Regular",
+    lineHeight: 14,
     marginTop: 2,
   },
 
