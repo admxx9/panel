@@ -57,7 +57,7 @@ function BotCard({ bot, onDelete }: { bot: Bot; onDelete: (id: string, name: str
           <View style={card.metaRow}>
             <View style={card.statusPill}>
               <View style={[card.statusDot, { backgroundColor: cfg.color }]} />
-              <Text style={[card.statusText, { color: "#A0A0B0" }]}>{cfg.label}</Text>
+              <Text style={[card.statusText, { color: "#8E8E9E" }]}>{cfg.label}</Text>
             </View>
             <Text style={card.detail}>
               · {bot.totalGroups} grupo{bot.totalGroups !== 1 ? "s" : ""}
@@ -72,7 +72,7 @@ function BotCard({ bot, onDelete }: { bot: Bot; onDelete: (id: string, name: str
             router.push(`/bot/${bot.id}` as any);
           }}
         >
-          <Feather name="chevron-right" size={18} color="#A0A0B0" />
+          <Feather name="chevron-right" size={18} color="#8E8E9E" />
         </Pressable>
       </View>
 
@@ -84,7 +84,7 @@ function BotCard({ bot, onDelete }: { bot: Bot; onDelete: (id: string, name: str
             router.push(`/bot/${bot.id}` as any);
           }}
         >
-          <Feather name="settings" size={13} color="#A0A0B0" />
+          <Feather name="settings" size={13} color="#8E8E9E" />
           <Text style={card.btnOutlineText}>Gerenciar</Text>
         </Pressable>
 
@@ -182,7 +182,7 @@ export default function BotsScreen() {
           style={({ pressed }) => [s.addBtn, pressed && { opacity: 0.8 }]}
           onPress={() => setShowCreate(true)}
         >
-          <Feather name="plus" size={22} color="#F0F0F5" />
+          <Feather name="plus" size={22} color="#EBEBF2" />
         </Pressable>
       </View>
 
@@ -292,7 +292,7 @@ const card = StyleSheet.create({
   },
   name: {
     fontSize: 17,
-    color: "#F0F0F5",
+    color: "#EBEBF2",
     fontFamily: "Inter_600SemiBold",
     marginBottom: 4,
   },
@@ -325,7 +325,7 @@ const card = StyleSheet.create({
   },
   detail: {
     fontSize: 13,
-    color: "#A0A0B0",
+    color: "#8E8E9E",
     fontFamily: "Inter_400Regular",
   },
   actionBtn: {
@@ -360,7 +360,7 @@ const card = StyleSheet.create({
   },
   btnOutlineText: {
     fontSize: 12,
-    color: "#A0A0B0",
+    color: "#8E8E9E",
     fontFamily: "Inter_600SemiBold",
   },
   btnPrimary: {
@@ -379,7 +379,7 @@ const card = StyleSheet.create({
 });
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#0F0F14" },
+  root: { flex: 1, backgroundColor: "#0C0C11" },
 
   blobWrap: {
     ...StyleSheet.absoluteFillObject,
@@ -400,7 +400,7 @@ const s = StyleSheet.create({
   },
   headerTitle: {
     fontSize: 28,
-    color: "#F0F0F5",
+    color: "#EBEBF2",
     fontFamily: "Inter_600SemiBold",
     letterSpacing: -0.5,
   },
@@ -430,13 +430,13 @@ const s = StyleSheet.create({
   emptyTitle: { fontSize: 18, color: "#D1D1DB", fontFamily: "Inter_700Bold" },
   emptyDesc: {
     fontSize: 14,
-    color: "#A0A0B0",
+    color: "#8E8E9E",
     fontFamily: "Inter_400Regular",
     textAlign: "center",
     maxWidth: 280,
     lineHeight: 20,
   },
-  emptyText: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  emptyText: { fontSize: 14, color: "#8E8E9E", fontFamily: "Inter_400Regular" },
   emptyBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -471,14 +471,14 @@ const s = StyleSheet.create({
     backgroundColor: "rgba(109,40,217,0.15)",
     borderRadius: 12,
   },
-  modalTitle: { fontSize: 18, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
-  modalLabel: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
+  modalTitle: { fontSize: 18, color: "#EBEBF2", fontFamily: "Inter_700Bold" },
+  modalLabel: { fontSize: 11, color: "#8E8E9E", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
   modalInput: {
     backgroundColor: "rgba(255,255,255,0.05)",
     borderRadius: 14,
     borderWidth: 1,
     borderColor: "rgba(255,255,255,0.08)",
-    color: "#F0F0F5",
+    color: "#EBEBF2",
     fontSize: 15,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -494,7 +494,7 @@ const s = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
   },
-  cancelText: { color: "#A0A0B0", fontSize: 15, fontFamily: "Inter_600SemiBold" },
+  cancelText: { color: "#8E8E9E", fontSize: 15, fontFamily: "Inter_600SemiBold" },
   confirmBtn: {
     flex: 1,
     borderRadius: 14,

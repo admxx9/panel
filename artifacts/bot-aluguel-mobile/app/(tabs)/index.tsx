@@ -62,7 +62,7 @@ export default function DashboardScreen() {
       >
         <View style={[s.header, { paddingTop }]}>
           <View style={s.headerIcon}>
-            <Feather name="terminal" size={16} color="#F0F0F5" />
+            <Feather name="terminal" size={16} color="#EBEBF2" />
             <View style={s.headerOnline} />
           </View>
           <View style={{ flex: 1 }}>
@@ -125,7 +125,7 @@ export default function DashboardScreen() {
               <View style={s.statCard}>
                 <View style={s.statIconRow}>
                   <View style={s.statIconWrap}>
-                    <Feather name="activity" size={14} color="#F0F0F5" />
+                    <Feather name="activity" size={14} color="#EBEBF2" />
                   </View>
                   <Text style={s.statCardLabel}>Bots Ativos</Text>
                 </View>
@@ -137,7 +137,7 @@ export default function DashboardScreen() {
               <View style={s.statCard}>
                 <View style={s.statIconRow}>
                   <View style={s.statIconWrap}>
-                    <Feather name="zap" size={14} color="#F0F0F5" />
+                    <Feather name="zap" size={14} color="#EBEBF2" />
                   </View>
                   <Text style={s.statCardLabel}>Msgs Hoje</Text>
                 </View>
@@ -190,7 +190,7 @@ export default function DashboardScreen() {
                           style={s.botMenuBtn}
                           onPress={() => router.push(`/bot/settings/${bot.id}` as any)}
                         >
-                          <Feather name="more-vertical" size={16} color="#A0A0B0" />
+                          <Feather name="more-vertical" size={16} color="#8E8E9E" />
                         </Pressable>
                       </View>
                       <View style={s.botBottom}>
@@ -202,7 +202,7 @@ export default function DashboardScreen() {
                           style={({ pressed }) => [s.builderBtn, pressed && { opacity: 0.8 }]}
                           onPress={() => router.push(`/builder/${bot.id}` as any)}
                         >
-                          <Feather name="grid" size={14} color="#F0F0F5" />
+                          <Feather name="grid" size={14} color="#EBEBF2" />
                           <Text style={s.builderBtnText}>Builder</Text>
                         </Pressable>
                       </View>
@@ -253,7 +253,7 @@ export default function DashboardScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#0F0F14" },
+  root: { flex: 1, backgroundColor: "#0C0C11" },
 
   header: {
     paddingHorizontal: 20,
@@ -262,7 +262,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     gap: 12,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: "#2A2A3540",
+    borderBottomColor: "#20202B40",
   },
   headerIcon: {
     width: 40,
@@ -270,7 +270,7 @@ const s = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#6D28D930",
-    backgroundColor: "#0F0F14",
+    backgroundColor: "#0C0C11",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -283,9 +283,9 @@ const s = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: "#22C55E",
     borderWidth: 2,
-    borderColor: "#0F0F14",
+    borderColor: "#0C0C11",
   },
-  headerTitle: { fontSize: 16, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
+  headerTitle: { fontSize: 16, color: "#EBEBF2", fontFamily: "Inter_600SemiBold" },
   headerMeta: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
   proBadge: {
     backgroundColor: "#6D28D915",
@@ -296,18 +296,18 @@ const s = StyleSheet.create({
     paddingVertical: 2,
   },
   proBadgeText: { fontSize: 10, color: "#A78BFA", fontFamily: "Inter_600SemiBold", letterSpacing: 0.5 },
-  headerSub: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  headerSub: { fontSize: 11, color: "#8E8E9E", fontFamily: "Inter_400Regular" },
   avatarBtn: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: "#1A1A24",
+    backgroundColor: "#13131D",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#20202B",
     alignItems: "center",
     justifyContent: "center",
   },
-  avatarText: { color: "#A0A0B0", fontSize: 14, fontFamily: "Inter_600SemiBold" },
+  avatarText: { color: "#8E8E9E", fontSize: 14, fontFamily: "Inter_600SemiBold" },
 
   loader: { paddingVertical: 80, alignItems: "center" },
 
@@ -315,9 +315,9 @@ const s = StyleSheet.create({
     marginHorizontal: 20,
     marginTop: 20,
     marginBottom: 24,
-    backgroundColor: "#1A1A24",
+    backgroundColor: "#13131D",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#20202B",
     borderRadius: 20,
     padding: 20,
     gap: 12,
@@ -328,8 +328,8 @@ const s = StyleSheet.create({
     backgroundColor: "#6D28D915",
     borderRadius: 8,
   },
-  createTitle: { fontSize: 17, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
-  createDesc: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular", lineHeight: 19 },
+  createTitle: { fontSize: 17, color: "#EBEBF2", fontFamily: "Inter_600SemiBold" },
+  createDesc: { fontSize: 13, color: "#8E8E9E", fontFamily: "Inter_400Regular", lineHeight: 19 },
   platformRow: { flexDirection: "row", gap: 10, marginTop: 4 },
   platformBtn: {
     flex: 1,
@@ -338,8 +338,8 @@ const s = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#2A2A35",
-    backgroundColor: "#0F0F14",
+    borderColor: "#20202B",
+    backgroundColor: "#0C0C11",
   },
   platformIconWrap: {
     width: 40,
@@ -348,7 +348,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  platformLabel: { fontSize: 11, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
+  platformLabel: { fontSize: 11, color: "#EBEBF2", fontFamily: "Inter_600SemiBold" },
 
   sectionHeader: {
     flexDirection: "row",
@@ -359,20 +359,20 @@ const s = StyleSheet.create({
   },
   sectionLabel: {
     fontSize: 11,
-    color: "#A0A0B0",
+    color: "#8E8E9E",
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 1.5,
   },
   sectionLink: { fontSize: 12, color: "#6D28D9", fontFamily: "Inter_500Medium" },
   totalBadge: {
-    backgroundColor: "#1A1A24",
+    backgroundColor: "#13131D",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#20202B",
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 3,
   },
-  totalBadgeText: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_500Medium" },
+  totalBadgeText: { fontSize: 11, color: "#8E8E9E", fontFamily: "Inter_500Medium" },
 
   statsRow: {
     flexDirection: "row",
@@ -382,9 +382,9 @@ const s = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: "#1A1A24",
+    backgroundColor: "#13131D",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#20202B",
     borderRadius: 16,
     padding: 16,
     gap: 10,
@@ -392,21 +392,21 @@ const s = StyleSheet.create({
   statIconRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   statIconWrap: {
     padding: 4,
-    backgroundColor: "#2A2A35",
+    backgroundColor: "#20202B",
     borderRadius: 6,
   },
-  statCardLabel: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_500Medium" },
+  statCardLabel: { fontSize: 12, color: "#8E8E9E", fontFamily: "Inter_500Medium" },
   statValueRow: { flexDirection: "row", alignItems: "baseline", gap: 6 },
-  statBigNum: { fontSize: 28, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
-  statSmallNum: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_500Medium" },
+  statBigNum: { fontSize: 28, color: "#EBEBF2", fontFamily: "Inter_700Bold" },
+  statSmallNum: { fontSize: 12, color: "#8E8E9E", fontFamily: "Inter_500Medium" },
   statGreen: { fontSize: 12, color: "#22C55E", fontFamily: "Inter_600SemiBold" },
 
   botCard: {
     marginHorizontal: 20,
     marginBottom: 12,
-    backgroundColor: "#1A1A24",
+    backgroundColor: "#13131D",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#20202B",
     borderRadius: 16,
     overflow: "hidden",
   },
@@ -429,7 +429,7 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  botName: { fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
+  botName: { fontSize: 15, color: "#EBEBF2", fontFamily: "Inter_600SemiBold" },
   botBadgeRow: { flexDirection: "row", alignItems: "center", gap: 8, marginTop: 6 },
   platBadge: {
     borderWidth: 1,
@@ -442,15 +442,15 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "#0F0F14",
+    backgroundColor: "#0C0C11",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#20202B",
     borderRadius: 6,
     paddingHorizontal: 6,
     paddingVertical: 2,
   },
   statusDot: { width: 5, height: 5, borderRadius: 3 },
-  statusText: { fontSize: 9, color: "#A0A0B0", fontFamily: "Inter_600SemiBold", letterSpacing: 0.5 },
+  statusText: { fontSize: 9, color: "#8E8E9E", fontFamily: "Inter_600SemiBold", letterSpacing: 0.5 },
   botMenuBtn: { padding: 4 },
   botBottom: {
     flexDirection: "row",
@@ -460,30 +460,30 @@ const s = StyleSheet.create({
     paddingTop: 14,
     marginTop: 12,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: "#2A2A3560",
+    borderTopColor: "#20202B60",
   },
-  botVolumeLabel: { fontSize: 9, color: "#A0A0B0", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
-  botVolumeValue: { fontSize: 14, color: "#F0F0F5", fontFamily: "Inter_700Bold", marginTop: 2 },
-  botVolumeSuffix: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_500Medium" },
+  botVolumeLabel: { fontSize: 9, color: "#8E8E9E", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
+  botVolumeValue: { fontSize: 14, color: "#EBEBF2", fontFamily: "Inter_700Bold", marginTop: 2 },
+  botVolumeSuffix: { fontSize: 11, color: "#8E8E9E", fontFamily: "Inter_500Medium" },
   builderBtn: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
     backgroundColor: "#1E1E28",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#20202B",
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
-  builderBtnText: { fontSize: 12, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
+  builderBtnText: { fontSize: 12, color: "#EBEBF2", fontFamily: "Inter_600SemiBold" },
 
   planCard: {
     marginHorizontal: 20,
     marginTop: 12,
-    backgroundColor: "#0F0F14",
+    backgroundColor: "#0C0C11",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#20202B",
     borderRadius: 16,
     padding: 20,
     gap: 16,
@@ -493,14 +493,14 @@ const s = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: "#1A1A24",
+    backgroundColor: "#13131D",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#20202B",
     alignItems: "center",
     justifyContent: "center",
   },
-  planTitle: { fontSize: 14, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
-  planSub: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_500Medium", marginTop: 2 },
+  planTitle: { fontSize: 14, color: "#EBEBF2", fontFamily: "Inter_700Bold" },
+  planSub: { fontSize: 11, color: "#8E8E9E", fontFamily: "Inter_500Medium", marginTop: 2 },
   planActiveBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -515,16 +515,16 @@ const s = StyleSheet.create({
   planActiveText: { fontSize: 9, color: "#22C55E", fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
   meterSection: { gap: 8 },
   meterHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  meterLabel: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_500Medium" },
-  meterValue: { fontSize: 12, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
-  meterMax: { color: "#A0A0B0", fontFamily: "Inter_500Medium" },
+  meterLabel: { fontSize: 12, color: "#8E8E9E", fontFamily: "Inter_500Medium" },
+  meterValue: { fontSize: 12, color: "#EBEBF2", fontFamily: "Inter_700Bold" },
+  meterMax: { color: "#8E8E9E", fontFamily: "Inter_500Medium" },
   meterTrack: {
     height: 5,
-    backgroundColor: "#1A1A24",
+    backgroundColor: "#13131D",
     borderRadius: 3,
     overflow: "hidden",
     borderWidth: 1,
-    borderColor: "#2A2A3550",
+    borderColor: "#20202B50",
   },
   meterFill: {
     height: "100%",

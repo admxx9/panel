@@ -89,7 +89,7 @@ function PlanCard({ plan, isActive, coins, onActivate, loading }: {
         ))}
         {plan.maxGroups !== 0 && (
           <View style={p.feature}>
-            <Feather name="users" size={12} color="#A0A0B0" />
+            <Feather name="users" size={12} color="#8E8E9E" />
             <Text style={p.featureText}>
               {plan.maxGroups < 0 ? "Grupos ilimitados" : `Até ${plan.maxGroups} grupos`}
             </Text>
@@ -364,7 +364,7 @@ export default function PaymentsScreen() {
                       <Feather
                         name={copied ? "check-circle" : "copy"}
                         size={15}
-                        color={copied ? "#22C55E" : "#F0F0F5"}
+                        color="#22C55E"
                       />
                       <Text style={[s.copyText, copied && s.copyTextDone]}>
                         {copied ? "Copiado com sucesso!" : "Copiar código PIX"}
@@ -386,7 +386,7 @@ export default function PaymentsScreen() {
             <View style={s.loaderBox}><ActivityIndicator color="#6D28D9" /></View>
           ) : historyList.length === 0 ? (
             <View style={s.emptyBlock}>
-              <Feather name="inbox" size={24} color="#A0A0B0" />
+              <Feather name="inbox" size={24} color="#8E8E9E" />
               <Text style={s.emptyText}>Nenhum pagamento ainda</Text>
             </View>
           ) : (
@@ -429,10 +429,10 @@ export default function PaymentsScreen() {
 const p = StyleSheet.create({
   card: {
     width: CARD_W,
-    backgroundColor: "#1A1A24",
+    backgroundColor: "#13131D",
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#20202B",
     padding: 18,
     gap: 14,
   },
@@ -444,21 +444,21 @@ const p = StyleSheet.create({
     alignItems: "center", justifyContent: "center", flexShrink: 0,
   },
   nameLine: { flexDirection: "row", alignItems: "center", gap: 7, marginBottom: 3 },
-  name: { fontSize: 17, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  name: { fontSize: 17, color: "#EBEBF2", fontFamily: "Inter_700Bold" },
   activeBadge: {
     flexDirection: "row", alignItems: "center", gap: 4,
     backgroundColor: "#22C55E15", borderWidth: 1, borderColor: "#22C55E30",
     borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2,
   },
   activeBadgeText: { fontSize: 9, color: "#22C55E", fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
-  desc: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  desc: { fontSize: 12, color: "#8E8E9E", fontFamily: "Inter_400Regular" },
   priceBlock: { alignItems: "flex-end", paddingLeft: 8, flexShrink: 0 },
   priceVal:  { fontSize: 24, color: "#A78BFA", fontFamily: "Inter_700Bold" },
-  priceUnit: { fontSize: 10, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 1 },
-  divider:   { height: StyleSheet.hairlineWidth, backgroundColor: "#2A2A35" },
+  priceUnit: { fontSize: 10, color: "#8E8E9E", fontFamily: "Inter_400Regular", marginTop: 1 },
+  divider:   { height: StyleSheet.hairlineWidth, backgroundColor: "#20202B" },
   features: { gap: 9 },
   feature: { flexDirection: "row", alignItems: "center", gap: 10 },
-  featureText: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular", flex: 1 },
+  featureText: { fontSize: 13, color: "#8E8E9E", fontFamily: "Inter_400Regular", flex: 1 },
   btn: {
     borderRadius: 12, paddingVertical: 13,
     alignItems: "center", justifyContent: "center",
@@ -473,11 +473,11 @@ const p = StyleSheet.create({
 
 /* ─── Screen styles ─── */
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#0F0F14" },
+  root: { flex: 1, backgroundColor: "#0C0C11" },
 
   header: { paddingHorizontal: 20, paddingBottom: 16 },
-  headerTitle: { fontSize: 24, color: "#F0F0F5", fontFamily: "Inter_700Bold", letterSpacing: -0.3 },
-  headerSub:   { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 4 },
+  headerTitle: { fontSize: 24, color: "#EBEBF2", fontFamily: "Inter_700Bold", letterSpacing: -0.3 },
+  headerSub:   { fontSize: 13, color: "#8E8E9E", fontFamily: "Inter_400Regular", marginTop: 4 },
 
   inner: { paddingHorizontal: 20 },
 
@@ -486,26 +486,26 @@ const s = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    backgroundColor: "#1A1A24",
+    backgroundColor: "#13131D",
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#20202B",
     padding: 20,
     marginBottom: 20,
   },
-  balanceLabel: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginBottom: 8, letterSpacing: 0.5 },
+  balanceLabel: { fontSize: 12, color: "#8E8E9E", fontFamily: "Inter_400Regular", marginBottom: 8, letterSpacing: 0.5 },
   balanceRow:   { flexDirection: "row", alignItems: "baseline" },
-  balanceValue: { fontSize: 38, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  balanceValue: { fontSize: 38, color: "#EBEBF2", fontFamily: "Inter_700Bold" },
   balanceCoin:  { fontSize: 16, color: "#A78BFA", fontFamily: "Inter_600SemiBold" },
   balanceIconWrap: {
     width: 44, height: 44, borderRadius: 12,
-    backgroundColor: "#2A2A35", alignItems: "center", justifyContent: "center",
+    backgroundColor: "#20202B", alignItems: "center", justifyContent: "center",
   },
 
   /* Section */
   sectionHeader: { marginBottom: 12 },
   sectionLabel: {
-    fontSize: 11, color: "#A0A0B0",
+    fontSize: 11, color: "#8E8E9E",
     fontFamily: "Inter_600SemiBold", letterSpacing: 1.5,
   },
 
@@ -528,7 +528,7 @@ const s = StyleSheet.create({
 
   /* Input */
   inputLabel: {
-    fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_600SemiBold",
+    fontSize: 11, color: "#8E8E9E", fontFamily: "Inter_600SemiBold",
     letterSpacing: 1.5, marginBottom: 8,
   },
   inputRow: {
@@ -538,11 +538,11 @@ const s = StyleSheet.create({
     paddingHorizontal: 16, marginBottom: 10,
   },
   inputRowActive: { borderColor: "#6D28D960" },
-  currency: { fontSize: 18, color: "#A0A0B0", fontFamily: "Inter_700Bold", marginRight: 4 },
-  input:    { flex: 1, color: "#F0F0F5", fontSize: 22, paddingVertical: 14, fontFamily: "Inter_700Bold" },
+  currency: { fontSize: 18, color: "#8E8E9E", fontFamily: "Inter_700Bold", marginRight: 4 },
+  input:    { flex: 1, color: "#EBEBF2", fontSize: 22, paddingVertical: 14, fontFamily: "Inter_700Bold" },
 
   coinsPreview: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 },
-  coinsPreviewText: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  coinsPreviewText: { fontSize: 13, color: "#8E8E9E", fontFamily: "Inter_400Regular" },
   coinsPreviewHighlight: { color: "#A78BFA", fontFamily: "Inter_700Bold" },
 
   /* PIX button */
@@ -570,26 +570,28 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: "rgba(34,197,94,0.25)",
     alignItems: "center", justifyContent: "center",
   },
-  pixCardTitle: { fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
-  pixCardSub:   { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 2 },
+  pixCardTitle: { fontSize: 15, color: "#EBEBF2", fontFamily: "Inter_600SemiBold" },
+  pixCardSub:   { fontSize: 12, color: "#8E8E9E", fontFamily: "Inter_400Regular", marginTop: 2 },
   codeBox: {
     backgroundColor: "rgba(0,0,0,0.25)", borderRadius: 10,
     borderWidth: 1, borderColor: "rgba(34,197,94,0.12)", padding: 12,
   },
-  codeText: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", lineHeight: 18 },
+  codeText: { fontSize: 12, color: "#8E8E9E", fontFamily: "Inter_400Regular", lineHeight: 18 },
   copyBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
     borderRadius: 12, paddingVertical: 13,
   },
   copyBtnDefault: {
-    backgroundColor: "#6D28D9",
+    backgroundColor: "rgba(34,197,94,0.18)",
+    borderWidth: 1,
+    borderColor: "rgba(34,197,94,0.35)",
   },
   copyBtnDone: {
-    backgroundColor: "rgba(34,197,94,0.15)",
+    backgroundColor: "rgba(34,197,94,0.28)",
     borderWidth: 1,
-    borderColor: "rgba(34,197,94,0.3)",
+    borderColor: "rgba(34,197,94,0.5)",
   },
-  copyText:     { fontSize: 14, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  copyText:     { fontSize: 14, color: "#22C55E", fontFamily: "Inter_700Bold" },
   copyTextDone: { color: "#22C55E" },
   waitText: { textAlign: "center", fontSize: 12, color: "rgba(34,197,94,0.6)", fontFamily: "Inter_400Regular" },
   paidRow: {
@@ -600,18 +602,18 @@ const s = StyleSheet.create({
 
   /* History */
   histCard: {
-    backgroundColor: "#1A1A24", borderRadius: 16,
-    borderWidth: 1, borderColor: "#2A2A35", overflow: "hidden", marginTop: 4,
+    backgroundColor: "#13131D", borderRadius: 16,
+    borderWidth: 1, borderColor: "#20202B", overflow: "hidden", marginTop: 4,
   },
   histRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
-  histRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#2A2A3560" },
+  histRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#20202B60" },
   histIconWrap: {
     width: 40, height: 40, borderRadius: 12,
     backgroundColor: "#6D28D915", borderWidth: 1,
     borderColor: "#6D28D925", alignItems: "center", justifyContent: "center",
   },
   histIconText: { fontSize: 11, color: "#A78BFA", fontFamily: "Inter_700Bold" },
-  histAmount:  { fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
+  histAmount:  { fontSize: 15, color: "#EBEBF2", fontFamily: "Inter_600SemiBold" },
   histCoins:   { fontSize: 12, color: "#A78BFA", fontFamily: "Inter_400Regular", marginTop: 1 },
   histDateRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 2 },
   histDate:    { fontSize: 11, color: "#555566", fontFamily: "Inter_400Regular" },
@@ -621,8 +623,8 @@ const s = StyleSheet.create({
   loaderBox: { paddingVertical: 32, alignItems: "center" },
   emptyBlock: {
     alignItems: "center", gap: 8, paddingVertical: 24,
-    backgroundColor: "#1A1A24", borderRadius: 16,
-    borderWidth: 1, borderColor: "#2A2A35", marginBottom: 16,
+    backgroundColor: "#13131D", borderRadius: 16,
+    borderWidth: 1, borderColor: "#20202B", marginBottom: 16,
   },
-  emptyText: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  emptyText: { fontSize: 14, color: "#8E8E9E", fontFamily: "Inter_400Regular" },
 });

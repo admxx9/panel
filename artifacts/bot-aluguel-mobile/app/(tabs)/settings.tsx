@@ -42,7 +42,7 @@ function RowItem({ icon, label, value, badge, onPress, last }: RowProps) {
       ) : value ? (
         <Text style={s.rowValue}>{value}</Text>
       ) : null}
-      {onPress && <Feather name="chevron-right" size={15} color="#A0A0B0" style={{ marginLeft: 2 }} />}
+      {onPress && <Feather name="chevron-right" size={15} color="#8E8E9E" style={{ marginLeft: 2 }} />}
     </Pressable>
   );
 }
@@ -95,12 +95,12 @@ export default function SettingsScreen() {
           <View style={{ flex: 1 }}>
             <Text style={s.userName}>{user?.name ?? "Usuário"}</Text>
             <View style={s.phoneRow}>
-              <Feather name="phone" size={11} color="#A0A0B0" />
+              <Feather name="phone" size={11} color="#8E8E9E" />
               <Text style={s.userPhone}>{user?.phone ?? "—"}</Text>
             </View>
           </View>
           <Pressable style={s.gearBtn} onPress={() => {}}>
-            <Feather name="settings" size={17} color="#A0A0B0" />
+            <Feather name="settings" size={17} color="#8E8E9E" />
           </Pressable>
         </View>
 
@@ -109,7 +109,7 @@ export default function SettingsScreen() {
           <View style={[s.statCard, { marginRight: 10 }]}>
             <View style={s.statIconRow}>
               <View style={s.statIconWrap}>
-                <Feather name="zap" size={13} color="#F0F0F5" />
+                <Feather name="zap" size={13} color="#EBEBF2" />
               </View>
               <Text style={s.statLabel}>SALDO</Text>
             </View>
@@ -119,7 +119,7 @@ export default function SettingsScreen() {
           <View style={s.statCard}>
             <View style={s.statIconRow}>
               <View style={s.statIconWrap}>
-                <Feather name="credit-card" size={13} color="#F0F0F5" />
+                <Feather name="credit-card" size={13} color="#EBEBF2" />
               </View>
               <Text style={s.statLabel}>PLANO</Text>
             </View>
@@ -171,7 +171,7 @@ export default function SettingsScreen() {
           style={({ pressed }) => [s.logoutBtn, { opacity: pressed ? 0.75 : 1 }]}
           onPress={handleLogout}
         >
-          <Feather name="log-out" size={16} color="#A0A0B0" />
+          <Feather name="log-out" size={16} color="#8E8E9E" />
           <Text style={s.logoutText}>Sair da conta</Text>
         </Pressable>
 
@@ -182,20 +182,20 @@ export default function SettingsScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#0F0F14" },
+  root: { flex: 1, backgroundColor: "#0C0C11" },
 
   topBar: { paddingHorizontal: 20, paddingBottom: 14 },
-  title:  { fontSize: 24, color: "#F0F0F5", fontFamily: "Inter_700Bold", letterSpacing: -0.3 },
+  title:  { fontSize: 24, color: "#EBEBF2", fontFamily: "Inter_700Bold", letterSpacing: -0.3 },
 
   /* User Card */
   userCard: {
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    backgroundColor: "#1A1A24",
+    backgroundColor: "#13131D",
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#20202B",
     padding: 16,
     marginBottom: 12,
   },
@@ -211,9 +211,9 @@ const s = StyleSheet.create({
     flexShrink: 0,
   },
   avatarText:  { fontSize: 20, color: "#A78BFA", fontFamily: "Inter_700Bold" },
-  userName:    { fontSize: 16, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  userName:    { fontSize: 16, color: "#EBEBF2", fontFamily: "Inter_700Bold" },
   phoneRow:    { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4 },
-  userPhone:   { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  userPhone:   { fontSize: 12, color: "#8E8E9E", fontFamily: "Inter_400Regular" },
   gearBtn: {
     width: 38,
     height: 38,
@@ -229,9 +229,9 @@ const s = StyleSheet.create({
   statsRow: { flexDirection: "row", marginBottom: 24 },
   statCard: {
     flex: 1,
-    backgroundColor: "#1A1A24",
+    backgroundColor: "#13131D",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#20202B",
     borderRadius: 16,
     padding: 16,
     gap: 6,
@@ -239,33 +239,33 @@ const s = StyleSheet.create({
   statIconRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 2 },
   statIconWrap: {
     padding: 5,
-    backgroundColor: "#2A2A35",
+    backgroundColor: "#20202B",
     borderRadius: 7,
   },
   statLabel: {
     fontSize: 10,
-    color: "#A0A0B0",
+    color: "#8E8E9E",
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 1,
   },
-  statValue: { fontSize: 24, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
-  statSub:   { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  statValue: { fontSize: 24, color: "#EBEBF2", fontFamily: "Inter_700Bold" },
+  statSub:   { fontSize: 11, color: "#8E8E9E", fontFamily: "Inter_400Regular" },
 
   /* Section */
   sectionHeader: { marginBottom: 10, paddingLeft: 2 },
   sectionLabel: {
     fontSize: 11,
-    color: "#A0A0B0",
+    color: "#8E8E9E",
     fontFamily: "Inter_600SemiBold",
     letterSpacing: 1.5,
   },
 
   /* Card + Rows */
   card: {
-    backgroundColor: "#1A1A24",
+    backgroundColor: "#13131D",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#20202B",
     overflow: "hidden",
     marginBottom: 24,
   },
@@ -276,7 +276,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 15,
   },
-  rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#2A2A3560" },
+  rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#20202B60" },
   rowIconWrap: {
     width: 34, height: 34,
     borderRadius: 10,
@@ -288,7 +288,7 @@ const s = StyleSheet.create({
     flexShrink: 0,
   },
   rowLabel: { flex: 1, fontSize: 14, color: "#D1D1DB", fontFamily: "Inter_500Medium" },
-  rowValue: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  rowValue: { fontSize: 12, color: "#8E8E9E", fontFamily: "Inter_400Regular" },
 
   badgeWrap: {
     backgroundColor: "#6D28D915",
@@ -313,12 +313,12 @@ const s = StyleSheet.create({
     paddingVertical: 15,
     marginBottom: 24,
   },
-  logoutText: { fontSize: 15, color: "#A0A0B0", fontFamily: "Inter_600SemiBold" },
+  logoutText: { fontSize: 15, color: "#8E8E9E", fontFamily: "Inter_600SemiBold" },
 
   version: {
     textAlign: "center",
     fontSize: 10,
-    color: "#2A2A35",
+    color: "#20202B",
     fontFamily: "Inter_400Regular",
     letterSpacing: 2,
     marginBottom: 8,
