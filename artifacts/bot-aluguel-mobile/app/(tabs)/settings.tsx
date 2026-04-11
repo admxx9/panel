@@ -1,7 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import { LinearGradient } from "expo-linear-gradient";
 import React from "react";
 import {
   Alert,
@@ -18,7 +17,6 @@ import { useGetDashboardStats, useListBots } from "@workspace/api-client-react";
 
 type RowProps = {
   icon: string;
-  iconColor: string;
   label: string;
   value?: string;
   badge?: string;
@@ -26,15 +24,15 @@ type RowProps = {
   last?: boolean;
 };
 
-function RowItem({ icon, iconColor, label, value, badge, onPress, last }: RowProps) {
+function RowItem({ icon, label, value, badge, onPress, last }: RowProps) {
   return (
     <Pressable
       style={({ pressed }) => [s.row, !last && s.rowBorder, { opacity: pressed && onPress ? 0.72 : 1 }]}
       onPress={onPress}
       disabled={!onPress}
     >
-      <View style={[s.rowIconWrap, { backgroundColor: iconColor + "18", borderColor: iconColor + "28" }]}>
-        <Feather name={icon as any} size={15} color={iconColor} />
+      <View style={s.rowIconWrap}>
+        <Feather name={icon as any} size={15} color="#A78BFA" />
       </View>
       <Text style={s.rowLabel}>{label}</Text>
       {badge ? (
@@ -44,7 +42,7 @@ function RowItem({ icon, iconColor, label, value, badge, onPress, last }: RowPro
       ) : value ? (
         <Text style={s.rowValue}>{value}</Text>
       ) : null}
-      {onPress && <Feather name="chevron-right" size={15} color="#303040" style={{ marginLeft: 2 }} />}
+      {onPress && <Feather name="chevron-right" size={15} color="#A0A0B0" style={{ marginLeft: 2 }} />}
     </Pressable>
   );
 }
@@ -91,48 +89,41 @@ export default function SettingsScreen() {
       >
         {/* ── User Card ── */}
         <View style={s.userCard}>
-          <LinearGradient
-            colors={["#7C3AED", "#9333EA"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={s.avatar}
-          >
+          <View style={s.avatar}>
             <Text style={s.avatarText}>{initial}</Text>
-          </LinearGradient>
+          </View>
           <View style={{ flex: 1 }}>
             <Text style={s.userName}>{user?.name ?? "Usuário"}</Text>
             <View style={s.phoneRow}>
-              <Feather name="phone" size={11} color="#505060" />
+              <Feather name="phone" size={11} color="#A0A0B0" />
               <Text style={s.userPhone}>{user?.phone ?? "—"}</Text>
             </View>
           </View>
           <Pressable style={s.gearBtn} onPress={() => {}}>
-            <Feather name="settings" size={17} color="#505060" />
+            <Feather name="settings" size={17} color="#A0A0B0" />
           </Pressable>
         </View>
 
         {/* ── Stat Cards ── */}
         <View style={s.statsRow}>
-          <View style={[s.statCard, { marginRight: 8 }]}>
-            <LinearGradient
-              colors={["#7C3AED", "#4F46E5"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={s.statBar}
-            />
-            <Text style={s.statLabel}>SALDO</Text>
+          <View style={[s.statCard, { marginRight: 10 }]}>
+            <View style={s.statIconRow}>
+              <View style={s.statIconWrap}>
+                <Feather name="zap" size={13} color="#F0F0F5" />
+              </View>
+              <Text style={s.statLabel}>SALDO</Text>
+            </View>
             <Text style={s.statValue}>{coins}</Text>
             <Text style={s.statSub}>Moedas disponíveis</Text>
           </View>
           <View style={s.statCard}>
-            <LinearGradient
-              colors={["#A78BFA", "#C026D3"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 0, y: 1 }}
-              style={s.statBar}
-            />
-            <Text style={s.statLabel}>PLANO</Text>
-            <Text style={[s.statValue, { color: "#8B5CF6", fontSize: planName.length > 8 ? 17 : 22 }]}>
+            <View style={s.statIconRow}>
+              <View style={s.statIconWrap}>
+                <Feather name="credit-card" size={13} color="#F0F0F5" />
+              </View>
+              <Text style={s.statLabel}>PLANO</Text>
+            </View>
+            <Text style={[s.statValue, { fontSize: planName.length > 8 ? 17 : 22, color: "#A78BFA" }]}>
               {planName}
             </Text>
             <Text style={s.statSub}>
@@ -143,26 +134,22 @@ export default function SettingsScreen() {
 
         {/* ── SUA CONTA ── */}
         <View style={s.sectionHeader}>
-          <View style={s.sectionBar} />
           <Text style={s.sectionLabel}>SUA CONTA</Text>
         </View>
         <View style={s.card}>
           <RowItem
             icon="message-square"
-            iconColor="#7C3AED"
             label="Meus Bots"
             badge={activeBots > 0 ? `${activeBots} Ativo${activeBots !== 1 ? "s" : ""}` : undefined}
             onPress={() => router.push("/(tabs)/bots")}
           />
           <RowItem
             icon="zap"
-            iconColor="#F59E0B"
             label="Comprar Moedas"
             onPress={() => router.push("/(tabs)/payments")}
           />
           <RowItem
             icon="credit-card"
-            iconColor="#22C55E"
             label="Ver Planos"
             onPress={() => router.push("/(tabs)/payments")}
             last
@@ -171,13 +158,12 @@ export default function SettingsScreen() {
 
         {/* ── PREFERENCIAS ── */}
         <View style={s.sectionHeader}>
-          <View style={s.sectionBar} />
           <Text style={s.sectionLabel}>PREFERENCIAS</Text>
         </View>
         <View style={s.card}>
-          <RowItem icon="bell"        iconColor="#3B82F6" label="Notificações"        value="Ativadas" />
-          <RowItem icon="shield"      iconColor="#EF4444" label="Privacidade"         onPress={() => {}} />
-          <RowItem icon="help-circle" iconColor="#6366F1" label="Central de Ajuda"    onPress={() => {}} last />
+          <RowItem icon="bell"        label="Notificações"     value="Ativadas" />
+          <RowItem icon="shield"      label="Privacidade"      onPress={() => {}} />
+          <RowItem icon="help-circle" label="Central de Ajuda" onPress={() => {}} last />
         </View>
 
         {/* ── Logout ── */}
@@ -185,7 +171,7 @@ export default function SettingsScreen() {
           style={({ pressed }) => [s.logoutBtn, { opacity: pressed ? 0.75 : 1 }]}
           onPress={handleLogout}
         >
-          <Feather name="log-out" size={16} color="#7C3AED" />
+          <Feather name="log-out" size={16} color="#A0A0B0" />
           <Text style={s.logoutText}>Sair da conta</Text>
         </Pressable>
 
@@ -196,7 +182,7 @@ export default function SettingsScreen() {
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: "#111118" },
+  root: { flex: 1, backgroundColor: "#0F0F14" },
 
   topBar: { paddingHorizontal: 20, paddingBottom: 14 },
   title:  { fontSize: 24, color: "#F0F0F5", fontFamily: "Inter_700Bold", letterSpacing: -0.3 },
@@ -206,129 +192,113 @@ const s = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 14,
-    backgroundColor: "#18181F",
-    borderRadius: 24,
-    padding: 18,
+    backgroundColor: "#1A1A24",
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+    padding: 16,
     marginBottom: 12,
   },
   avatar: {
-    width: 52,
-    height: 52,
-    borderRadius: 16,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
-  avatarText:  { fontSize: 22, color: "#FFF", fontFamily: "Inter_700Bold" },
-  userName:    { fontSize: 17, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  avatarText:  { fontSize: 20, color: "#A78BFA", fontFamily: "Inter_700Bold" },
+  userName:    { fontSize: 16, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
   phoneRow:    { flexDirection: "row", alignItems: "center", gap: 5, marginTop: 4 },
-  userPhone:   { fontSize: 12, color: "#505060", fontFamily: "Inter_400Regular" },
+  userPhone:   { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
   gearBtn: {
-    width: 40, height: 40,
-    borderRadius: 14,
-    backgroundColor: "#111118",
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.05)",
     borderWidth: 1,
-    borderColor: "#202028",
+    borderColor: "rgba(255,255,255,0.08)",
     alignItems: "center",
     justifyContent: "center",
   },
 
   /* Stat Cards */
-  statsRow: { flexDirection: "row", marginBottom: 20 },
+  statsRow: { flexDirection: "row", marginBottom: 24 },
   statCard: {
     flex: 1,
-    backgroundColor: "#18181F",
-    borderRadius: 24,
-    padding: 18,
-    overflow: "hidden",
+    backgroundColor: "#1A1A24",
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+    borderRadius: 16,
+    padding: 16,
+    gap: 6,
   },
-  statBar: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-    borderTopLeftRadius: 24,
-    borderBottomLeftRadius: 24,
+  statIconRow: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 2 },
+  statIconWrap: {
+    padding: 5,
+    backgroundColor: "#2A2A35",
+    borderRadius: 7,
   },
   statLabel: {
     fontSize: 10,
-    color: "#505060",
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 2,
-    marginBottom: 8,
-    paddingLeft: 8,
+    color: "#A0A0B0",
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 1,
   },
-  statValue: {
-    fontSize: 28,
-    color: "#F0F0F5",
-    fontFamily: "Inter_700Bold",
-    paddingLeft: 8,
-    lineHeight: 32,
-  },
-  statSub: {
-    fontSize: 11,
-    color: "#505060",
-    fontFamily: "Inter_400Regular",
-    marginTop: 6,
-    paddingLeft: 8,
-  },
+  statValue: { fontSize: 24, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  statSub:   { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
 
-  /* Section header */
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 10,
-  },
-  sectionBar: {
-    width: 4,
-    height: 16,
-    borderRadius: 2,
-    backgroundColor: "#7C3AED",
-  },
+  /* Section */
+  sectionHeader: { marginBottom: 10, paddingLeft: 2 },
   sectionLabel: {
     fontSize: 11,
-    color: "#505060",
-    fontFamily: "Inter_700Bold",
-    letterSpacing: 2,
+    color: "#A0A0B0",
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 1.5,
   },
 
   /* Card + Rows */
   card: {
-    backgroundColor: "#18181F",
-    borderRadius: 24,
+    backgroundColor: "#1A1A24",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
     overflow: "hidden",
-    marginBottom: 20,
+    marginBottom: 24,
   },
   row: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 14,
-    paddingHorizontal: 18,
-    paddingVertical: 16,
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 15,
   },
-  rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#202028" },
+  rowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#2A2A3560" },
   rowIconWrap: {
-    width: 36, height: 36,
-    borderRadius: 12,
+    width: 34, height: 34,
+    borderRadius: 10,
+    backgroundColor: "#6D28D912",
     borderWidth: 1,
+    borderColor: "#6D28D920",
     alignItems: "center",
     justifyContent: "center",
     flexShrink: 0,
   },
-  rowLabel: { flex: 1, fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
-  rowValue: { fontSize: 12, color: "#505060", fontFamily: "Inter_400Regular" },
+  rowLabel: { flex: 1, fontSize: 14, color: "#D1D1DB", fontFamily: "Inter_500Medium" },
+  rowValue: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
 
   badgeWrap: {
-    backgroundColor: "#7C3AED18",
+    backgroundColor: "#6D28D915",
     borderWidth: 1,
-    borderColor: "#7C3AED28",
-    borderRadius: 20,
-    paddingHorizontal: 10,
+    borderColor: "#6D28D930",
+    borderRadius: 8,
+    paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  badgeText: { fontSize: 11, color: "#A78BFA", fontFamily: "Inter_700Bold" },
+  badgeText: { fontSize: 11, color: "#A78BFA", fontFamily: "Inter_600SemiBold" },
 
   /* Logout */
   logoutBtn: {
@@ -336,18 +306,19 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 10,
-    borderRadius: 24,
+    borderRadius: 14,
+    backgroundColor: "rgba(255,255,255,0.05)",
     borderWidth: 1,
-    borderColor: "#7C3AED30",
-    paddingVertical: 16,
-    marginBottom: 20,
+    borderColor: "rgba(255,255,255,0.08)",
+    paddingVertical: 15,
+    marginBottom: 24,
   },
-  logoutText: { fontSize: 15, color: "#7C3AED", fontFamily: "Inter_700Bold" },
+  logoutText: { fontSize: 15, color: "#A0A0B0", fontFamily: "Inter_600SemiBold" },
 
   version: {
     textAlign: "center",
     fontSize: 10,
-    color: "#303040",
+    color: "#2A2A35",
     fontFamily: "Inter_400Regular",
     letterSpacing: 2,
     marginBottom: 8,
