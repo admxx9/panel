@@ -497,14 +497,21 @@ const s = StyleSheet.create({
   },
   pixHeaderText: { fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
   pixSub: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 2 },
-  codeBox: { backgroundColor: "#1E1E28", borderRadius: 12, borderWidth: 1, borderColor: "#2A2A35", padding: 14 },
-  codeText: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", lineHeight: 18 },
-  copyBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
-    borderRadius: 12, backgroundColor: "#6D28D915", borderWidth: 1,
-    borderColor: "#6D28D930", paddingVertical: 12,
+  codeBox: {
+    backgroundColor: "#22C55E0D",
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#22C55E25",
+    padding: 14,
+    marginBottom: 4,
   },
-  copyBtnDone: { backgroundColor: "#22C55E15", borderColor: "#22C55E30" },
+  codeText: { fontSize: 12, color: "#D1D5DB", fontFamily: "Inter_400Regular", lineHeight: 19 },
+  copyBtn: {
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    borderRadius: 12, backgroundColor: "transparent", borderWidth: 1,
+    borderColor: "#6D28D950", paddingVertical: 13,
+  },
+  copyBtnDone: { backgroundColor: "#22C55E15", borderColor: "#22C55E40" },
   copyText: { fontSize: 14, color: "#A78BFA", fontFamily: "Inter_600SemiBold" },
   waitText: { textAlign: "center", fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
   paidBadge: {
