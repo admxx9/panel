@@ -1,12 +1,15 @@
 import {
+  useActivatePlan,
   useCheckPixStatus,
   useCreatePixCharge,
+  useGetDashboardStats,
   useGetPaymentHistory,
+  useListPlans,
 } from "@workspace/api-client-react";
 import { Clipboard } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -21,7 +24,15 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-const PRESETS = [5, 10, 25, 50, 100];
+type Plan = {
+  id: string;
+  name: string;
+  description: string;
+  coins: number;
+  days: number;
+  maxGroups: number;
+  features: string[];
+};
 
 const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> = {
   pending: { label: "Pendente",  color: "#F59E0B", bg: "#F59E0B15" },
@@ -30,22 +41,93 @@ const STATUS_CFG: Record<string, { label: string; color: string; bg: string }> =
   error:   { label: "Erro",      color: "#EF4444", bg: "#EF444415" },
 };
 
+function PlanCard({ plan, isActive, coins, onActivate, loading }: {
+  plan: Plan; isActive: boolean; coins: number; onActivate: () => void; loading: boolean;
+}) {
+  const canAfford = coins >= plan.coins;
+  const missing = plan.coins - coins;
+
+  return (
+    <View style={[p.card, isActive && p.cardActive]}>
+      <View style={p.cardTop}>
+        <View style={p.planIconWrap}>
+          <Feather name="star" size={18} color="#A78BFA" />
+        </View>
+        <View style={p.cardMeta}>
+          <View style={p.nameLine}>
+            <Text style={p.name}>{plan.name}</Text>
+            {isActive && (
+              <View style={p.activeBadge}>
+                <Text style={p.activeBadgeText}>ATIVO</Text>
+              </View>
+            )}
+          </View>
+          <Text style={p.desc}>{plan.description}</Text>
+        </View>
+        <View style={p.priceBlock}>
+          <Text style={p.priceVal}>{plan.coins}</Text>
+          <Text style={p.priceUnit}>MOEDAS / {plan.days}d</Text>
+        </View>
+      </View>
+
+      <View style={p.features}>
+        {plan.features.slice(0, 3).map((f, i) => (
+          <View key={i} style={p.feature}>
+            <Feather name="check" size={12} color="#6D28D9" />
+            <Text style={p.featureText}>{f}</Text>
+          </View>
+        ))}
+        {plan.maxGroups > 0 && (
+          <View style={p.feature}>
+            <Feather name="users" size={12} color="#A0A0B0" />
+            <Text style={p.featureText}>Até {plan.maxGroups} grupos</Text>
+          </View>
+        )}
+      </View>
+
+      <Pressable
+        style={({ pressed }) => [
+          p.btn,
+          isActive ? p.btnActive : canAfford ? p.btnPrimary : p.btnDisabled,
+          { opacity: pressed || loading ? 0.8 : 1 },
+        ]}
+        onPress={onActivate}
+        disabled={isActive || loading || !canAfford}
+      >
+        {loading ? (
+          <ActivityIndicator color={isActive ? "#A78BFA" : "#FFF"} size="small" />
+        ) : (
+          <Text style={[p.btnText, isActive && p.btnActiveText, !canAfford && !isActive && p.btnDisabledText]}>
+            {isActive ? "Plano ativo" : canAfford ? "Ativar plano" : `Faltam ${missing} moedas`}
+          </Text>
+        )}
+      </Pressable>
+    </View>
+  );
+}
+
 export default function PaymentsScreen() {
   const insets = useSafeAreaInsets();
   const [amount, setAmount] = useState("");
   const [pendingTxid, setPendingTxid] = useState<string | null>(null);
   const [pixData, setPixData] = useState<{ copyPaste?: string | null; coins: number; amount: number } | null>(null);
   const [copied, setCopied] = useState(false);
+  const [activatingId, setActivatingId] = useState<string | null>(null);
 
   const createPix = useCreatePixCharge();
-  const { data: history, isLoading: historyLoading, refetch } = useGetPaymentHistory();
+  const { data: history, isLoading: historyLoading, refetch: refetchHistory } = useGetPaymentHistory();
+  const { data: plans, isLoading: plansLoading } = useListPlans();
+  const { data: stats, refetch: refetchStats } = useGetDashboardStats();
+  const activatePlan = useActivatePlan();
+
   const { data: pixStatus } = useCheckPixStatus(pendingTxid ?? "", {
     query: { enabled: !!pendingTxid, refetchInterval: 10000 },
   });
 
   useEffect(() => {
     if (pixStatus?.status === "paid" && pendingTxid) {
-      refetch();
+      refetchHistory();
+      refetchStats();
     }
   }, [pixStatus]);
 
@@ -68,80 +150,128 @@ export default function PaymentsScreen() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const handleActivate = (plan: Plan) => {
+    Alert.alert("Ativar plano", `Ativar "${plan.name}" por ${plan.coins} moedas?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Confirmar",
+        onPress: async () => {
+          setActivatingId(plan.id);
+          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          try {
+            await activatePlan.mutateAsync({ planId: plan.id });
+            await refetchStats();
+          } catch {
+            Alert.alert("Erro", "Não foi possível ativar o plano.");
+          } finally {
+            setActivatingId(null);
+          }
+        },
+      },
+    ]);
+  };
+
   const paddingBottom = Platform.OS === "web" ? 34 + 110 : insets.bottom + 110;
   const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
   const historyList = (history as any[] | undefined) ?? [];
+  const planList = (plans as Plan[] | undefined) ?? [];
+  const coins = stats?.coins ?? 0;
+  const activePlan = stats?.activePlan;
 
   return (
     <View style={s.root}>
       <View style={[s.header, { paddingTop }]}>
-        <Text style={s.headerTitle}>Comprar Moedas</Text>
+        <Text style={s.headerTitle}>Moedas & Planos</Text>
         <Text style={s.headerSub}>R$ 1,00 = 100 moedas</Text>
       </View>
 
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={historyLoading} onRefresh={refetch} tintColor="#6D28D9" />}
+        refreshControl={
+          <RefreshControl
+            refreshing={historyLoading}
+            onRefresh={() => { refetchHistory(); refetchStats(); }}
+            tintColor="#6D28D9"
+          />
+        }
       >
-        <View style={s.card}>
-          <View style={s.cardHeader}>
-            <View style={s.cardIconWrap}>
-              <Feather name="zap" size={16} color="#A78BFA" />
+        {/* Saldo atual */}
+        <View style={s.balanceCard}>
+          <View>
+            <Text style={s.balanceLabel}>Saldo atual</Text>
+            <View style={s.balanceRow}>
+              <Text style={s.balanceValue}>{coins}</Text>
+              <Text style={s.balanceCoin}> moedas</Text>
             </View>
-            <Text style={s.cardTitle}>Gerar PIX</Text>
           </View>
-
-          <View style={s.presetsRow}>
-            {PRESETS.map((p) => (
-              <Pressable
-                key={p}
-                style={[s.preset, amount === String(p) && s.presetActive]}
-                onPress={() => setAmount(String(p))}
-              >
-                <Text style={[s.presetText, amount === String(p) && s.presetTextActive]}>R${p}</Text>
-              </Pressable>
-            ))}
+          <View style={s.zapWrap}>
+            <Feather name="zap" size={22} color="#6D28D9" />
           </View>
-
-          <Text style={s.label}>VALOR PERSONALIZADO</Text>
-          <View style={s.inputRow}>
-            <Text style={s.currency}>R$</Text>
-            <TextInput
-              style={s.input}
-              placeholder="0,00"
-              placeholderTextColor="#6B7280"
-              keyboardType="decimal-pad"
-              value={amount}
-              onChangeText={(v) => setAmount(v.replace(",", "."))}
-            />
-          </View>
-
-          {amount && parseFloat(amount) > 0 && (
-            <View style={s.preview}>
-              <Feather name="dollar-sign" size={14} color="#6D28D9" />
-              <Text style={s.previewText}>
-                Você receberá <Text style={{ color: "#6D28D9", fontWeight: "700" }}>{Math.round(parseFloat(amount) * 100)} moedas</Text>
-              </Text>
-            </View>
-          )}
-
-          <Pressable
-            style={({ pressed }) => [s.btn, { opacity: pressed || createPix.isPending || !amount ? 0.7 : 1 }]}
-            onPress={handleCreatePix}
-            disabled={createPix.isPending || !amount}
-          >
-            {createPix.isPending ? (
-              <ActivityIndicator color="#FFF" size="small" />
-            ) : (
-              <>
-                <Feather name="zap" size={14} color="#FFF" />
-                <Text style={s.btnText}>Gerar PIX</Text>
-              </>
-            )}
-          </Pressable>
         </View>
 
+        {/* Planos */}
+        <Text style={s.sectionLabel}>PLANOS</Text>
+        {plansLoading ? (
+          <View style={s.loader}><ActivityIndicator color="#6D28D9" /></View>
+        ) : planList.length === 0 ? (
+          <View style={s.emptyBlock}>
+            <Text style={s.emptyText}>Nenhum plano disponível</Text>
+          </View>
+        ) : (
+          <View style={s.plansList}>
+            {planList.map((plan) => (
+              <PlanCard
+                key={plan.id}
+                plan={plan}
+                isActive={activePlan === plan.name}
+                coins={coins}
+                onActivate={() => handleActivate(plan)}
+                loading={activatingId === plan.id}
+              />
+            ))}
+          </View>
+        )}
+
+        {/* PIX */}
+        <Text style={[s.sectionLabel, { marginTop: 8 }]}>VALOR PERSONALIZADO</Text>
+        <View style={s.inputRow}>
+          <Text style={s.currency}>R$</Text>
+          <TextInput
+            style={s.input}
+            placeholder="0,00"
+            placeholderTextColor="#6B7280"
+            keyboardType="decimal-pad"
+            value={amount}
+            onChangeText={(v) => setAmount(v.replace(",", "."))}
+          />
+        </View>
+
+        {amount && parseFloat(amount) > 0 && (
+          <View style={s.preview}>
+            <Feather name="dollar-sign" size={13} color="#6D28D9" />
+            <Text style={s.previewText}>
+              Você receberá{" "}
+              <Text style={{ color: "#A78BFA", fontFamily: "Inter_700Bold" }}>
+                {Math.round(parseFloat(amount) * 100)} moedas
+              </Text>
+            </Text>
+          </View>
+        )}
+
+        <Pressable
+          style={({ pressed }) => [s.btn, { opacity: pressed || createPix.isPending || !amount ? 0.7 : 1 }]}
+          onPress={handleCreatePix}
+          disabled={createPix.isPending || !amount}
+        >
+          {createPix.isPending ? (
+            <ActivityIndicator color="#FFF" size="small" />
+          ) : (
+            <Text style={s.btnText}>Gerar PIX  →</Text>
+          )}
+        </Pressable>
+
+        {/* PIX gerado */}
         {pixData && (
           <View style={s.pixCard}>
             <View style={s.pixHeader}>
@@ -153,7 +283,6 @@ export default function PaymentsScreen() {
                 <Text style={s.pixSub}>{pixData.coins} moedas por R$ {pixData.amount.toFixed(2)}</Text>
               </View>
             </View>
-
             {pixStatus?.status === "paid" ? (
               <View style={s.paidBadge}>
                 <Feather name="check" size={14} color="#22C55E" />
@@ -176,33 +305,38 @@ export default function PaymentsScreen() {
           </View>
         )}
 
-        <View style={s.sectionHeader}>
-          <Text style={s.sectionLabel}>HISTÓRICO</Text>
-        </View>
+        {/* Histórico */}
+        <Text style={[s.sectionLabel, { marginTop: 16 }]}>HISTORICO DE COMPRAS</Text>
         {historyLoading ? (
           <View style={s.loader}><ActivityIndicator color="#6D28D9" /></View>
         ) : historyList.length === 0 ? (
-          <View style={s.emptyHistory}>
-            <Feather name="inbox" size={28} color="#A0A0B0" />
-            <Text style={s.emptyHistoryText}>Nenhum pagamento ainda</Text>
+          <View style={s.emptyBlock}>
+            <Feather name="inbox" size={26} color="#A0A0B0" />
+            <Text style={s.emptyText}>Nenhum pagamento ainda</Text>
           </View>
         ) : (
           <View style={s.historyCard}>
             {historyList.map((item: any, i: number) => {
               const cfg = STATUS_CFG[item.status] ?? STATUS_CFG.pending;
+              const coins = item.coins ?? Math.round(parseFloat(item.amount ?? 0) * 100);
+              const date = new Date(item.createdAt);
+              const dateStr = date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" }).toUpperCase()
+                + ", " + date.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" });
               return (
                 <View key={item.id} style={[s.historyRow, i < historyList.length - 1 && s.historyRowBorder]}>
                   <View style={s.historyIconWrap}>
-                    <Feather name="dollar-sign" size={16} color="#A78BFA" />
+                    <Text style={s.historyIconText}>R$</Text>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={s.historyAmount}>R$ {parseFloat(item.amount ?? 0).toFixed(2)}</Text>
-                    <Text style={s.historyDate}>
-                      {new Date(item.createdAt).toLocaleDateString("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit" })}
-                    </Text>
+                    <Text style={s.historyCoins}>+{coins.toLocaleString("pt-BR")} moedas</Text>
+                    <View style={s.historyDateRow}>
+                      <Feather name="clock" size={11} color="#6B7280" />
+                      <Text style={s.historyDate}>{dateStr}</Text>
+                    </View>
                   </View>
-                  <View style={[s.statusBadge, { backgroundColor: cfg.bg, borderColor: cfg.color + "30" }]}>
-                    <Text style={[s.statusText, { color: cfg.color }]}>{cfg.label}</Text>
+                  <View style={[s.statusBadge, { backgroundColor: cfg.bg, borderColor: cfg.color + "40" }]}>
+                    <Text style={[s.statusText, { color: cfg.color }]}>{cfg.label.toUpperCase()}</Text>
                   </View>
                 </View>
               );
@@ -213,6 +347,61 @@ export default function PaymentsScreen() {
     </View>
   );
 }
+
+const p = StyleSheet.create({
+  card: {
+    backgroundColor: "#1A1A24",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#2A2A35",
+    padding: 18,
+    gap: 12,
+  },
+  cardActive: { borderWidth: 2, borderColor: "#6D28D9" },
+  cardTop: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  planIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 12,
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  cardMeta: { flex: 1 },
+  nameLine: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 3 },
+  name: { fontSize: 17, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  activeBadge: {
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
+    borderRadius: 6,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+  },
+  activeBadgeText: { fontSize: 9, color: "#A78BFA", fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+  desc: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  priceBlock: { alignItems: "flex-end" },
+  priceVal: { fontSize: 22, color: "#6D28D9", fontFamily: "Inter_700Bold" },
+  priceUnit: { fontSize: 10, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 1 },
+  features: { gap: 7 },
+  feature: { flexDirection: "row", alignItems: "center", gap: 8 },
+  featureText: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  btn: {
+    borderRadius: 12,
+    paddingVertical: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  btnPrimary: { backgroundColor: "#6D28D9" },
+  btnActive: { backgroundColor: "#6D28D915", borderWidth: 1, borderColor: "#6D28D930" },
+  btnDisabled: { backgroundColor: "#1E1E28", borderWidth: 1, borderColor: "#2A2A35" },
+  btnText: { fontSize: 14, color: "#FFF", fontFamily: "Inter_700Bold" },
+  btnActiveText: { color: "#A78BFA" },
+  btnDisabledText: { color: "#A0A0B0" },
+});
 
 const s = StyleSheet.create({
   root: { flex: 1, backgroundColor: "#0F0F14" },
@@ -226,51 +415,57 @@ const s = StyleSheet.create({
   headerTitle: { fontSize: 22, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
   headerSub: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 4 },
 
-  card: {
+  balanceCard: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     backgroundColor: "#1A1A24",
     borderRadius: 16,
     borderWidth: 1,
     borderColor: "#2A2A35",
     padding: 20,
-    marginBottom: 16,
-    gap: 14,
+    marginBottom: 24,
   },
-  cardHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
-  cardIconWrap: {
-    padding: 6,
+  balanceLabel: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginBottom: 6 },
+  balanceRow: { flexDirection: "row", alignItems: "baseline" },
+  balanceValue: { fontSize: 32, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  balanceCoin: { fontSize: 16, color: "#A78BFA", fontFamily: "Inter_600SemiBold" },
+  zapWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
     backgroundColor: "#6D28D915",
-    borderRadius: 8,
-  },
-  cardTitle: { fontSize: 16, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
-
-  presetsRow: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
-  preset: {
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 10,
-    backgroundColor: "#1E1E28",
     borderWidth: 1,
-    borderColor: "#2A2A35",
+    borderColor: "#6D28D930",
+    alignItems: "center",
+    justifyContent: "center",
   },
-  presetActive: { backgroundColor: "#6D28D915", borderColor: "#6D28D930" },
-  presetText: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_600SemiBold" },
-  presetTextActive: { color: "#A78BFA" },
 
-  label: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_600SemiBold", letterSpacing: 1 },
+  sectionLabel: {
+    fontSize: 11,
+    color: "#A0A0B0",
+    fontFamily: "Inter_600SemiBold",
+    letterSpacing: 1.5,
+    marginBottom: 12,
+  },
+
+  plansList: { gap: 14, marginBottom: 24 },
+
   inputRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#1E1E28",
+    backgroundColor: "#1A1A24",
     borderRadius: 12,
     borderWidth: 1,
     borderColor: "#2A2A35",
     paddingHorizontal: 14,
+    marginBottom: 12,
   },
   currency: { fontSize: 18, color: "#A0A0B0", fontFamily: "Inter_700Bold", marginRight: 4 },
   input: { flex: 1, color: "#F0F0F5", fontSize: 20, paddingVertical: 14, fontFamily: "Inter_700Bold" },
 
-  preview: { flexDirection: "row", alignItems: "center", gap: 6 },
-  previewText: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  preview: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12 },
+  previewText: { fontSize: 13, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
 
   btn: {
     backgroundColor: "#6D28D9",
@@ -278,8 +473,7 @@ const s = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
     justifyContent: "center",
-    flexDirection: "row",
-    gap: 8,
+    marginBottom: 16,
   },
   btnText: { color: "#FFF", fontSize: 15, fontFamily: "Inter_700Bold" },
 
@@ -290,42 +484,32 @@ const s = StyleSheet.create({
     borderColor: "#2A2A35",
     borderLeftWidth: 3,
     borderLeftColor: "#22C55E",
-    padding: 20,
+    padding: 18,
     marginBottom: 16,
     gap: 12,
   },
   pixHeader: { flexDirection: "row", alignItems: "center", gap: 12 },
   pixIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: "#22C55E15",
-    alignItems: "center",
-    justifyContent: "center",
+    width: 36, height: 36, borderRadius: 10,
+    backgroundColor: "#22C55E15", alignItems: "center", justifyContent: "center",
   },
   pixHeaderText: { fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
   pixSub: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 2 },
   codeBox: { backgroundColor: "#1E1E28", borderRadius: 12, borderWidth: 1, borderColor: "#2A2A35", padding: 14 },
   codeText: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", lineHeight: 18 },
   copyBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    borderRadius: 12,
-    backgroundColor: "#6D28D915",
-    borderWidth: 1,
-    borderColor: "#6D28D930",
-    paddingVertical: 12,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6,
+    borderRadius: 12, backgroundColor: "#6D28D915", borderWidth: 1,
+    borderColor: "#6D28D930", paddingVertical: 12,
   },
   copyBtnDone: { backgroundColor: "#22C55E15", borderColor: "#22C55E30" },
   copyText: { fontSize: 14, color: "#A78BFA", fontFamily: "Inter_600SemiBold" },
   waitText: { textAlign: "center", fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
-  paidBadge: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#22C55E15", borderRadius: 12, padding: 14 },
+  paidBadge: {
+    flexDirection: "row", alignItems: "center", gap: 8,
+    backgroundColor: "#22C55E15", borderRadius: 12, padding: 14,
+  },
   paidText: { fontSize: 14, color: "#22C55E", fontFamily: "Inter_600SemiBold" },
-
-  sectionHeader: { marginBottom: 12 },
-  sectionLabel: { fontSize: 11, color: "#A0A0B0", fontFamily: "Inter_600SemiBold", letterSpacing: 1.5 },
 
   historyCard: {
     backgroundColor: "#1A1A24",
@@ -337,27 +521,23 @@ const s = StyleSheet.create({
   historyRow: { flexDirection: "row", alignItems: "center", gap: 12, padding: 16 },
   historyRowBorder: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: "#2A2A3560" },
   historyIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: "#6D28D915",
-    alignItems: "center",
-    justifyContent: "center",
+    width: 40, height: 40, borderRadius: 12,
+    backgroundColor: "#6D28D915", borderWidth: 1,
+    borderColor: "#6D28D930", alignItems: "center", justifyContent: "center",
   },
+  historyIconText: { fontSize: 13, color: "#A78BFA", fontFamily: "Inter_700Bold" },
   historyAmount: { fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
-  historyDate: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 2 },
+  historyCoins: { fontSize: 12, color: "#A78BFA", fontFamily: "Inter_400Regular", marginTop: 1 },
+  historyDateRow: { flexDirection: "row", alignItems: "center", gap: 4, marginTop: 3 },
+  historyDate: { fontSize: 11, color: "#6B7280", fontFamily: "Inter_400Regular" },
   statusBadge: { borderRadius: 8, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 5 },
-  statusText: { fontSize: 11, fontFamily: "Inter_600SemiBold", letterSpacing: 0.3 },
+  statusText: { fontSize: 10, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
 
   loader: { paddingVertical: 30, alignItems: "center" },
-  emptyHistory: {
-    alignItems: "center",
-    gap: 8,
-    paddingVertical: 40,
-    backgroundColor: "#1A1A24",
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: "#2A2A35",
+  emptyBlock: {
+    alignItems: "center", gap: 8, paddingVertical: 32,
+    backgroundColor: "#1A1A24", borderRadius: 16,
+    borderWidth: 1, borderColor: "#2A2A35", marginBottom: 16,
   },
-  emptyHistoryText: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  emptyText: { fontSize: 14, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
 });
