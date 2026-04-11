@@ -526,7 +526,8 @@ export default function BuilderScreen() {
           <Animated.View style={[s.canvas, canvasStyle]}>
             <View style={s.canvasBg} />
             <Svg
-              style={{ position: "absolute", top: 0, left: 0, pointerEvents: "none" }}
+              pointerEvents="none"
+              style={{ position: "absolute", top: 0, left: 0 }}
               width={CANVAS_SIZE}
               height={CANVAS_SIZE}
             >
