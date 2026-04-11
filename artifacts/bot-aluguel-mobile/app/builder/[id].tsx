@@ -35,11 +35,11 @@ interface FlowNode { id: string; type: NodeType; label: string; config: Record<s
 interface FlowEdge { id: string; source: string; target: string; sourceHandle?: "true" | "false"; }
 
 const NODE_CFG: Record<NodeType, { color: string; dim: string; label: string; icon: string; desc: string }> = {
-  command:   { color: "#6D28D9", dim: "#6D28D930", label: "Comando",  icon: "message-square", desc: "Recebe mensagem" },
-  action:    { color: "#7C3AED", dim: "#7C3AED30", label: "Ação",     icon: "zap",            desc: "Executa algo" },
-  condition: { color: "#F59E0B", dim: "#F59E0B30", label: "Condição", icon: "git-branch",     desc: "Ramificação" },
-  response:  { color: "#22C55E", dim: "#22C55E30", label: "Resposta", icon: "message-circle", desc: "Envia mensagem" },
-  buttons:   { color: "#06B6D4", dim: "#06B6D430", label: "Botões",   icon: "layout",         desc: "Menu de botões" },
+  command:   { color: "#6D28D9", dim: "#6D28D91A", label: "Comando",  icon: "message-square", desc: "Recebe mensagem" },
+  action:    { color: "#7C3AED", dim: "#7C3AED1A", label: "Ação",     icon: "zap",            desc: "Executa algo" },
+  condition: { color: "#F59E0B", dim: "#F59E0B1A", label: "Condição", icon: "git-branch",     desc: "Ramificação" },
+  response:  { color: "#22C55E", dim: "#22C55E1A", label: "Resposta", icon: "message-circle", desc: "Envia mensagem" },
+  buttons:   { color: "#06B6D4", dim: "#06B6D41A", label: "Botões",   icon: "layout",         desc: "Menu de botões" },
 };
 
 const CFG: Record<NodeType, { key: string; label: string; type: "text" | "textarea" | "select" | "toggle"; options?: { value: string; label: string }[]; placeholder?: string; showWhen?: (c: Record<string, unknown>) => boolean }[]> = {
@@ -290,11 +290,12 @@ function BezierEdge({ x1, y1, x2, y2, color, live = false }: {
   const dy = y2 - y1;
   if (Math.sqrt(dx * dx + dy * dy) < 4) return null;
 
-  const bend = live ? 0 : Math.min(Math.abs(dx) * 0.55, 130);
+  const liveBend = Math.min(Math.abs(dx) * 0.35 + 36, 90);
+  const bend = live ? liveBend : Math.min(Math.abs(dx) * 0.55, 130);
   const cp1x = x1 + bend; const cp1y = y1;
-  const cp2x = x2 - bend; const cp2y = y2;
+  const cp2x = x2 - (live ? liveBend * 0.4 : bend); const cp2y = y2;
 
-  const N = 48;
+  const N = live ? 32 : 48;
   const pts = Array.from({ length: N + 1 }, (_, i) => {
     const t = i / N;
     const mt = 1 - t;
@@ -308,7 +309,7 @@ function BezierEdge({ x1, y1, x2, y2, color, live = false }: {
   const DASH = 9;
   const GAP = 6;
   const STEP = DASH + GAP;
-  const opacity = live ? 0.95 : 0.82;
+  const opacity = live ? 0.92 : 0.82;
   let arc = 0;
   const segs: React.ReactElement[] = [];
 
@@ -334,6 +335,29 @@ function BezierEdge({ x1, y1, x2, y2, color, live = false }: {
         opacity,
         transform: [{ rotate: `${angle}deg` }],
       }} />
+    );
+  }
+
+  if (live) {
+    return (
+      <>
+        {segs}
+        {/* Live line endpoint: glowing circle, no arrowhead */}
+        <View style={{
+          position: "absolute",
+          left: x2 - 7, top: y2 - 7,
+          width: 14, height: 14, borderRadius: 7,
+          backgroundColor: color, opacity: 0.85,
+          shadowColor: color, shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 1, shadowRadius: 6, elevation: 4,
+        }} />
+        <View style={{
+          position: "absolute",
+          left: x2 - 4, top: y2 - 4,
+          width: 8, height: 8, borderRadius: 4,
+          backgroundColor: "#fff", opacity: 0.7,
+        }} />
+      </>
     );
   }
 
