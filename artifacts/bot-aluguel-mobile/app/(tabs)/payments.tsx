@@ -9,10 +9,11 @@ import {
 import { Clipboard } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Dimensions,
   Platform,
   Pressable,
   RefreshControl,
@@ -219,7 +220,12 @@ export default function PaymentsScreen() {
             <Text style={s.emptyText}>Nenhum plano disponível</Text>
           </View>
         ) : (
-          <View style={s.plansList}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={s.carousel}
+            style={{ marginHorizontal: -20, marginBottom: 24 }}
+          >
             {planList.map((plan) => (
               <PlanCard
                 key={plan.id}
@@ -230,7 +236,7 @@ export default function PaymentsScreen() {
                 loading={activatingId === plan.id}
               />
             ))}
-          </View>
+          </ScrollView>
         )}
 
         {/* PIX */}
@@ -348,8 +354,11 @@ export default function PaymentsScreen() {
   );
 }
 
+const CARD_W = Dimensions.get("window").width * 0.72;
+
 const p = StyleSheet.create({
   card: {
+    width: CARD_W,
     backgroundColor: "#1A1A24",
     borderRadius: 16,
     borderWidth: 1,
@@ -449,7 +458,7 @@ const s = StyleSheet.create({
     marginBottom: 12,
   },
 
-  plansList: { gap: 14, marginBottom: 24 },
+  carousel: { paddingHorizontal: 20, gap: 12 },
 
   inputRow: {
     flexDirection: "row",
