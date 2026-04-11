@@ -7,7 +7,6 @@ const ALL_TABS: (NavTab & { name: string; adminOnly?: boolean })[] = [
   { name: "index",    href: "/",        icon: "grid",         label: "Hub" },
   { name: "bots",     href: "/bots",    icon: "cpu",          label: "Bots" },
   { name: "payments", href: "/payments",icon: "credit-card",  label: "Moedas" },
-  { name: "plans",    href: "/plans",   icon: "star",         label: "Planos" },
   { name: "settings", href: "/settings",icon: "settings",     label: "Config" },
   { name: "admin",    href: "/admin",   icon: "shield",       label: "Admin", adminOnly: true },
 ];
