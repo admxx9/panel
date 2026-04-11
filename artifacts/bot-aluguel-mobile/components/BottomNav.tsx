@@ -1,6 +1,7 @@
 import React from "react";
 import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { Feather } from "@expo/vector-icons";
+import { LinearGradient } from "expo-linear-gradient";
 import { usePathname, router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -14,11 +15,9 @@ interface Props {
   tabs: NavTab[];
 }
 
-const ACTIVE_COLOR = "#F0F0F5";
-const INACTIVE_COLOR = "#6B7280";
-const ACCENT = "#6D28D9";
-const BAR_BG = "#0F0F14";
-const BORDER_COLOR = "#2A2A35";
+const INACTIVE_COLOR = "#555568";
+const BAR_BG = "#0D0D12";
+const BORDER_COLOR = "#1E1E2A";
 
 export default function BottomNav({ tabs }: Props) {
   const pathname = usePathname();
@@ -45,19 +44,28 @@ export default function BottomNav({ tabs }: Props) {
               onPress={() => router.push(tab.href as any)}
               accessibilityLabel={tab.label}
             >
-              <Feather name={tab.icon as any} size={20} color={on ? ACTIVE_COLOR : INACTIVE_COLOR} />
+              <Feather name={tab.icon as any} size={21} color={on ? "#A78BFA" : INACTIVE_COLOR} />
               <Text style={[s.itemLabel, on && s.itemLabelActive]}>{tab.label}</Text>
+              {on && <View style={s.activeDot} />}
             </Pressable>
           );
         })}
 
+        {/* Central FAB */}
         <View style={s.fabSlot}>
           <Pressable
-            style={({ pressed }) => [s.fab, pressed && { transform: [{ scale: 0.92 }] }]}
+            style={({ pressed }) => [s.fabWrap, pressed && { transform: [{ scale: 0.91 }] }]}
             onPress={() => router.push("/builder-picker" as any)}
-            accessibilityLabel="Builder"
+            accessibilityLabel="Novo Bot"
           >
-            <Feather name="plus" size={26} color="#FFF" />
+            <LinearGradient
+              colors={["#7C3AED", "#4F46E5"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={s.fab}
+            >
+              <Feather name="plus" size={28} color="#FFF" />
+            </LinearGradient>
           </Pressable>
         </View>
 
@@ -70,8 +78,9 @@ export default function BottomNav({ tabs }: Props) {
               onPress={() => router.push(tab.href as any)}
               accessibilityLabel={tab.label}
             >
-              <Feather name={tab.icon as any} size={20} color={on ? ACTIVE_COLOR : INACTIVE_COLOR} />
+              <Feather name={tab.icon as any} size={21} color={on ? "#A78BFA" : INACTIVE_COLOR} />
               <Text style={[s.itemLabel, on && s.itemLabelActive]}>{tab.label}</Text>
+              {on && <View style={s.activeDot} />}
             </Pressable>
           );
         })}
@@ -88,18 +97,18 @@ const s = StyleSheet.create({
     overflow: "visible",
   },
   bar: {
-    height: 60,
+    height: 62,
     flexDirection: "row",
     alignItems: "center",
     overflow: "visible",
-    paddingHorizontal: 4,
+    paddingHorizontal: 6,
   },
   item: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
     gap: 3,
-    height: 60,
+    height: 62,
   },
   itemLabel: {
     fontSize: 10,
@@ -107,28 +116,37 @@ const s = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
   },
   itemLabelActive: {
-    color: ACTIVE_COLOR,
+    color: "#A78BFA",
+  },
+  activeDot: {
+    position: "absolute",
+    bottom: 6,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#7C3AED",
   },
   fabSlot: {
-    width: 68,
+    width: 72,
     alignItems: "center",
     justifyContent: "center",
     overflow: "visible",
   },
+  fabWrap: {
+    marginTop: -30,
+    shadowColor: "#7C3AED",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.55,
+    shadowRadius: 16,
+    elevation: 14,
+  },
   fab: {
-    width: 54,
-    height: 54,
-    borderRadius: 27,
-    backgroundColor: ACCENT,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: -32,
-    borderWidth: 4,
+    borderWidth: 3,
     borderColor: BAR_BG,
-    shadowColor: "#6D28D9",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.5,
-    shadowRadius: 14,
-    elevation: 12,
   },
 });
