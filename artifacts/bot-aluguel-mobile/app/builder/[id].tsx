@@ -6,6 +6,7 @@ import {
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue, useAnimatedStyle, runOnJS, type SharedValue,
+  withRepeat, withSequence, withTiming,
 } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -236,43 +237,103 @@ function getNodeLabel(node: FlowNode): string {
   return node.label;
 }
 
-interface EdgeLineProps { x1: number; y1: number; x2: number; y2: number; color: string; }
-function EdgeLine({ x1, y1, x2, y2, color }: EdgeLineProps) {
+/* Pulsing animated dot for output ports */
+function PulsingDot({ color, size = 14 }: { color: string; size?: number }) {
+  const scale = useSharedValue(1);
+  useEffect(() => {
+    scale.value = withRepeat(
+      withSequence(
+        withTiming(1.45, { duration: 750 }),
+        withTiming(1,    { duration: 750 }),
+      ),
+      -1,
+    );
+  }, []);
+  const ring = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+    opacity: 2 - scale.value,
+  }));
+  return (
+    <View style={{ width: size + 10, height: size + 10, alignItems: "center", justifyContent: "center" }}>
+      <Animated.View style={[{
+        position: "absolute",
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        borderWidth: 2,
+        borderColor: color,
+      }, ring]} />
+      <View style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: color,
+        borderWidth: 2,
+        borderColor: "#000",
+      }} />
+    </View>
+  );
+}
+
+/* Dashed edge drawn as a series of small circles — no SVG required */
+function DashedEdge({ x1, y1, x2, y2, color, live = false }: { x1: number; y1: number; x2: number; y2: number; color: string; live?: boolean }) {
   const dx = x2 - x1;
   const dy = y2 - y1;
   const length = Math.sqrt(dx * dx + dy * dy);
-  const angle = Math.atan2(dy, dx) * (180 / Math.PI);
-  if (length < 1) return null;
+  if (length < 2) return null;
+  const STEP = 14;
+  const count = Math.max(1, Math.floor(length / STEP));
+  const dots = Array.from({ length: count }, (_, i) => {
+    const t = count === 1 ? 0.5 : i / (count - 1);
+    return { x: x1 + dx * t, y: y1 + dy * t };
+  });
   return (
-    <View
-      style={{
-        position: "absolute",
-        left: x1 + dx / 2 - length / 2,
-        top:  y1 + dy / 2 - 1.5,
-        width: length,
-        height: 3,
-        backgroundColor: color,
-        opacity: 0.75,
-        borderRadius: 2,
-        transform: [{ rotate: `${angle}deg` }],
-      }}
-    />
+    <>
+      {dots.map((d, i) => (
+        <View
+          key={i}
+          style={{
+            position: "absolute",
+            left: d.x - 3,
+            top: d.y - 3,
+            width: live ? 5 : 4,
+            height: live ? 5 : 4,
+            borderRadius: live ? 2.5 : 2,
+            backgroundColor: color,
+            opacity: live ? 0.9 - i * 0.015 : 0.7,
+          }}
+        />
+      ))}
+    </>
   );
 }
 
 interface NodeCardProps {
   node: FlowNode;
   canvasScale: SharedValue<number>;
+  canvasX: SharedValue<number>;
+  canvasY: SharedValue<number>;
+  canvasOX: SharedValue<number>;
+  canvasOY: SharedValue<number>;
   selected: boolean;
-  connectingFrom: string | null;
-  isConnectable: boolean;
-  onTap: () => void;
-  onPortTap: (handle?: "true" | "false") => void;
-  onInputTap: () => void;
+  hoverHighlight: boolean;
+  isConnecting: boolean;
+  onSelect: (id: string) => void;
+  onEditNode: (node: FlowNode) => void;
+  onDeleteNode: (id: string) => void;
+  onInputTap: (id: string) => void;
+  onPortDragStart: (portX: number, portY: number, color: string, nodeId: string, handle?: "true" | "false") => void;
+  onPortDragUpdate: (absX: number, absY: number) => void;
+  onPortDragEnd: (absX: number, absY: number) => void;
   onDragEnd: (id: string, x: number, y: number) => void;
 }
 
-function NodeCard({ node, canvasScale, selected, connectingFrom, isConnectable, onTap, onPortTap, onInputTap, onDragEnd }: NodeCardProps) {
+function NodeCard({
+  node, canvasScale, canvasX, canvasY, canvasOX, canvasOY,
+  selected, hoverHighlight, isConnecting,
+  onSelect, onEditNode, onDeleteNode, onInputTap,
+  onPortDragStart, onPortDragUpdate, onPortDragEnd, onDragEnd,
+}: NodeCardProps) {
   const cfg = NODE_CFG[node.type];
   const sharedX = useSharedValue(node.x);
   const sharedY = useSharedValue(node.y);
@@ -280,8 +341,8 @@ function NodeCard({ node, canvasScale, selected, connectingFrom, isConnectable, 
   const savedY = useSharedValue(0);
 
   useEffect(() => {
-    if (sharedX.value !== node.x) sharedX.value = node.x;
-    if (sharedY.value !== node.y) sharedY.value = node.y;
+    sharedX.value = node.x;
+    sharedY.value = node.y;
   }, [node.x, node.y]);
 
   const animStyle = useAnimatedStyle(() => ({
@@ -290,13 +351,11 @@ function NodeCard({ node, canvasScale, selected, connectingFrom, isConnectable, 
     top: sharedY.value,
   }));
 
-  const handleDragEnd = useCallback((id: string, x: number, y: number) => {
-    onDragEnd(id, x, y);
-  }, [onDragEnd]);
-
   const nodeId = node.id;
+
   const dragGesture = Gesture.Pan()
-    .minDistance(6)
+    .enabled(selected)
+    .minDistance(8)
     .onStart(() => {
       "worklet";
       savedX.value = sharedX.value;
@@ -309,53 +368,107 @@ function NodeCard({ node, canvasScale, selected, connectingFrom, isConnectable, 
     })
     .onEnd(() => {
       "worklet";
-      runOnJS(handleDragEnd)(nodeId, sharedX.value, sharedY.value);
+      runOnJS(onDragEnd)(nodeId, sharedX.value, sharedY.value);
     });
 
-  const isConnecting = !!connectingFrom && connectingFrom !== node.id;
+  const makePortGesture = (portOffsetY: number, color: string, handle?: "true" | "false") =>
+    Gesture.Pan()
+      .minDistance(4)
+      .onStart((e) => {
+        "worklet";
+        const px = node.x + NODE_W;
+        const py = node.y + portOffsetY;
+        runOnJS(onPortDragStart)(px, py, color, nodeId, handle);
+        runOnJS(onPortDragUpdate)(e.absoluteX, e.absoluteY);
+      })
+      .onUpdate((e) => {
+        "worklet";
+        runOnJS(onPortDragUpdate)(e.absoluteX, e.absoluteY);
+      })
+      .onEnd((e) => {
+        "worklet";
+        runOnJS(onPortDragEnd)(e.absoluteX, e.absoluteY);
+      });
+
+  const mainPortGesture = makePortGesture(NODE_H / 2, cfg.color);
+  const truePortGesture = makePortGesture(NODE_H / 3, "#22C55E", "true");
+  const falsePortGesture = makePortGesture((NODE_H * 2) / 3, "#EF4444", "false");
+
+  const borderColor = hoverHighlight
+    ? "#22C55E"
+    : selected
+    ? cfg.color
+    : isConnecting
+    ? cfg.color + "60"
+    : "rgba(255,255,255,0.08)";
+  const glowColor = selected ? cfg.color + "50" : "transparent";
 
   return (
     <GestureDetector gesture={dragGesture}>
       <Animated.View style={[animStyle, { width: NODE_W }]}>
+        {/* Glow ring when selected */}
+        {selected && (
+          <View style={[s.nodeGlow, { borderColor: glowColor, shadowColor: cfg.color }]} pointerEvents="none" />
+        )}
+
+        {/* Node body */}
         <Pressable
-          onPress={isConnecting ? onInputTap : onTap}
-          style={({ pressed }) => [
-            s.node,
-            { borderColor: selected ? cfg.color : isConnectable ? cfg.color + "80" : C.border },
-            pressed && { opacity: 0.9 },
-          ]}
+          onPress={() => isConnecting ? onInputTap(nodeId) : onSelect(nodeId)}
+          style={[s.node, { borderColor, borderWidth: hoverHighlight ? 2 : 1.5 }]}
         >
-          <View style={[s.nodeHeader, { backgroundColor: cfg.dim }]}>
-            <View style={[s.nodeTypeIndicator, { backgroundColor: cfg.color }]} />
-            <Feather name={cfg.icon as any} size={13} color={cfg.color} />
-            <Text style={[s.nodeType, { color: cfg.color }]}>{cfg.label}</Text>
+          {/* Header */}
+          <View style={s.nodeHeader}>
+            <Feather name={cfg.icon as any} size={12} color={cfg.color} />
+            <Text style={[s.nodeType, { color: cfg.color }]}>{cfg.label.toUpperCase()}</Text>
+            <View style={{ flex: 1 }} />
+            <Pressable hitSlop={8} onPress={() => onEditNode(node)} style={s.nodeIconBtn}>
+              <Feather name="edit-2" size={12} color="rgba(255,255,255,0.35)" />
+            </Pressable>
+            <Pressable hitSlop={8} onPress={() => onDeleteNode(nodeId)} style={s.nodeIconBtn}>
+              <Feather name="trash-2" size={12} color="rgba(255,255,255,0.25)" />
+            </Pressable>
           </View>
+
+          {/* Body */}
           <View style={s.nodeBody}>
-            <Text style={[s.nodeLabel, { color: C.fg }]} numberOfLines={2}>
+            <Feather name={cfg.icon as any} size={22} color={cfg.color + "55"} style={{ marginBottom: 4 }} />
+            <Text style={[s.nodeLabel, { color: "rgba(255,255,255,0.9)" }]} numberOfLines={2}>
               {getNodeLabel(node)}
             </Text>
           </View>
         </Pressable>
 
-        <Pressable style={[s.port, s.portLeft]} onPress={onInputTap}>
-          <View style={[s.portDot, { backgroundColor: C.border, borderColor: C.border }]} />
+        {/* Left input port */}
+        <Pressable
+          style={s.portLeftWrap}
+          onPress={() => isConnecting ? onInputTap(nodeId) : undefined}
+          hitSlop={16}
+        >
+          <View style={s.inputDot} />
         </Pressable>
 
+        {/* Right output port(s) */}
         {node.type === "condition" ? (
           <>
-            <Pressable style={[s.port, s.portRightTrue]} onPress={() => onPortTap("true")}>
-              <View style={[s.portDot, { backgroundColor: "#22C55E", borderColor: "#22C55E" }]} />
-              <Text style={s.portLabel}>Sim</Text>
-            </Pressable>
-            <Pressable style={[s.port, s.portRightFalse]} onPress={() => onPortTap("false")}>
-              <View style={[s.portDot, { backgroundColor: "#EF4444", borderColor: "#EF4444" }]} />
-              <Text style={s.portLabel}>Não</Text>
-            </Pressable>
+            <GestureDetector gesture={truePortGesture}>
+              <Pressable style={s.portRightTrue} hitSlop={16}>
+                <Text style={[s.portLabel, { color: "#22C55E" }]}>SIM</Text>
+                <PulsingDot color="#22C55E" size={13} />
+              </Pressable>
+            </GestureDetector>
+            <GestureDetector gesture={falsePortGesture}>
+              <Pressable style={s.portRightFalse} hitSlop={16}>
+                <Text style={[s.portLabel, { color: "#EF4444" }]}>NÃO</Text>
+                <PulsingDot color="#EF4444" size={13} />
+              </Pressable>
+            </GestureDetector>
           </>
         ) : (
-          <Pressable style={[s.port, s.portRight]} onPress={() => onPortTap()}>
-            <View style={[s.portDot, { backgroundColor: cfg.color, borderColor: cfg.color }]} />
-          </Pressable>
+          <GestureDetector gesture={mainPortGesture}>
+            <Pressable style={s.portRightSingle} hitSlop={20}>
+              <PulsingDot color={cfg.color} size={14} />
+            </Pressable>
+          </GestureDetector>
         )}
       </Animated.View>
     </GestureDetector>
@@ -370,13 +483,29 @@ export default function BuilderScreen() {
   const [edges, setEdges] = useState<FlowEdge[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editingNode, setEditingNode] = useState<FlowNode | null>(null);
-  const [connectingFrom, setConnectingFrom] = useState<{ nodeId: string; handle?: "true" | "false" } | null>(null);
+  const [connectingFrom, setConnectingFrom] = useState<{ nodeId: string; handle?: "true" | "false"; color: string } | null>(null);
+  const [liveLine, setLiveLine] = useState<{ x1: number; y1: number; x2: number; y2: number; color: string } | null>(null);
+  const [hoverNodeId, setHoverNodeId] = useState<string | null>(null);
   const [showTypePicker, setShowTypePicker] = useState(false);
   const [showTemplates, setShowTemplates] = useState(false);
   const [hasUnsaved, setHasUnsaved] = useState(false);
 
   const { data: commandData } = useGetBotCommands(botId ?? "", { query: { enabled: !!botId } });
   const saveMutation = useSaveBotCommands();
+
+  const canvasContainerRef = useRef<View>(null);
+  const canvasOX = useSharedValue(0);
+  const canvasOY = useSharedValue(0);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      canvasContainerRef.current?.measureInWindow((x, y) => {
+        canvasOX.value = x;
+        canvasOY.value = y;
+      });
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     if (commandData) {
@@ -396,7 +525,6 @@ export default function BuilderScreen() {
   const canvasScale = useSharedValue(1);
   const savedCX = useSharedValue(0);
   const savedCY = useSharedValue(0);
-  const savedScale = useSharedValue(1);
 
   const canvasStyle = useAnimatedStyle(() => ({
     transform: [
@@ -408,6 +536,7 @@ export default function BuilderScreen() {
 
   const panGesture = Gesture.Pan()
     .minDistance(8)
+    .enabled(!liveLine)
     .onStart(() => {
       "worklet";
       savedCX.value = canvasX.value;
@@ -419,11 +548,94 @@ export default function BuilderScreen() {
       canvasY.value = savedCY.value + e.translationY;
     });
 
-  const canvasGesture = panGesture;
+  /* --- Port drag handlers --- */
+  const absToCanvas = useCallback((absX: number, absY: number) => ({
+    x: (absX - canvasOX.value - canvasX.value) / canvasScale.value,
+    y: (absY - canvasOY.value - canvasY.value) / canvasScale.value,
+  }), [canvasOX, canvasOY, canvasX, canvasY, canvasScale]);
 
+  const handlePortDragStart = useCallback((portX: number, portY: number, color: string, nodeId: string, handle?: "true" | "false") => {
+    setConnectingFrom({ nodeId, handle, color });
+    setSelectedId(nodeId);
+    setLiveLine({ x1: portX, y1: portY, x2: portX, y2: portY, color });
+  }, []);
+
+  const handlePortDragUpdate = useCallback((absX: number, absY: number) => {
+    const { x, y } = absToCanvas(absX, absY);
+    setLiveLine(prev => prev ? { ...prev, x2: x, y2: y } : null);
+    const hovered = nodes.find(n => x >= n.x && x <= n.x + NODE_W && y >= n.y && y <= n.y + NODE_H);
+    setHoverNodeId(hovered?.id ?? null);
+  }, [absToCanvas, nodes]);
+
+  const handlePortDragEnd = useCallback((absX: number, absY: number) => {
+    const { x, y } = absToCanvas(absX, absY);
+    const target = nodes.find(n => x >= n.x && x <= n.x + NODE_W && y >= n.y && y <= n.y + NODE_H);
+    if (target && connectingFrom && target.id !== connectingFrom.nodeId) {
+      const already = edges.some(e => e.source === connectingFrom.nodeId && e.target === target.id && e.sourceHandle === connectingFrom.handle);
+      if (!already) {
+        setEdges(prev => [...prev, { id: uid(), source: connectingFrom.nodeId, target: target.id, sourceHandle: connectingFrom.handle }]);
+        setHasUnsaved(true);
+      }
+    }
+    setLiveLine(null);
+    setHoverNodeId(null);
+    setConnectingFrom(null);
+  }, [absToCanvas, nodes, connectingFrom, edges]);
+
+  /* --- Node handlers --- */
   const handleDragEnd = useCallback((id: string, x: number, y: number) => {
     setNodes(prev => prev.map(n => n.id === id ? { ...n, x, y } : n));
     setHasUnsaved(true);
+  }, []);
+
+  const handleSelectNode = useCallback((id: string) => {
+    if (connectingFrom) {
+      if (connectingFrom.nodeId !== id) {
+        const already = edges.some(e => e.source === connectingFrom.nodeId && e.target === id && e.sourceHandle === connectingFrom.handle);
+        if (!already) {
+          setEdges(prev => [...prev, { id: uid(), source: connectingFrom.nodeId, target: id, sourceHandle: connectingFrom.handle }]);
+          setHasUnsaved(true);
+        }
+        setConnectingFrom(null);
+        setLiveLine(null);
+        setHoverNodeId(null);
+      }
+    } else {
+      setSelectedId(prev => prev === id ? null : id);
+    }
+  }, [connectingFrom, edges]);
+
+  const handleInputTap = useCallback((targetId: string) => {
+    if (!connectingFrom || connectingFrom.nodeId === targetId) {
+      setConnectingFrom(null);
+      setLiveLine(null);
+      return;
+    }
+    const already = edges.some(e => e.source === connectingFrom.nodeId && e.target === targetId && e.sourceHandle === connectingFrom.handle);
+    if (!already) {
+      setEdges(prev => [...prev, { id: uid(), source: connectingFrom.nodeId, target: targetId, sourceHandle: connectingFrom.handle }]);
+      setHasUnsaved(true);
+    }
+    setConnectingFrom(null);
+    setLiveLine(null);
+    setHoverNodeId(null);
+    setSelectedId(null);
+  }, [connectingFrom, edges]);
+
+  const handleEditNode = useCallback((node: FlowNode) => {
+    setEditingNode({ ...node });
+  }, []);
+
+  const handleDeleteNode = useCallback((id: string) => {
+    Alert.alert("Excluir bloco?", "Esta ação não pode ser desfeita.", [
+      { text: "Cancelar", style: "cancel" },
+      { text: "Excluir", style: "destructive", onPress: () => {
+        setNodes(prev => prev.filter(n => n.id !== id));
+        setEdges(prev => prev.filter(e => e.source !== id && e.target !== id));
+        setSelectedId(null);
+        setHasUnsaved(true);
+      }},
+    ]);
   }, []);
 
   const addNode = useCallback((type: NodeType) => {
@@ -433,46 +645,11 @@ export default function BuilderScreen() {
     setShowTypePicker(false);
   }, [nodes.length]);
 
-  const deleteNode = useCallback((id: string) => {
-    setNodes(prev => prev.filter(n => n.id !== id));
-    setEdges(prev => prev.filter(e => e.source !== id && e.target !== id));
-    setSelectedId(null);
-    setHasUnsaved(true);
-  }, []);
-
   const updateNode = useCallback((updated: FlowNode) => {
     setNodes(prev => prev.map(n => n.id === updated.id ? updated : n));
     setEditingNode(null);
     setHasUnsaved(true);
   }, []);
-
-  const handlePortTap = useCallback((nodeId: string, handle?: "true" | "false") => {
-    setConnectingFrom({ nodeId, handle });
-    setSelectedId(nodeId);
-  }, []);
-
-  const handleInputTap = useCallback((targetId: string) => {
-    if (!connectingFrom || connectingFrom.nodeId === targetId) {
-      setConnectingFrom(null);
-      return;
-    }
-    const already = edges.some(e => e.source === connectingFrom.nodeId && e.target === targetId && e.sourceHandle === connectingFrom.handle);
-    if (!already) {
-      setEdges(prev => [...prev, { id: uid(), source: connectingFrom.nodeId, target: targetId, sourceHandle: connectingFrom.handle }]);
-      setHasUnsaved(true);
-    }
-    setConnectingFrom(null);
-    setSelectedId(null);
-  }, [connectingFrom, edges]);
-
-  const handleNodeTap = useCallback((node: FlowNode) => {
-    if (connectingFrom) {
-      handleInputTap(node.id);
-    } else {
-      setSelectedId(node.id);
-      setEditingNode({ ...node });
-    }
-  }, [connectingFrom, handleInputTap]);
 
   const applyTemplate = useCallback((tpl: typeof TEMPLATES[0]) => {
     const ids: string[] = tpl.nodes.map(() => uid());
@@ -539,47 +716,60 @@ export default function BuilderScreen() {
         </View>
       )}
 
-      <GestureDetector gesture={canvasGesture}>
-        <View style={s.canvasContainer}>
+      <GestureDetector gesture={panGesture}>
+        <View ref={canvasContainerRef} style={s.canvasContainer}>
           <Animated.View style={[s.canvas, canvasStyle]}>
             <View style={s.canvasBg} />
-            <View
-              pointerEvents="none"
-              style={{ position: "absolute", top: 0, left: 0, width: CANVAS_SIZE, height: CANVAS_SIZE }}
-            >
+
+            {/* Static edges */}
+            <View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, width: CANVAS_SIZE, height: CANVAS_SIZE }}>
               {edges.map(edge => {
                 const src = getNodeById(edge.source);
                 const tgt = getNodeById(edge.target);
                 if (!src || !tgt) return null;
                 let sy = src.y + NODE_H / 2;
-                if (edge.sourceHandle === "true") sy = src.y + NODE_H / 3;
+                if (edge.sourceHandle === "true")  sy = src.y + NODE_H / 3;
                 if (edge.sourceHandle === "false") sy = src.y + (NODE_H * 2) / 3;
                 const sx = src.x + NODE_W;
                 const tx = tgt.x;
                 const ty = tgt.y + NODE_H / 2;
                 const edgeColor = edge.sourceHandle === "true" ? "#22C55E" : edge.sourceHandle === "false" ? "#EF4444" : "#7C3AED";
                 return (
-                  <EdgeLine
-                    key={edge.id}
-                    x1={sx} y1={sy}
-                    x2={tx} y2={ty}
-                    color={edgeColor}
-                  />
+                  <DashedEdge key={edge.id} x1={sx} y1={sy} x2={tx} y2={ty} color={edgeColor} />
                 );
               })}
+
+              {/* Live dragging line */}
+              {liveLine && (
+                <DashedEdge
+                  x1={liveLine.x1} y1={liveLine.y1}
+                  x2={liveLine.x2} y2={liveLine.y2}
+                  color={liveLine.color}
+                  live
+                />
+              )}
             </View>
 
+            {/* Nodes */}
             {nodes.map(node => (
               <NodeCard
                 key={node.id}
                 node={node}
                 canvasScale={canvasScale}
+                canvasX={canvasX}
+                canvasY={canvasY}
+                canvasOX={canvasOX}
+                canvasOY={canvasOY}
                 selected={selectedId === node.id}
-                connectingFrom={connectingFrom?.nodeId ?? null}
-                isConnectable={!!connectingFrom && connectingFrom.nodeId !== node.id}
-                onTap={() => handleNodeTap(node)}
-                onPortTap={(handle) => handlePortTap(node.id, handle)}
-                onInputTap={() => connectingFrom ? handleInputTap(node.id) : handleNodeTap(node)}
+                hoverHighlight={hoverNodeId === node.id}
+                isConnecting={!!connectingFrom && connectingFrom.nodeId !== node.id}
+                onSelect={handleSelectNode}
+                onEditNode={handleEditNode}
+                onDeleteNode={handleDeleteNode}
+                onInputTap={handleInputTap}
+                onPortDragStart={handlePortDragStart}
+                onPortDragUpdate={handlePortDragUpdate}
+                onPortDragEnd={handlePortDragEnd}
                 onDragEnd={handleDragEnd}
               />
             ))}
@@ -609,7 +799,7 @@ export default function BuilderScreen() {
       <NodeEditor
         node={editingNode}
         onSave={updateNode}
-        onDelete={deleteNode}
+        onDelete={handleDeleteNode}
         onClose={() => setEditingNode(null)}
       />
 
@@ -830,27 +1020,101 @@ const s = StyleSheet.create({
   canvasContainer: { flex: 1, overflow: "hidden", backgroundColor: C.bg },
   canvas: { width: CANVAS_SIZE, height: CANVAS_SIZE },
   canvasBg: { position: "absolute" as const, top: 0, left: 0, width: CANVAS_SIZE, height: CANVAS_SIZE, backgroundColor: C.bg },
+
+  /* Node glass card */
   node: {
     width: NODE_W,
-    borderRadius: 12, borderWidth: 1.5,
-    overflow: "hidden" as const,
-    shadowColor: "#000", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 6,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    backgroundColor: "rgba(12,12,22,0.82)",
+    paddingBottom: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  nodeGlow: {
+    position: "absolute" as const,
+    top: -4, left: -4, right: -4, bottom: -4,
+    borderRadius: 18,
+    borderWidth: 2,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.6,
+    shadowRadius: 12,
+    elevation: 0,
   },
   nodeHeader: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    paddingHorizontal: 10, paddingVertical: 8,
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingTop: 9,
+    paddingBottom: 7,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255,255,255,0.08)",
   },
-  nodeTypeIndicator: { width: 4, height: 20, borderRadius: 2, marginRight: 2 },
-  nodeType: { fontSize: 11, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" as const, letterSpacing: 0.5 },
-  nodeBody: { paddingHorizontal: 10, paddingVertical: 8, minHeight: 36 },
-  nodeLabel: { fontSize: 13, fontFamily: "Inter_500Medium", lineHeight: 18 },
-  port: { position: "absolute" as const, justifyContent: "center", alignItems: "center", zIndex: 10 },
-  portLeft: { left: -10, top: NODE_H / 2 - 9 },
-  portRight: { right: -10, top: NODE_H / 2 - 9 },
-  portRightTrue: { right: -28, top: NODE_H / 3 - 9, flexDirection: "row", alignItems: "center", gap: 2 },
-  portRightFalse: { right: -28, top: (NODE_H * 2) / 3 - 9, flexDirection: "row", alignItems: "center", gap: 2 },
-  portDot: { width: 14, height: 14, borderRadius: 7, borderWidth: 2 },
-  portLabel: { fontSize: 9, color: "#888", fontFamily: "Inter_500Medium" },
+  nodeIconBtn: { padding: 2 },
+  nodeType: {
+    fontSize: 10,
+    fontWeight: "700" as const,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 0.8,
+  },
+  nodeBody: {
+    paddingHorizontal: 10,
+    paddingTop: 8,
+    minHeight: 40,
+    alignItems: "flex-start" as const,
+  },
+  nodeLabel: {
+    fontSize: 12,
+    fontFamily: "Inter_500Medium",
+    lineHeight: 17,
+    marginTop: 2,
+  },
+
+  /* Ports */
+  portLeftWrap: {
+    position: "absolute" as const,
+    left: -8,
+    top: NODE_H / 2 - 8,
+    zIndex: 10,
+    padding: 4,
+  },
+  inputDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    borderWidth: 1.5,
+    borderColor: "rgba(255,255,255,0.4)",
+  },
+  portRightSingle: {
+    position: "absolute" as const,
+    right: -12,
+    top: NODE_H / 2 - 12,
+    zIndex: 10,
+  },
+  portRightTrue: {
+    position: "absolute" as const,
+    right: -46,
+    top: NODE_H / 3 - 12,
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 4,
+    zIndex: 10,
+  },
+  portRightFalse: {
+    position: "absolute" as const,
+    right: -46,
+    top: (NODE_H * 2) / 3 - 12,
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 4,
+    zIndex: 10,
+  },
+  portLabel: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
   toolbar: {
     flexDirection: "row", alignItems: "center", gap: 10,
     paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1,
