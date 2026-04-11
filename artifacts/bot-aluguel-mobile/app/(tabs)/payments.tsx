@@ -9,10 +9,11 @@ import {
 import { Clipboard } from "react-native";
 import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  Animated,
   Dimensions,
   Platform,
   Pressable,
@@ -126,6 +127,8 @@ export default function PaymentsScreen() {
   const [copied, setCopied] = useState(false);
   const [activatingId, setActivatingId] = useState<string | null>(null);
 
+  const copyScale = useRef(new Animated.Value(1)).current;
+
   const createPix = useCreatePixCharge();
   const { data: history, isLoading: historyLoading, refetch: refetchHistory } = useGetPaymentHistory();
   const { data: plans, isLoading: plansLoading } = useListPlans();
@@ -158,8 +161,14 @@ export default function PaymentsScreen() {
     if (!pixData?.copyPaste) return;
     Clipboard.setString(pixData.copyPaste);
     await Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    // Bounce animation
+    Animated.sequence([
+      Animated.spring(copyScale, { toValue: 0.88, useNativeDriver: true, speed: 40 }),
+      Animated.spring(copyScale, { toValue: 1.06, useNativeDriver: true, speed: 20 }),
+      Animated.spring(copyScale, { toValue: 1,    useNativeDriver: true, speed: 20 }),
+    ]).start();
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), 2500);
   };
 
   const handleActivate = (plan: Plan) => {
@@ -343,15 +352,25 @@ export default function PaymentsScreen() {
                   <View style={s.codeBox}>
                     <Text style={s.codeText} numberOfLines={3}>{pixData.copyPaste ?? "—"}</Text>
                   </View>
-                  <Pressable
-                    style={({ pressed }) => [s.copyBtn, copied && s.copyBtnDone, { opacity: pressed ? 0.7 : 1 }]}
-                    onPress={handleCopy}
-                  >
-                    <Feather name={copied ? "check" : "copy"} size={13} color={copied ? "#22C55E" : "#A78BFA"} />
-                    <Text style={[s.copyText, copied && { color: "#22C55E" }]}>
-                      {copied ? "Copiado!" : "Copiar código PIX"}
-                    </Text>
-                  </Pressable>
+                  <Animated.View style={{ transform: [{ scale: copyScale }] }}>
+                    <Pressable
+                      style={({ pressed }) => [
+                        s.copyBtn,
+                        copied ? s.copyBtnDone : s.copyBtnDefault,
+                        { opacity: pressed ? 0.8 : 1 },
+                      ]}
+                      onPress={handleCopy}
+                    >
+                      <Feather
+                        name={copied ? "check-circle" : "copy"}
+                        size={15}
+                        color={copied ? "#22C55E" : "#F0F0F5"}
+                      />
+                      <Text style={[s.copyText, copied && s.copyTextDone]}>
+                        {copied ? "Copiado com sucesso!" : "Copiar código PIX"}
+                      </Text>
+                    </Pressable>
+                  </Animated.View>
                   <Text style={s.waitText}>Aguardando pagamento...</Text>
                 </>
               )}
@@ -536,32 +555,46 @@ const s = StyleSheet.create({
 
   /* PIX card */
   pixCard: {
-    backgroundColor: "#1A1A24", borderRadius: 16, borderWidth: 1,
-    borderColor: "#2A2A35", borderLeftWidth: 3, borderLeftColor: "#22C55E",
-    padding: 16, marginBottom: 20, gap: 12,
+    backgroundColor: "rgba(34,197,94,0.07)",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "rgba(34,197,94,0.18)",
+    padding: 16,
+    marginBottom: 20,
+    gap: 12,
   },
   pixCardHeader: { flexDirection: "row", alignItems: "center", gap: 10 },
   pixCheckWrap: {
-    width: 34, height: 34, borderRadius: 10,
-    backgroundColor: "#22C55E15", alignItems: "center", justifyContent: "center",
+    width: 36, height: 36, borderRadius: 11,
+    backgroundColor: "rgba(34,197,94,0.15)",
+    borderWidth: 1, borderColor: "rgba(34,197,94,0.25)",
+    alignItems: "center", justifyContent: "center",
   },
   pixCardTitle: { fontSize: 15, color: "#F0F0F5", fontFamily: "Inter_600SemiBold" },
   pixCardSub:   { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", marginTop: 2 },
   codeBox: {
-    backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 10,
-    borderWidth: 1, borderColor: "rgba(255,255,255,0.08)", padding: 12,
+    backgroundColor: "rgba(0,0,0,0.25)", borderRadius: 10,
+    borderWidth: 1, borderColor: "rgba(34,197,94,0.12)", padding: 12,
   },
   codeText: { fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular", lineHeight: 18 },
   copyBtn: {
-    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 7,
-    borderRadius: 10, borderWidth: 1, borderColor: "#6D28D940", paddingVertical: 12,
+    flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
+    borderRadius: 12, paddingVertical: 13,
   },
-  copyBtnDone: { borderColor: "#22C55E40" },
-  copyText: { fontSize: 14, color: "#A78BFA", fontFamily: "Inter_600SemiBold" },
-  waitText: { textAlign: "center", fontSize: 12, color: "#A0A0B0", fontFamily: "Inter_400Regular" },
+  copyBtnDefault: {
+    backgroundColor: "#6D28D9",
+  },
+  copyBtnDone: {
+    backgroundColor: "rgba(34,197,94,0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(34,197,94,0.3)",
+  },
+  copyText:     { fontSize: 14, color: "#F0F0F5", fontFamily: "Inter_700Bold" },
+  copyTextDone: { color: "#22C55E" },
+  waitText: { textAlign: "center", fontSize: 12, color: "rgba(34,197,94,0.6)", fontFamily: "Inter_400Regular" },
   paidRow: {
     flexDirection: "row", alignItems: "center", gap: 7,
-    backgroundColor: "#22C55E15", borderRadius: 10, padding: 12,
+    backgroundColor: "rgba(34,197,94,0.12)", borderRadius: 10, padding: 12,
   },
   paidText: { fontSize: 14, color: "#22C55E", fontFamily: "Inter_600SemiBold" },
 
