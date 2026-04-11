@@ -7,7 +7,6 @@ import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, {
   useSharedValue, useAnimatedStyle, runOnJS, type SharedValue,
 } from "react-native-reanimated";
-import Svg, { Path } from "react-native-svg";
 import { Feather } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import { useGetBotCommands, useSaveBotCommands } from "@workspace/api-client-react";
@@ -237,9 +236,28 @@ function getNodeLabel(node: FlowNode): string {
   return node.label;
 }
 
-function bezier(sx: number, sy: number, tx: number, ty: number): string {
-  const cp = Math.max(80, Math.abs(tx - sx) * 0.5);
-  return `M ${sx} ${sy} C ${sx + cp} ${sy} ${tx - cp} ${ty} ${tx} ${ty}`;
+interface EdgeLineProps { x1: number; y1: number; x2: number; y2: number; color: string; }
+function EdgeLine({ x1, y1, x2, y2, color }: EdgeLineProps) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const length = Math.sqrt(dx * dx + dy * dy);
+  const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+  if (length < 1) return null;
+  return (
+    <View
+      style={{
+        position: "absolute",
+        left: x1 + dx / 2 - length / 2,
+        top:  y1 + dy / 2 - 1.5,
+        width: length,
+        height: 3,
+        backgroundColor: color,
+        opacity: 0.75,
+        borderRadius: 2,
+        transform: [{ rotate: `${angle}deg` }],
+      }}
+    />
+  );
 }
 
 interface NodeCardProps {
@@ -525,11 +543,9 @@ export default function BuilderScreen() {
         <View style={s.canvasContainer}>
           <Animated.View style={[s.canvas, canvasStyle]}>
             <View style={s.canvasBg} />
-            <Svg
+            <View
               pointerEvents="none"
-              style={{ position: "absolute", top: 0, left: 0 }}
-              width={CANVAS_SIZE}
-              height={CANVAS_SIZE}
+              style={{ position: "absolute", top: 0, left: 0, width: CANVAS_SIZE, height: CANVAS_SIZE }}
             >
               {edges.map(edge => {
                 const src = getNodeById(edge.source);
@@ -543,17 +559,15 @@ export default function BuilderScreen() {
                 const ty = tgt.y + NODE_H / 2;
                 const edgeColor = edge.sourceHandle === "true" ? "#22C55E" : edge.sourceHandle === "false" ? "#EF4444" : "#7C3AED";
                 return (
-                  <Path
+                  <EdgeLine
                     key={edge.id}
-                    d={bezier(sx, sy, tx, ty)}
-                    stroke={edgeColor}
-                    strokeWidth={2}
-                    fill="none"
-                    strokeOpacity={0.7}
+                    x1={sx} y1={sy}
+                    x2={tx} y2={ty}
+                    color={edgeColor}
                   />
                 );
               })}
-            </Svg>
+            </View>
 
             {nodes.map(node => (
               <NodeCard
