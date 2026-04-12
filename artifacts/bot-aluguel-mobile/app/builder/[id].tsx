@@ -566,7 +566,7 @@ export default function BuilderScreen() {
   const [connectingFrom, setConnectingFrom] = useState<{ nodeId: string; handle?: "true" | "false"; color: string } | null>(null);
   const [liveLine, setLiveLine] = useState<{ x1: number; y1: number; x2: number; y2: number; color: string } | null>(null);
   const [hoverNodeId, setHoverNodeId] = useState<string | null>(null);
-  const [showTypePicker, setShowTypePicker] = useState(false);
+  const [draggingType, setDraggingType] = useState<NodeType | null>(null);
   const [showTemplates, setShowTemplates] = useState(false);
   const [hasUnsaved, setHasUnsaved] = useState(false);
   const [draggingPos, setDraggingPos] = useState<{ id: string; x: number; y: number } | null>(null);
@@ -609,6 +609,9 @@ export default function BuilderScreen() {
   const savedScale = useSharedValue(1);
   const containerW = useSharedValue(300);
   const containerH = useSharedValue(600);
+  const ghostX = useSharedValue(0);
+  const ghostY = useSharedValue(0);
+  const ghostVisible = useSharedValue(0);
 
   const canvasStyle = useAnimatedStyle(() => ({
     transform: [
@@ -616,6 +619,14 @@ export default function BuilderScreen() {
       { translateY: canvasY.value },
       { scale: canvasScale.value },
     ],
+  }));
+
+  const ghostStyle = useAnimatedStyle(() => ({
+    position: "absolute" as const,
+    left: ghostX.value - 52,
+    top: ghostY.value - 18,
+    opacity: ghostVisible.value,
+    zIndex: 999,
   }));
 
   const panGesture = Gesture.Pan()
@@ -648,12 +659,11 @@ export default function BuilderScreen() {
       const f = Math.max(minF, Math.min(maxF, e.scale));
       const newScale = savedScale.value * f;
 
-      // Focal point of the pinch in container coords (always use saved baseline — no feedback loop)
-      // Formula: newCX = (1-f)*(focalX - CANVAS_SIZE/2) + f*savedCX
+      // Keep the pinch focal point stationary: newCX = (1-f)*focalX + f*savedCX
       const fX = e.focalX;
       const fY = e.focalY;
-      canvasX.value = (1 - f) * (fX - CANVAS_SIZE / 2) + f * savedCX.value;
-      canvasY.value = (1 - f) * (fY - CANVAS_SIZE / 2) + f * savedCY.value;
+      canvasX.value = (1 - f) * fX + f * savedCX.value;
+      canvasY.value = (1 - f) * fY + f * savedCY.value;
       canvasScale.value = newScale;
     });
 
@@ -766,12 +776,59 @@ export default function BuilderScreen() {
     ]);
   }, []);
 
-  const addNode = useCallback((type: NodeType) => {
-    const n = makeNode(type, 100 + nodes.length * 220 % 600, 180 + Math.floor(nodes.length / 3) * 140);
+  const addNode = useCallback((type: NodeType, cx?: number, cy?: number) => {
+    const x = cx ?? 100 + nodes.length * 220 % 600;
+    const y = cy ?? 180 + Math.floor(nodes.length / 3) * 140;
+    const n = makeNode(type, x, y);
     setNodes(prev => [...prev, n]);
     setHasUnsaved(true);
-    setShowTypePicker(false);
   }, [nodes.length]);
+
+  const addNodeAtCenter = useCallback((type: NodeType) => {
+    const absX = canvasOX.value + containerW.value / 2;
+    const absY = canvasOY.value + containerH.value / 2;
+    const cx = (absX - canvasOX.value - canvasX.value) / canvasScale.value - NODE_W / 2;
+    const cy = (absY - canvasOY.value - canvasY.value) / canvasScale.value - NODE_H / 2;
+    addNode(type, Math.max(20, cx), Math.max(20, cy));
+  }, [canvasOX, canvasOY, containerW, containerH, canvasX, canvasY, canvasScale, addNode]);
+
+  const handlePillDrop = useCallback((type: NodeType, absX: number, absY: number) => {
+    setDraggingType(null);
+    const relX = absX - canvasOX.value;
+    const relY = absY - canvasOY.value;
+    if (relX < 0 || relX > containerW.value || relY < 0 || relY > containerH.value) return;
+    const cx = (absX - canvasOX.value - canvasX.value) / canvasScale.value - NODE_W / 2;
+    const cy = (absY - canvasOY.value - canvasY.value) / canvasScale.value - NODE_H / 2;
+    addNode(type, Math.max(20, cx), Math.max(20, cy));
+  }, [canvasOX, canvasOY, containerW, containerH, canvasX, canvasY, canvasScale, addNode]);
+
+  const PILL_TYPES: NodeType[] = ["command", "action", "condition", "response", "buttons"];
+  const pillGestures = PILL_TYPES.map((type) =>
+    Gesture.Pan()
+      .onStart((e) => {
+        "worklet";
+        ghostX.value = e.absoluteX;
+        ghostY.value = e.absoluteY;
+        runOnJS(setDraggingType)(type);
+      })
+      .onUpdate((e) => {
+        "worklet";
+        const moved = Math.sqrt(e.translationX * e.translationX + e.translationY * e.translationY);
+        if (moved > 8) ghostVisible.value = 1;
+        ghostX.value = e.absoluteX;
+        ghostY.value = e.absoluteY;
+      })
+      .onEnd((e) => {
+        "worklet";
+        ghostVisible.value = 0;
+        const moved = Math.sqrt(e.translationX * e.translationX + e.translationY * e.translationY);
+        if (moved < 10) {
+          runOnJS(addNodeAtCenter)(type);
+        } else {
+          runOnJS(handlePillDrop)(type, e.absoluteX, e.absoluteY);
+        }
+      })
+  );
 
   const updateNode = useCallback((updated: FlowNode) => {
     setNodes(prev => prev.map(n => n.id === updated.id ? updated : n));
@@ -812,9 +869,9 @@ export default function BuilderScreen() {
     const oldScale = canvasScale.value;
     const newScale = Math.max(0.25, Math.min(2.5, oldScale * factor));
     const f = newScale / oldScale;
-    // Zoom toward viewport center using: cx' = (1-f)*(cW/2 - CANVAS_SIZE/2) + f*cx
-    const newCX = (1 - f) * (containerW.value / 2 - CANVAS_SIZE / 2) + f * canvasX.value;
-    const newCY = (1 - f) * (containerH.value / 2 - CANVAS_SIZE / 2) + f * canvasY.value;
+    // Keep viewport center stationary: newCX = (1-f)*(cW/2) + f*cx
+    const newCX = (1 - f) * (containerW.value / 2) + f * canvasX.value;
+    const newCY = (1 - f) * (containerH.value / 2) + f * canvasY.value;
     canvasX.value = withTiming(newCX, { duration: 180 });
     canvasY.value = withTiming(newCY, { duration: 180 });
     canvasScale.value = withTiming(newScale, { duration: 180 });
@@ -876,17 +933,28 @@ export default function BuilderScreen() {
             </View>
           )}
         </View>
-      </View>
 
-      {connectingFrom && (
-        <View style={[s.connectingBanner, { backgroundColor: "#F59E0B20", borderColor: "#F59E0B40" }]}>
-          <Feather name="link" size={14} color="#F59E0B" />
-          <Text style={[s.connectingText, { color: "#F59E0B" }]}>Toque em outro bloco para conectar</Text>
-          <Pressable onPress={() => setConnectingFrom(null)}>
-            <Feather name="x" size={16} color="#F59E0B" />
-          </Pressable>
-        </View>
-      )}
+        {/* Row 3: block type pills — tap or drag-to-create */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={s.pillsRow}
+          contentContainerStyle={s.pillsRowContent}
+        >
+          {PILL_TYPES.map((type, i) => {
+            const cfg = NODE_CFG[type];
+            return (
+              <GestureDetector key={type} gesture={pillGestures[i]}>
+                <View style={[s.blockPill, { backgroundColor: cfg.dim, borderColor: cfg.color + "55" }]}>
+                  <Feather name="plus" size={10} color={cfg.color} />
+                  <Feather name={cfg.icon as any} size={11} color={cfg.color} />
+                  <Text style={[s.blockPillText, { color: cfg.color }]}>{cfg.label}</Text>
+                </View>
+              </GestureDetector>
+            );
+          })}
+        </ScrollView>
+      </View>
 
       <GestureDetector gesture={composedGesture}>
         <View
@@ -964,10 +1032,7 @@ export default function BuilderScreen() {
           <Feather name="layout" size={18} color={C.primary} />
           <Text style={[s.toolBtnText, { color: C.primary }]}>Templates</Text>
         </Pressable>
-        <Pressable style={[s.toolBtnPrimary, { backgroundColor: C.primary }]} onPress={() => setShowTypePicker(true)}>
-          <Feather name="plus" size={20} color="#FFF" />
-          <Text style={s.toolBtnPrimaryText}>Adicionar bloco</Text>
-        </Pressable>
+        <View style={{ flex: 1 }} />
         <View style={s.zoomBtns}>
           <Pressable style={[s.zoomBtn, { backgroundColor: C.secondary }]} onPress={() => zoom(1.2)}>
             <Feather name="zoom-in" size={16} color={C.fg} />
@@ -978,17 +1043,25 @@ export default function BuilderScreen() {
         </View>
       </View>
 
+      {/* Drag ghost — follows finger when dragging a block pill */}
+      <Animated.View style={ghostStyle} pointerEvents="none">
+        {draggingType && (() => {
+          const cfg = NODE_CFG[draggingType];
+          return (
+            <View style={[s.blockPill, s.blockPillGhost, { backgroundColor: cfg.dim, borderColor: cfg.color + "80" }]}>
+              <Feather name="plus" size={10} color={cfg.color} />
+              <Feather name={cfg.icon as any} size={11} color={cfg.color} />
+              <Text style={[s.blockPillText, { color: cfg.color }]}>{cfg.label}</Text>
+            </View>
+          );
+        })()}
+      </Animated.View>
+
       <NodeEditor
         node={editingNode}
         onSave={updateNode}
         onDelete={handleDeleteNode}
         onClose={() => setEditingNode(null)}
-      />
-
-      <TypePickerModal
-        visible={showTypePicker}
-        onSelect={addNode}
-        onClose={() => setShowTypePicker(false)}
       />
 
       <TemplatesModal
@@ -1369,6 +1442,18 @@ const s = StyleSheet.create({
   toolBtnPrimaryText: { color: "#FFF", fontSize: 14, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
   zoomBtns: { flexDirection: "row", gap: 6 },
   zoomBtn: { width: 38, height: 38, borderRadius: 10, alignItems: "center", justifyContent: "center" },
+  pillsRow: { marginTop: 6 },
+  pillsRowContent: {
+    paddingHorizontal: 12, paddingBottom: 10, gap: 7,
+    flexDirection: "row" as const, alignItems: "center",
+  },
+  blockPill: {
+    flexDirection: "row" as const, alignItems: "center", gap: 5,
+    paddingHorizontal: 11, paddingVertical: 7,
+    borderRadius: 20, borderWidth: 1,
+  },
+  blockPillGhost: { shadowColor: "#000", shadowOpacity: 0.4, shadowRadius: 12, shadowOffset: { width: 0, height: 4 }, elevation: 10 },
+  blockPillText: { fontSize: 12, fontFamily: "Inter_500Medium", letterSpacing: 0.2 },
   editorOverlay: { flex: 1 },
   editorSheet: {
     borderTopLeftRadius: 24, borderTopRightRadius: 24,
