@@ -590,16 +590,6 @@ export default function BuilderScreen() {
   const canvasOY = useSharedValue(0);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      canvasContainerRef.current?.measureInWindow((x, y) => {
-        canvasOX.value = x;
-        canvasOY.value = y;
-      });
-    }, 600);
-    return () => clearTimeout(timer);
-  }, []);
-
-  useEffect(() => {
     if (commandData) {
       const rawNodes: any[] = (commandData as any).nodes ?? [];
       const normalizedNodes: FlowNode[] = rawNodes.map((n: any) => ({
@@ -620,6 +610,19 @@ export default function BuilderScreen() {
   const savedScale = useSharedValue(1);
   const containerW = useSharedValue(300);
   const containerH = useSharedValue(600);
+
+  // Measure canvas absolute position — called on layout to get accurate screen coords
+  const measureCanvas = useCallback(() => {
+    canvasContainerRef.current?.measureInWindow((x, y, w, h) => {
+      if (w > 0) {
+        canvasOX.value = x;
+        canvasOY.value = y;
+        containerW.value = w;
+        containerH.value = h;
+      }
+    });
+  }, [canvasOX, canvasOY, containerW, containerH]);
+
   const ghostX = useSharedValue(0);
   const ghostY = useSharedValue(0);
   const ghostVisible = useSharedValue(0);
@@ -682,10 +685,15 @@ export default function BuilderScreen() {
   const composedGesture = Gesture.Simultaneous(panGesture, pinchGesture);
 
   /* --- Port drag handlers --- */
-  const absToCanvas = useCallback((absX: number, absY: number) => ({
-    x: (absX - canvasOX.value - canvasX.value) / canvasScale.value,
-    y: (absY - canvasOY.value - canvasY.value) / canvasScale.value,
-  }), [canvasOX, canvasOY, canvasX, canvasY, canvasScale]);
+  const absToCanvas = useCallback((absX: number, absY: number) => {
+    const s = canvasScale.value;
+    const pX = absX - canvasOX.value;
+    const pY = absY - canvasOY.value;
+    return {
+      x: (pX - 1500 - canvasX.value) / s + 1500,
+      y: (pY - 1500 - canvasY.value) / s + 1500,
+    };
+  }, [canvasOX, canvasOY, canvasX, canvasY, canvasScale]);
 
   const handlePortDragStart = useCallback((portX: number, portY: number, color: string, nodeId: string, handle?: "true" | "false") => {
     setConnectingFrom({ nodeId, handle, color });
@@ -797,22 +805,36 @@ export default function BuilderScreen() {
   }, [nodes.length]);
 
   const addNodeAtCenter = useCallback((type: NodeType) => {
-    const absX = canvasOX.value + containerW.value / 2;
-    const absY = canvasOY.value + containerH.value / 2;
-    const cx = (absX - canvasOX.value - canvasX.value) / canvasScale.value - NODE_W / 2;
-    const cy = (absY - canvasOY.value - canvasY.value) / canvasScale.value - NODE_H / 2;
+    // parent_x for viewport center = containerW/2
+    const parentX = containerW.value / 2;
+    const parentY = containerH.value / 2;
+    const s = canvasScale.value;
+    const tx = canvasX.value;
+    const ty = canvasY.value;
+    const cx = (parentX - 1500 - tx) / s + 1500 - NODE_W / 2;
+    const cy = (parentY - 1500 - ty) / s + 1500 - NODE_H / 2;
     addNode(type, Math.max(20, cx), Math.max(20, cy));
-  }, [canvasOX, canvasOY, containerW, containerH, canvasX, canvasY, canvasScale, addNode]);
+  }, [containerW, containerH, canvasX, canvasY, canvasScale, addNode]);
 
   const handlePillDrop = useCallback((type: NodeType, absX: number, absY: number) => {
     setDraggingType(null);
-    const relX = absX - canvasOX.value;
-    const relY = absY - canvasOY.value;
-    if (relX < 0 || relX > containerW.value || relY < 0 || relY > containerH.value) return;
-    const cx = (absX - canvasOX.value - canvasX.value) / canvasScale.value - NODE_W / 2;
-    const cy = (absY - canvasOY.value - canvasY.value) / canvasScale.value - NODE_H / 2;
-    addNode(type, Math.max(20, cx), Math.max(20, cy));
-  }, [canvasOX, canvasOY, containerW, containerH, canvasX, canvasY, canvasScale, addNode]);
+    // Convert absolute screen coords → canvas-local coords
+    // RN transforms: parent_x = (cx - 1500)*scale + 1500 + tx
+    // Inverse:       cx = (parent_x - 1500 - tx) / scale + 1500
+    const oX = canvasOX.value;
+    const oY = canvasOY.value;
+    const s = canvasScale.value;
+    const tx = canvasX.value;
+    const ty = canvasY.value;
+    const parentX = absX - oX;
+    const parentY = absY - oY;
+    const cx = (parentX - 1500 - tx) / s + 1500 - NODE_W / 2;
+    const cy = (parentY - 1500 - ty) / s + 1500 - NODE_H / 2;
+    // Clamp within canvas bounds
+    const clampedX = Math.max(20, Math.min(CANVAS_SIZE - NODE_W - 20, cx));
+    const clampedY = Math.max(20, Math.min(CANVAS_SIZE - NODE_H - 20, cy));
+    addNode(type, clampedX, clampedY);
+  }, [canvasOX, canvasOY, canvasX, canvasY, canvasScale, addNode]);
 
   const PILL_TYPES: NodeType[] = ["command", "action", "condition", "response", "buttons"];
   const pillGestures = PILL_TYPES.map((type) =>
@@ -981,9 +1003,9 @@ export default function BuilderScreen() {
         <View
           ref={canvasContainerRef}
           style={s.canvasContainer}
-          onLayout={(e) => {
-            containerW.value = e.nativeEvent.layout.width;
-            containerH.value = e.nativeEvent.layout.height;
+          onLayout={() => {
+            // Re-measure on every layout change for accurate absolute coordinates
+            setTimeout(measureCanvas, 50);
           }}
         >
           <Animated.View style={[s.canvas, canvasStyle]}>
