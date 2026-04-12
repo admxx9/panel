@@ -788,19 +788,55 @@ export default function BuilderScreen() {
 
   return (
     <View style={[s.root, { backgroundColor: C.bg }]}>
-      <View style={[s.topBar, { paddingTop: paddingTop + 10, borderBottomColor: C.border }]}>
-        <Pressable style={s.backBtn} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={20} color={C.fg} />
-        </Pressable>
-        <Text style={[s.title, { color: C.fg }]}>Construtor de Fluxo</Text>
-        <View style={s.topBarRight}>
-          {hasUnsaved && (
-            <View style={s.unsavedDot} />
-          )}
-          <Pressable style={[s.saveBtn, { backgroundColor: "#7C3AED" }]} onPress={handleSave} disabled={saveMutation.isPending}>
-            <Feather name="save" size={14} color="#FFF" />
-            <Text style={s.saveBtnText}>{saveMutation.isPending ? "Salvando…" : "Salvar"}</Text>
+      {/* ── HEADER: Edge glass style ── */}
+      <View style={[s.topBar, { paddingTop: paddingTop + 10, borderBottomColor: "rgba(255,255,255,0.06)", backgroundColor: "#0A0A14" }]}>
+        {/* Row 1: back | title+subtitle | mode pills | save */}
+        <View style={s.topBarRow}>
+          {/* Back button — glass */}
+          <Pressable style={s.backBtnGlass} onPress={() => router.back()}>
+            <Feather name="chevron-left" size={18} color="#8E8E9E" />
           </Pressable>
+
+          {/* Title + subtitle */}
+          <View style={{ flex: 1, marginLeft: 10 }}>
+            <Text style={s.titleEdge}>Construtor Visual</Text>
+            <Text style={s.subtitleEdge}>Arraste para navegar · Scroll para zoom</Text>
+          </View>
+
+          {/* Mode mini-toolbar — glass pill */}
+          <View style={s.modePill}>
+            <View style={s.modeBtnActive}>
+              <Feather name="move" size={13} color="#fff" />
+            </View>
+            <View style={s.modeBtnInactive}>
+              <Feather name="eye" size={13} color="#555575" />
+            </View>
+          </View>
+
+          {/* Save button */}
+          <Pressable
+            style={[s.saveBtnEdge, saveMutation.isPending && { opacity: 0.6 }]}
+            onPress={handleSave}
+            disabled={saveMutation.isPending}
+          >
+            <Feather name="save" size={14} color="#FFF" />
+            <Text style={s.saveBtnText}>{saveMutation.isPending ? "…" : "Salvar"}</Text>
+          </Pressable>
+        </View>
+
+        {/* Row 2: bot id badge + unsaved indicator */}
+        <View style={s.topBarRow2}>
+          <View style={s.botBadge}>
+            <View style={[s.statusDot, { shadowColor: "#22C55E", shadowOpacity: 0.9, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } }]} />
+            <Text style={s.botBadgeText} numberOfLines={1}>Bot #{String(botId ?? "").slice(0, 8)}</Text>
+            <Feather name="chevron-down" size={13} color="#555575" />
+          </View>
+          {hasUnsaved && (
+            <View style={s.unsavedChip}>
+              <View style={[s.unsavedDot, { marginRight: 4 }]} />
+              <Text style={s.unsavedText}>não salvo</Text>
+            </View>
+          )}
         </View>
       </View>
 
@@ -1103,14 +1139,74 @@ function TemplatesModal({ visible, onSelect, onClose }: { visible: boolean; onSe
 
 const s = StyleSheet.create({
   root: { flex: 1 },
+  /* ── Edge-style header ── */
   topBar: {
-    flexDirection: "row", alignItems: "center", justifyContent: "space-between",
-    paddingHorizontal: 16, paddingBottom: 12, borderBottomWidth: 1,
+    paddingHorizontal: 16, paddingBottom: 10, borderBottomWidth: 1,
+    gap: 10,
   },
+  topBarRow: {
+    flexDirection: "row" as const, alignItems: "center", gap: 8,
+  },
+  topBarRow2: {
+    flexDirection: "row" as const, alignItems: "center", justifyContent: "space-between",
+  },
+  backBtnGlass: {
+    width: 34, height: 34, alignItems: "center", justifyContent: "center",
+    borderRadius: 12, borderWidth: 1,
+    backgroundColor: "rgba(255,255,255,0.05)", borderColor: "rgba(255,255,255,0.08)",
+  },
+  titleEdge: {
+    fontSize: 15, fontWeight: "700" as const, fontFamily: "Inter_700Bold",
+    color: "#EBEBF2", lineHeight: 18,
+  },
+  subtitleEdge: {
+    fontSize: 9, fontFamily: "Inter_400Regular",
+    color: "#3A3A58", marginTop: 1,
+  },
+  modePill: {
+    flexDirection: "row" as const, alignItems: "center", gap: 3,
+    paddingHorizontal: 5, paddingVertical: 5, borderRadius: 14, borderWidth: 1,
+    backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.07)",
+  },
+  modeBtnActive: {
+    width: 28, height: 28, alignItems: "center", justifyContent: "center",
+    borderRadius: 10, backgroundColor: "#6D28D9",
+  },
+  modeBtnInactive: {
+    width: 28, height: 28, alignItems: "center", justifyContent: "center",
+    borderRadius: 10,
+  },
+  saveBtnEdge: {
+    flexDirection: "row" as const, alignItems: "center", gap: 6,
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14,
+    backgroundColor: "#7C3AED",
+    shadowColor: "#7C3AED", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.45, shadowRadius: 10, elevation: 6,
+  },
+  botBadge: {
+    flexDirection: "row" as const, alignItems: "center", gap: 7,
+    paddingHorizontal: 12, paddingVertical: 8, borderRadius: 14, borderWidth: 1,
+    backgroundColor: "rgba(255,255,255,0.03)", borderColor: "rgba(255,255,255,0.06)",
+    flex: 1, marginRight: 8,
+  },
+  statusDot: {
+    width: 7, height: 7, borderRadius: 4, backgroundColor: "#22C55E",
+  },
+  botBadgeText: {
+    flex: 1, fontSize: 12, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold", color: "#EBEBF2",
+  },
+  unsavedChip: {
+    flexDirection: "row" as const, alignItems: "center",
+    paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10, borderWidth: 1,
+    backgroundColor: "rgba(245,158,11,0.10)", borderColor: "rgba(245,158,11,0.25)",
+  },
+  unsavedText: {
+    fontSize: 10, fontFamily: "Inter_500Medium", color: "#F59E0B",
+  },
+  /* kept for compatibility */
   backBtn: { width: 36, height: 36, alignItems: "center", justifyContent: "center" },
   title: { flex: 1, textAlign: "center" as const, fontSize: 16, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
   topBarRight: { flexDirection: "row", alignItems: "center", gap: 8 },
-  unsavedDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "#F59E0B" },
+  unsavedDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#F59E0B" },
   saveBtn: { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
   saveBtnText: { color: "#FFF", fontSize: 13, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
   connectingBanner: {
