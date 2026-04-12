@@ -627,14 +627,16 @@ export default function BuilderScreen() {
   const ghostX = useSharedValue(0);
   const ghostY = useSharedValue(0);
   const ghostVisible = useSharedValue(0);
-  const isPinching = useSharedValue(false);
 
+  // Scale from top-left (0,0) — simplifies ALL coordinate math
   const canvasStyle = useAnimatedStyle(() => ({
     transform: [
       { translateX: canvasX.value },
       { translateY: canvasY.value },
       { scale: canvasScale.value },
     ],
+    // @ts-ignore web-only, native uses center by default but we override
+    transformOrigin: "0% 0%",
   }));
 
   const ghostStyle = useAnimatedStyle(() => ({
@@ -645,7 +647,8 @@ export default function BuilderScreen() {
     zIndex: 999,
   }));
 
-  // Stable gesture objects — created once with useMemo to prevent re-registration on every render
+  // --- Canvas gestures (stable via useMemo) ---
+  // 1-finger = pan, 2-finger = pinch zoom (Exclusive: pinch takes priority)
   const panGesture = useMemo(() =>
     Gesture.Pan()
       .minDistance(6)
@@ -656,13 +659,6 @@ export default function BuilderScreen() {
       })
       .onUpdate((e) => {
         "worklet";
-        // During pinch, keep savedCX/CY in sync but don't move canvas
-        // (pinch handles translation itself)
-        if (isPinching.value) {
-          savedCX.value = canvasX.value - e.translationX;
-          savedCY.value = canvasY.value - e.translationY;
-          return;
-        }
         canvasX.value = savedCX.value + e.translationX;
         canvasY.value = savedCY.value + e.translationY;
       }),
@@ -674,7 +670,6 @@ export default function BuilderScreen() {
     Gesture.Pinch()
       .onStart(() => {
         "worklet";
-        isPinching.value = true;
         savedScale.value = canvasScale.value;
         savedCX.value = canvasX.value;
         savedCY.value = canvasY.value;
@@ -684,37 +679,29 @@ export default function BuilderScreen() {
         const minF = 0.25 / savedScale.value;
         const maxF = 2.5  / savedScale.value;
         const f = Math.max(minF, Math.min(maxF, e.scale));
-        const newScale = savedScale.value * f;
-        // Pivot at pinch focal point:  newCX = (fX - 1500)*(1-f) + f*savedCX
-        canvasX.value = (e.focalX - 1500) * (1 - f) + f * savedCX.value;
-        canvasY.value = (e.focalY - 1500) * (1 - f) + f * savedCY.value;
-        canvasScale.value = newScale;
-      })
-      .onEnd(() => {
-        "worklet";
-        isPinching.value = false;
-      })
-      .onFinalize(() => {
-        "worklet";
-        isPinching.value = false;
+        canvasScale.value = savedScale.value * f;
+        // Keep focal point stationary: newTX = fX*(1-f) + f*savedTX
+        canvasX.value = e.focalX * (1 - f) + f * savedCX.value;
+        canvasY.value = e.focalY * (1 - f) + f * savedCY.value;
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
+  // Exclusive: pinch wins when 2 fingers detected, otherwise pan
   const composedGesture = useMemo(() =>
-    Gesture.Simultaneous(panGesture, pinchGesture),
+    Gesture.Exclusive(pinchGesture, panGesture),
     [panGesture, pinchGesture]
   );
 
   /* --- Port drag handlers --- */
+  // With transformOrigin 0,0: parent_x = cx * scale + tx
+  // Inverse: cx = (parent_x - tx) / scale
   const absToCanvas = useCallback((absX: number, absY: number) => {
     const s = canvasScale.value;
-    const pX = absX - canvasOX.value;
-    const pY = absY - canvasOY.value;
     return {
-      x: (pX - 1500 - canvasX.value) / s + 1500,
-      y: (pY - 1500 - canvasY.value) / s + 1500,
+      x: (absX - canvasOX.value - canvasX.value) / s,
+      y: (absY - canvasOY.value - canvasY.value) / s,
     };
   }, [canvasOX, canvasOY, canvasX, canvasY, canvasScale]);
 
@@ -828,32 +815,21 @@ export default function BuilderScreen() {
   }, [nodes.length]);
 
   const addNodeAtCenter = useCallback((type: NodeType) => {
-    // parent_x for viewport center = containerW/2
-    const parentX = containerW.value / 2;
-    const parentY = containerH.value / 2;
+    // With transformOrigin 0,0: cx = (parentX - tx) / s
     const s = canvasScale.value;
-    const tx = canvasX.value;
-    const ty = canvasY.value;
-    const cx = (parentX - 1500 - tx) / s + 1500 - NODE_W / 2;
-    const cy = (parentY - 1500 - ty) / s + 1500 - NODE_H / 2;
+    const cx = (containerW.value / 2 - canvasX.value) / s - NODE_W / 2;
+    const cy = (containerH.value / 2 - canvasY.value) / s - NODE_H / 2;
     addNode(type, Math.max(20, cx), Math.max(20, cy));
   }, [containerW, containerH, canvasX, canvasY, canvasScale, addNode]);
 
   const handlePillDrop = useCallback((type: NodeType, absX: number, absY: number) => {
     setDraggingType(null);
-    // Convert absolute screen coords → canvas-local coords
-    // RN transforms: parent_x = (cx - 1500)*scale + 1500 + tx
-    // Inverse:       cx = (parent_x - 1500 - tx) / scale + 1500
-    const oX = canvasOX.value;
-    const oY = canvasOY.value;
+    // With transformOrigin 0,0: cx = (parentX - tx) / s
     const s = canvasScale.value;
     const tx = canvasX.value;
     const ty = canvasY.value;
-    const parentX = absX - oX;
-    const parentY = absY - oY;
-    const cx = (parentX - 1500 - tx) / s + 1500 - NODE_W / 2;
-    const cy = (parentY - 1500 - ty) / s + 1500 - NODE_H / 2;
-    // Clamp within canvas bounds
+    const cx = (absX - canvasOX.value - tx) / s - NODE_W / 2;
+    const cy = (absY - canvasOY.value - ty) / s - NODE_H / 2;
     const clampedX = Math.max(20, Math.min(CANVAS_SIZE - NODE_W - 20, cx));
     const clampedY = Math.max(20, Math.min(CANVAS_SIZE - NODE_H - 20, cy));
     addNode(type, clampedX, clampedY);
@@ -927,15 +903,14 @@ export default function BuilderScreen() {
     const oldS = canvasScale.value;
     const newS = Math.max(0.25, Math.min(2.5, oldS * factor));
     const f = newS / oldS;
-    // With RN scale around canvas center (1500,1500):
-    //   container_x = (cx - 1500)*s + 1500 + tx
-    // Keeping viewport center (cW/2) stationary: newTX = (cW/2 - 1500)*(1-f) + f*tx
     const cW = containerW.value > 50 ? containerW.value : 390;
     const cH = containerH.value > 50 ? containerH.value : 600;
     const tx = canvasX.value;
     const ty = canvasY.value;
-    canvasX.value = withTiming((cW / 2 - 1500) * (1 - f) + f * tx, { duration: 200 });
-    canvasY.value = withTiming((cH / 2 - 1500) * (1 - f) + f * ty, { duration: 200 });
+    // With transformOrigin 0,0: keep viewport center stationary
+    // newTX = (cW/2)*(1-f) + f*tx
+    canvasX.value = withTiming((cW / 2) * (1 - f) + f * tx, { duration: 200 });
+    canvasY.value = withTiming((cH / 2) * (1 - f) + f * ty, { duration: 200 });
     canvasScale.value = withTiming(newS, { duration: 200 });
   }, [canvasScale, canvasX, canvasY, containerW, containerH]);
 
