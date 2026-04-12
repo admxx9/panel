@@ -1209,17 +1209,15 @@ const s = StyleSheet.create({
     color: "#3A3A58", marginTop: 1,
   },
   modePill: {
-    flexDirection: "row" as const, alignItems: "center", gap: 3,
-    paddingHorizontal: 5, paddingVertical: 5, borderRadius: 14, borderWidth: 1,
-    backgroundColor: "rgba(255,255,255,0.04)", borderColor: "rgba(255,255,255,0.07)",
+    flexDirection: "row" as const, alignItems: "center", gap: 6,
   },
   modeBtnActive: {
-    width: 28, height: 28, alignItems: "center", justifyContent: "center",
-    borderRadius: 10, backgroundColor: "#6D28D9",
+    width: 32, height: 32, alignItems: "center", justifyContent: "center",
+    borderRadius: 16, backgroundColor: "#6D28D9",
   },
   modeBtnInactive: {
-    width: 28, height: 28, alignItems: "center", justifyContent: "center",
-    borderRadius: 10,
+    width: 32, height: 32, alignItems: "center", justifyContent: "center",
+    borderRadius: 16, backgroundColor: "rgba(255,255,255,0.06)",
   },
   saveBtnEdge: {
     flexDirection: "row" as const, alignItems: "center", gap: 6,
