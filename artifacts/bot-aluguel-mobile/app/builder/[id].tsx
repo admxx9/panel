@@ -178,48 +178,136 @@ function makeNode(type: NodeType, x: number, y: number): FlowNode {
   return { id: uid(), type, label: cfg.label, config: {}, x, y };
 }
 
-const TEMPLATES: { name: string; icon: string; nodes: Partial<FlowNode>[]; edges: Partial<FlowEdge>[] }[] = [
+const TEMPLATES: { name: string; icon: string; desc: string; nodes: Partial<FlowNode>[]; edges: Partial<FlowEdge>[] }[] = [
   {
-    name: "Menu Principal", icon: "list",
+    name: "Menu Principal", icon: "list", desc: "Menu interativo com lista de comandos",
     nodes: [
-      { type: "command", label: "Comando", config: { name: "menu", prefix: "." }, x: 60, y: 240 },
-      { type: "response", label: "Resposta", config: { texto: "🤖 *Menu do Bot*\n\n🖼️ .sticker — Criar figurinha\n📋 .menu — Ver opções\n💰 .saldo — Ver moedas", tipoResposta: "texto" }, x: 320, y: 240 },
-    ],
-    edges: [{ source: "0", target: "1" }],
-  },
-  {
-    name: "Figurinha", icon: "image",
-    nodes: [
-      { type: "command", label: "Comando", config: { name: "sticker", prefix: "." }, x: 60, y: 240 },
-      { type: "action", label: "Ação", config: { action: "make_sticker" }, x: 320, y: 240 },
-    ],
-    edges: [{ source: "0", target: "1" }],
-  },
-  {
-    name: "Marcar Todos", icon: "at-sign",
-    nodes: [
-      { type: "command", label: "Comando", config: { name: "marcar", prefix: ".", requerAdmin: true }, x: 60, y: 240 },
-      { type: "condition", label: "Condição", config: { condition: "is_admin" }, x: 320, y: 240 },
-      { type: "action", label: "Ação (Sim)", config: { action: "hidetag", message: "📢 Atenção a todos!" }, x: 580, y: 140 },
-      { type: "response", label: "Negado (Não)", config: { texto: "❌ Apenas admins podem usar este comando!", tipoResposta: "texto" }, x: 580, y: 340 },
+      { type: "command", label: "Comando", config: { name: "menu", prefix: "." }, x: 60, y: 200 },
+      { type: "condition", label: "É grupo?", config: { condition: "is_group" }, x: 300, y: 200 },
+      { type: "response", label: "Menu Grupo", config: { texto: "🤖 *Menu do Bot*\n\n👤 Olá, {nome}!\n🪙 Moedas: {moedas}\n\n📋 *Comandos:*\n🖼️ .sticker — Figurinha\n📢 .marcar — Marcar todos\n💰 .saldo — Ver moedas\n🎲 .dado — Rolar dado\n🏆 .top — Ranking\n📊 .rank — Meu rank\n\n_Digite o comando desejado_", tipoResposta: "texto", mention: true }, x: 540, y: 100 },
+      { type: "response", label: "Menu PV", config: { texto: "🤖 *Menu Privado*\n\n👤 {nome}\n📦 Plano: {plano}\n🪙 Moedas: {moedas}\n\n📋 *Opções:*\n💳 .planos — Ver planos\n🔑 .meubot — Painel do bot\n📊 .stats — Estatísticas\n\n_Envie o comando desejado_", tipoResposta: "texto" }, x: 540, y: 340 },
     ],
     edges: [{ source: "0", target: "1" }, { source: "1", target: "2", sourceHandle: "true" }, { source: "1", target: "3", sourceHandle: "false" }],
   },
   {
-    name: "Saldo de Moedas", icon: "dollar-sign",
+    name: "Figurinha Completa", icon: "image", desc: "Sticker com verificação de imagem",
     nodes: [
-      { type: "command", label: "Comando", config: { name: "saldo", prefix: "." }, x: 60, y: 240 },
-      { type: "response", label: "Resposta", config: { texto: "💰 *Saldo*\n\n👤 Usuário: {nome}\n🪙 Moedas: {moedas}\n📦 Plano: {plano}", tipoResposta: "texto" }, x: 320, y: 240 },
+      { type: "command", label: "Comando", config: { name: "sticker", prefix: "." }, x: 60, y: 200 },
+      { type: "condition", label: "Tem imagem?", config: { condition: "has_image" }, x: 300, y: 200 },
+      { type: "action", label: "Criar sticker", config: { action: "make_sticker" }, x: 540, y: 100 },
+      { type: "response", label: "Sem imagem", config: { texto: "⚠️ *Envie ou responda uma imagem/vídeo* para criar a figurinha!\n\n💡 _Dica: você também pode responder um GIF_", tipoResposta: "texto", quote: true }, x: 540, y: 340 },
     ],
-    edges: [{ source: "0", target: "1" }],
+    edges: [{ source: "0", target: "1" }, { source: "1", target: "2", sourceHandle: "true" }, { source: "1", target: "3", sourceHandle: "false" }],
   },
   {
-    name: "Cara ou Coroa", icon: "circle",
+    name: "Boas-Vindas", icon: "user-plus", desc: "Mensagem automática para novos membros",
     nodes: [
-      { type: "command", label: "Comando", config: { name: "cara", prefix: "." }, x: 60, y: 240 },
-      { type: "action", label: "Jogo", config: { action: "coin_flip" }, x: 320, y: 240 },
+      { type: "command", label: "Configurar", config: { name: "welcome", prefix: "." }, x: 60, y: 200 },
+      { type: "condition", label: "É admin?", config: { condition: "is_admin" }, x: 300, y: 200 },
+      { type: "action", label: "Ativar", config: { action: "set_welcome", welcome_text: "👋 *Bem-vindo(a), {nome}!*\n\n📋 Regras do grupo:\n1️⃣ Respeite todos\n2️⃣ Sem spam/flood\n3️⃣ Sem links sem permissão\n4️⃣ Sem conteúdo +18\n\n🤖 Digite *.menu* para ver os comandos!" }, x: 540, y: 100 },
+      { type: "response", label: "Negado", config: { texto: "❌ Apenas *admins* podem configurar a mensagem de boas-vindas!", tipoResposta: "texto" }, x: 540, y: 340 },
     ],
-    edges: [{ source: "0", target: "1" }],
+    edges: [{ source: "0", target: "1" }, { source: "1", target: "2", sourceHandle: "true" }, { source: "1", target: "3", sourceHandle: "false" }],
+  },
+  {
+    name: "Anti-Link Completo", icon: "shield", desc: "Proteção contra links com aviso e remoção",
+    nodes: [
+      { type: "command", label: "Ativar", config: { name: "antilink", prefix: "." }, x: 60, y: 100 },
+      { type: "condition", label: "É admin?", config: { condition: "is_admin" }, x: 300, y: 100 },
+      { type: "action", label: "Ligar Anti-Link", config: { action: "antilink" }, x: 540, y: 30 },
+      { type: "response", label: "Negado", config: { texto: "❌ Comando exclusivo para admins!", tipoResposta: "texto" }, x: 540, y: 200 },
+      { type: "condition", label: "Tem link?", config: { condition: "contains_link" }, x: 60, y: 380 },
+      { type: "condition", label: "Autor admin?", config: { condition: "is_admin" }, x: 300, y: 380 },
+      { type: "action", label: "Apagar msg", config: { action: "delete_message" }, x: 540, y: 460 },
+      { type: "response", label: "Aviso", config: { texto: "🚫 *@{nome}*, links não são permitidos neste grupo!\n\n⚠️ Próxima vez será removido(a).", tipoResposta: "texto", mention: true }, x: 780, y: 460 },
+    ],
+    edges: [
+      { source: "0", target: "1" }, { source: "1", target: "2", sourceHandle: "true" }, { source: "1", target: "3", sourceHandle: "false" },
+      { source: "4", target: "5", sourceHandle: "true" }, { source: "5", target: "6", sourceHandle: "false" }, { source: "6", target: "7" },
+    ],
+  },
+  {
+    name: "Marcar Todos", icon: "at-sign", desc: "Hidetag com verificação de admin",
+    nodes: [
+      { type: "command", label: "Comando", config: { name: "marcar", prefix: "." }, x: 60, y: 200 },
+      { type: "condition", label: "É grupo?", config: { condition: "is_group" }, x: 300, y: 200 },
+      { type: "condition", label: "É admin?", config: { condition: "is_admin" }, x: 540, y: 100 },
+      { type: "action", label: "Marcar todos", config: { action: "hidetag", message: "📢 *Atenção membros!*\n\n{mensagem}" }, x: 780, y: 30 },
+      { type: "response", label: "Não é admin", config: { texto: "❌ Apenas *admins* podem marcar todos!", tipoResposta: "texto" }, x: 780, y: 200 },
+      { type: "response", label: "Só grupo", config: { texto: "⚠️ Este comando só funciona em *grupos*!", tipoResposta: "texto" }, x: 540, y: 340 },
+    ],
+    edges: [
+      { source: "0", target: "1" },
+      { source: "1", target: "2", sourceHandle: "true" }, { source: "1", target: "5", sourceHandle: "false" },
+      { source: "2", target: "3", sourceHandle: "true" }, { source: "2", target: "4", sourceHandle: "false" },
+    ],
+  },
+  {
+    name: "Saldo & Loja", icon: "dollar-sign", desc: "Sistema de moedas com menu de loja",
+    nodes: [
+      { type: "command", label: ".saldo", config: { name: "saldo", prefix: "." }, x: 60, y: 100 },
+      { type: "response", label: "Exibir saldo", config: { texto: "💰 *Carteira de {nome}*\n\n🪙 Moedas: *{moedas}*\n📦 Plano: {plano}\n📊 Nível: {nivel}\n\n🛒 Digite *.loja* para gastar moedas!", tipoResposta: "texto" }, x: 300, y: 100 },
+      { type: "command", label: ".loja", config: { name: "loja", prefix: "." }, x: 60, y: 340 },
+      { type: "response", label: "Menu loja", config: { texto: "🛒 *Loja de Itens*\n\n🏷️ *Itens disponíveis:*\n\n1️⃣ 🎖️ Cargo VIP — 500 moedas\n2️⃣ 🖼️ Figurinha exclusiva — 100 moedas\n3️⃣ 🎰 Giro da sorte — 50 moedas\n4️⃣ 📢 Anúncio no grupo — 200 moedas\n\n_Responda com o número do item_", tipoResposta: "texto" }, x: 300, y: 340 },
+    ],
+    edges: [{ source: "0", target: "1" }, { source: "2", target: "3" }],
+  },
+  {
+    name: "Jogos & Diversão", icon: "zap", desc: "Pacote com cara/coroa, dado e roleta",
+    nodes: [
+      { type: "command", label: ".cara", config: { name: "cara", prefix: "." }, x: 60, y: 60 },
+      { type: "action", label: "Cara ou Coroa", config: { action: "coin_flip" }, x: 300, y: 60 },
+      { type: "command", label: ".dado", config: { name: "dado", prefix: "." }, x: 60, y: 200 },
+      { type: "action", label: "Rolar Dado", config: { action: "dice_roll" }, x: 300, y: 200 },
+      { type: "command", label: ".sorte", config: { name: "sorte", prefix: "." }, x: 60, y: 340 },
+      { type: "action", label: "Biscoito", config: { action: "fortune" }, x: 300, y: 340 },
+      { type: "command", label: ".roleta", config: { name: "roleta", prefix: "." }, x: 60, y: 480 },
+      { type: "action", label: "Roleta Russa", config: { action: "roulette" }, x: 300, y: 480 },
+    ],
+    edges: [{ source: "0", target: "1" }, { source: "2", target: "3" }, { source: "4", target: "5" }, { source: "6", target: "7" }],
+  },
+  {
+    name: "Moderação Completa", icon: "shield", desc: "Anti-spam, anti-flood e anti-palavrão",
+    nodes: [
+      { type: "command", label: ".mod", config: { name: "mod", prefix: "." }, x: 60, y: 200 },
+      { type: "condition", label: "É admin?", config: { condition: "is_admin" }, x: 300, y: 200 },
+      { type: "action", label: "Anti-Spam", config: { action: "antispam" }, x: 540, y: 60 },
+      { type: "action", label: "Anti-Flood", config: { action: "antiflood", flood_max: "5" }, x: 540, y: 200 },
+      { type: "action", label: "Anti-Palavrão", config: { action: "antitoxic" }, x: 540, y: 340 },
+      { type: "response", label: "Confirmado", config: { texto: "✅ *Moderação ativada!*\n\n🛡️ Anti-Spam: ON\n💧 Anti-Flood: ON (máx 5 msgs)\n🤬 Anti-Palavrão: ON\n\n_O bot agora protege o grupo automaticamente_", tipoResposta: "texto" }, x: 780, y: 200 },
+      { type: "response", label: "Negado", config: { texto: "❌ Apenas *admins* podem ativar a moderação!", tipoResposta: "texto" }, x: 300, y: 400 },
+    ],
+    edges: [
+      { source: "0", target: "1" },
+      { source: "1", target: "2", sourceHandle: "true" }, { source: "1", target: "6", sourceHandle: "false" },
+      { source: "2", target: "3" }, { source: "3", target: "4" }, { source: "4", target: "5" },
+    ],
+  },
+  {
+    name: "Enquete Rápida", icon: "bar-chart-2", desc: "Criar enquete com botões interativos",
+    nodes: [
+      { type: "command", label: ".enquete", config: { name: "enquete", prefix: "." }, x: 60, y: 200 },
+      { type: "condition", label: "É grupo?", config: { condition: "is_group" }, x: 300, y: 200 },
+      { type: "buttons", label: "Votação", config: { tipoBotao: "normal", titulo: "📊 Enquete Rápida", botoes: ".voto_sim | ✅ Sim, concordo\n.voto_nao | ❌ Não concordo\n.voto_tanto | 🤷 Tanto faz", rodape: "BotAluguel Pro" }, x: 540, y: 100 },
+      { type: "response", label: "Só grupo", config: { texto: "⚠️ Enquetes só funcionam em *grupos*!", tipoResposta: "texto" }, x: 540, y: 340 },
+    ],
+    edges: [{ source: "0", target: "1" }, { source: "1", target: "2", sourceHandle: "true" }, { source: "1", target: "3", sourceHandle: "false" }],
+  },
+  {
+    name: "Webhook Externo", icon: "globe", desc: "Integração com API externa via HTTP",
+    nodes: [
+      { type: "command", label: ".api", config: { name: "api", prefix: "." }, x: 60, y: 200 },
+      { type: "condition", label: "É dono?", config: { condition: "is_owner" }, x: 300, y: 200 },
+      { type: "action", label: "Digitando...", config: { action: "typing" }, x: 540, y: 100 },
+      { type: "action", label: "Webhook", config: { action: "http_request", http_url: "https://api.exemplo.com/webhook", http_method: "POST" }, x: 780, y: 100 },
+      { type: "response", label: "Resultado", config: { texto: "✅ *Webhook executado!*\n\n📡 Resposta da API recebida com sucesso.\n\n_Dados enviados: {mensagem}_", tipoResposta: "texto" }, x: 1020, y: 100 },
+      { type: "response", label: "Negado", config: { texto: "🔒 Este comando é exclusivo do *dono do bot*!", tipoResposta: "texto" }, x: 540, y: 340 },
+    ],
+    edges: [
+      { source: "0", target: "1" },
+      { source: "1", target: "2", sourceHandle: "true" }, { source: "1", target: "5", sourceHandle: "false" },
+      { source: "2", target: "3" }, { source: "3", target: "4" },
+    ],
   },
 ];
 
@@ -1327,26 +1415,29 @@ function TemplatesModal({ visible, onSelect, onClose }: { visible: boolean; onSe
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={s.modalOverlay} onPress={onClose} />
-      <View style={[s.modalSheet, { backgroundColor: C.card, paddingBottom: insets.bottom + 20 }]}>
+      <View style={[s.modalSheet, { backgroundColor: C.card, paddingBottom: insets.bottom + 20, maxHeight: "80%" }]}>
         <View style={[s.editorHandle, { backgroundColor: C.border }]} />
         <Text style={[s.modalTitle, { color: C.fg }]}>Templates prontos</Text>
         <Text style={[s.modalSubtitle, { color: C.muted }]}>Substitui o fluxo atual</Text>
-        {TEMPLATES.map(tpl => (
-          <Pressable
-            key={tpl.name}
-            style={({ pressed }) => [s.typeRow, { backgroundColor: pressed ? "#7C3AED18" : "transparent", borderColor: C.border }]}
-            onPress={() => onSelect(tpl)}
-          >
-            <View style={[s.typeIcon, { backgroundColor: "#7C3AED18" }]}>
-              <Feather name={tpl.icon as any} size={20} color="#7C3AED" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={[s.typeName, { color: C.fg }]}>{tpl.name}</Text>
-              <Text style={[s.typeDesc, { color: C.muted }]}>{tpl.nodes.length} blocos · {tpl.edges.length} conexões</Text>
-            </View>
-            <Feather name="chevron-right" size={18} color={C.muted} />
-          </Pressable>
-        ))}
+        <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
+          {TEMPLATES.map(tpl => (
+            <Pressable
+              key={tpl.name}
+              style={({ pressed }) => [s.typeRow, { backgroundColor: pressed ? "#7C3AED18" : "transparent", borderColor: C.border }]}
+              onPress={() => onSelect(tpl)}
+            >
+              <View style={[s.typeIcon, { backgroundColor: "#7C3AED18" }]}>
+                <Feather name={tpl.icon as any} size={20} color="#7C3AED" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[s.typeName, { color: C.fg }]}>{tpl.name}</Text>
+                <Text style={[s.typeDesc, { color: C.muted }]}>{tpl.desc}</Text>
+                <Text style={{ fontSize: 10, color: C.muted, marginTop: 2, fontFamily: "Inter_400Regular" }}>{tpl.nodes.length} blocos · {tpl.edges.length} conexões</Text>
+              </View>
+              <Feather name="chevron-right" size={18} color={C.muted} />
+            </Pressable>
+          ))}
+        </ScrollView>
       </View>
     </Modal>
   );
