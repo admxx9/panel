@@ -5,7 +5,7 @@ import {
 } from "react-native";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
 import Animated, {
-  useSharedValue, useAnimatedStyle, runOnJS, type SharedValue,
+  useSharedValue, useAnimatedStyle, runOnJS, runOnUI, type SharedValue,
   withRepeat, withSequence, withTiming,
 } from "react-native-reanimated";
 import { Feather } from "@expo/vector-icons";
@@ -512,9 +512,22 @@ function NodeCard({
             <Text style={[s.nodeLabel, { color: "rgba(255,255,255,0.92)" }]} numberOfLines={2}>
               {getNodeLabel(node)}
             </Text>
-            <Text style={[s.nodeSubLabel, { color: "rgba(255,255,255,0.38)" }]}>
-              {cfg.desc}
-            </Text>
+            {node.type === "condition" ? (
+              <View style={s.conditionPortLabels}>
+                <View style={s.conditionPortLabelRow}>
+                  <Feather name="check" size={8} color="#22C55E" />
+                  <Text style={[s.conditionPortLabelText, { color: "#22C55E" }]}>SIM</Text>
+                </View>
+                <View style={s.conditionPortLabelRow}>
+                  <Feather name="x" size={8} color="#EF4444" />
+                  <Text style={[s.conditionPortLabelText, { color: "#EF4444" }]}>NÃO</Text>
+                </View>
+              </View>
+            ) : (
+              <Text style={[s.nodeSubLabel, { color: "rgba(255,255,255,0.38)" }]}>
+                {cfg.desc}
+              </Text>
+            )}
           </View>
         </Pressable>
 
@@ -532,13 +545,11 @@ function NodeCard({
           <>
             <GestureDetector gesture={truePortGesture}>
               <Pressable style={s.portRightTrue} hitSlop={16}>
-                <Text style={[s.portLabel, { color: "#22C55E" }]}>SIM</Text>
                 <PulsingDot color="#22C55E" size={13} icon="check" />
               </Pressable>
             </GestureDetector>
             <GestureDetector gesture={falsePortGesture}>
               <Pressable style={s.portRightFalse} hitSlop={16}>
-                <Text style={[s.portLabel, { color: "#EF4444" }]}>NÃO</Text>
                 <PulsingDot color="#EF4444" size={13} icon="x" />
               </Pressable>
             </GestureDetector>
@@ -659,11 +670,12 @@ export default function BuilderScreen() {
       const f = Math.max(minF, Math.min(maxF, e.scale));
       const newScale = savedScale.value * f;
 
-      // Keep the pinch focal point stationary: newCX = (1-f)*focalX + f*savedCX
+      // Pivot = pinch focal point. With RN scale (around canvas center 1500,1500):
+      // newCX = (focalX - 1500)*(1-f) + f*savedCX
       const fX = e.focalX;
       const fY = e.focalY;
-      canvasX.value = (1 - f) * fX + f * savedCX.value;
-      canvasY.value = (1 - f) * fY + f * savedCY.value;
+      canvasX.value = (fX - 1500) * (1 - f) + f * savedCX.value;
+      canvasY.value = (fY - 1500) * (1 - f) + f * savedCY.value;
       canvasScale.value = newScale;
     });
 
@@ -805,6 +817,7 @@ export default function BuilderScreen() {
   const PILL_TYPES: NodeType[] = ["command", "action", "condition", "response", "buttons"];
   const pillGestures = PILL_TYPES.map((type) =>
     Gesture.Pan()
+      .activateAfterLongPress(350)
       .onStart((e) => {
         "worklet";
         ghostX.value = e.absoluteX;
@@ -866,15 +879,23 @@ export default function BuilderScreen() {
   }, [botId, nodes, edges, saveMutation]);
 
   const zoom = useCallback((factor: number) => {
-    const oldScale = canvasScale.value;
-    const newScale = Math.max(0.25, Math.min(2.5, oldScale * factor));
-    const f = newScale / oldScale;
-    // Keep viewport center stationary: newCX = (1-f)*(cW/2) + f*cx
-    const newCX = (1 - f) * (containerW.value / 2) + f * canvasX.value;
-    const newCY = (1 - f) * (containerH.value / 2) + f * canvasY.value;
-    canvasX.value = withTiming(newCX, { duration: 180 });
-    canvasY.value = withTiming(newCY, { duration: 180 });
-    canvasScale.value = withTiming(newScale, { duration: 180 });
+    runOnUI(() => {
+      "worklet";
+      const oldS = canvasScale.value;
+      const newS = Math.max(0.25, Math.min(2.5, oldS * factor));
+      const f = newS / oldS;
+      // Pivot = viewport center in container coords.
+      // With RN scale (around canvas center 1500,1500):
+      //   container_x = (cx - 1500)*s + 1500 + tx
+      // Keeping pivot fixed: newTX = (cW/2 - 1500)*(1-f) + f*tx
+      const cW = containerW.value;
+      const cH = containerH.value;
+      const tx = canvasX.value;
+      const ty = canvasY.value;
+      canvasX.value = withTiming((cW / 2 - 1500) * (1 - f) + f * tx, { duration: 180 });
+      canvasY.value = withTiming((cH / 2 - 1500) * (1 - f) + f * ty, { duration: 180 });
+      canvasScale.value = withTiming(newS, { duration: 180 });
+    })();
   }, [canvasScale, canvasX, canvasY, containerW, containerH]);
 
   const paddingTop = Platform.OS === "web" ? insets.top + 60 : insets.top;
@@ -1415,23 +1436,32 @@ const s = StyleSheet.create({
   },
   portRightTrue: {
     position: "absolute" as const,
-    right: -46,
-    top: NODE_H / 3 - 12,
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 4,
+    right: -12,
+    top: NODE_H / 3 - 8,
     zIndex: 10,
   },
   portRightFalse: {
     position: "absolute" as const,
-    right: -46,
-    top: (NODE_H * 2) / 3 - 12,
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 4,
+    right: -12,
+    top: (NODE_H * 2) / 3 - 8,
     zIndex: 10,
   },
   portLabel: { fontSize: 9, fontFamily: "Inter_700Bold", letterSpacing: 0.5 },
+  conditionPortLabels: {
+    flexDirection: "row" as const,
+    gap: 8,
+    marginTop: 2,
+  },
+  conditionPortLabelRow: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 3,
+  },
+  conditionPortLabelText: {
+    fontSize: 8,
+    fontFamily: "Inter_700Bold",
+    letterSpacing: 0.5,
+  },
   toolbar: {
     flexDirection: "row", alignItems: "center", gap: 10,
     paddingHorizontal: 16, paddingTop: 12, borderTopWidth: 1,
