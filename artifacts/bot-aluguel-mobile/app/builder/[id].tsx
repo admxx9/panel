@@ -1015,18 +1015,27 @@ export default function BuilderScreen() {
           <Animated.View style={[s.canvas, canvasStyle]}>
             {/* Dot-grid background — tap to deselect selected node */}
             <Pressable
-              style={{ position: "absolute", top: 0, left: 0, width: CANVAS_SIZE, height: CANVAS_SIZE }}
+              style={{ position: "absolute", top: 0, left: 0, width: CANVAS_SIZE, height: CANVAS_SIZE, backgroundColor: C.bg }}
               onPress={() => { setSelectedId(null); setConnectingFrom(null); setLiveLine(null); }}
             >
-              <Svg width={CANVAS_SIZE} height={CANVAS_SIZE}>
-                <Defs>
-                  <Pattern id="dots" x="0" y="0" width={14} height={14} patternUnits="userSpaceOnUse">
-                    <Circle cx={7} cy={7} r={0.9} fill="rgba(255,255,255,0.13)" />
-                  </Pattern>
-                </Defs>
-                <Rect width={CANVAS_SIZE} height={CANVAS_SIZE} fill={C.bg} />
-                <Rect width={CANVAS_SIZE} height={CANVAS_SIZE} fill="url(#dots)" />
-              </Svg>
+              {Platform.OS === "web" ? (
+                <View style={{
+                  width: CANVAS_SIZE, height: CANVAS_SIZE,
+                  // @ts-ignore — web-only CSS
+                  backgroundImage: "radial-gradient(rgba(255,255,255,0.14) 1px, transparent 1px)",
+                  backgroundSize: "14px 14px",
+                }} />
+              ) : (
+                // Native: render dots only over a viewport-sized tile to avoid memory crash
+                <Svg width={900} height={1400} style={{ position: "absolute", top: 0, left: 0 }}>
+                  <Defs>
+                    <Pattern id="dots" x="0" y="0" width={14} height={14} patternUnits="userSpaceOnUse">
+                      <Circle cx={7} cy={7} r={0.9} fill="rgba(255,255,255,0.13)" />
+                    </Pattern>
+                  </Defs>
+                  <Rect width={900} height={1400} fill="url(#dots)" />
+                </Svg>
+              )}
             </Pressable>
 
             {/* Static edges */}
