@@ -62,19 +62,24 @@ export default function SettingsScreen() {
   const botList = (bots as any[] | undefined) ?? [];
   const activeBots = botList.filter((b) => b.status === "active" || b.isConnected).length;
 
+  async function doLogout() {
+    try {
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } catch {}
+    await signOut();
+    router.replace("/(auth)/login");
+  }
+
   function handleLogout() {
-    Alert.alert("Sair da Conta", "Deseja encerrar a sessão?", [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Sair",
-        style: "destructive",
-        onPress: async () => {
-          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          await signOut();
-          router.replace("/(auth)/login");
-        },
-      },
-    ]);
+    if (Platform.OS === "web") {
+      const confirmed = window.confirm("Deseja encerrar a sessão?");
+      if (confirmed) doLogout();
+    } else {
+      Alert.alert("Sair da Conta", "Deseja encerrar a sessão?", [
+        { text: "Cancelar", style: "cancel" },
+        { text: "Sair", style: "destructive", onPress: doLogout },
+      ]);
+    }
   }
 
   return (
