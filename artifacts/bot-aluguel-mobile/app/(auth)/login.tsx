@@ -5,9 +5,7 @@ import { Feather } from "@expo/vector-icons";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
-  FlatList,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -20,21 +18,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path } from "react-native-svg";
 import { useAuth } from "@/context/AuthContext";
-
-const COUNTRIES = [
-  { code: "BR", dial: "+55", flag: "\u{1F1E7}\u{1F1F7}", name: "Brasil" },
-  { code: "US", dial: "+1", flag: "\u{1F1FA}\u{1F1F8}", name: "Estados Unidos" },
-  { code: "PT", dial: "+351", flag: "\u{1F1F5}\u{1F1F9}", name: "Portugal" },
-  { code: "AR", dial: "+54", flag: "\u{1F1E6}\u{1F1F7}", name: "Argentina" },
-  { code: "MX", dial: "+52", flag: "\u{1F1F2}\u{1F1FD}", name: "México" },
-  { code: "CO", dial: "+57", flag: "\u{1F1E8}\u{1F1F4}", name: "Colômbia" },
-  { code: "CL", dial: "+56", flag: "\u{1F1E8}\u{1F1F1}", name: "Chile" },
-  { code: "ES", dial: "+34", flag: "\u{1F1EA}\u{1F1F8}", name: "Espanha" },
-  { code: "PE", dial: "+51", flag: "\u{1F1F5}\u{1F1EA}", name: "Peru" },
-  { code: "UY", dial: "+598", flag: "\u{1F1FA}\u{1F1FE}", name: "Uruguai" },
-  { code: "PY", dial: "+595", flag: "\u{1F1F5}\u{1F1FE}", name: "Paraguai" },
-  { code: "BO", dial: "+591", flag: "\u{1F1E7}\u{1F1F4}", name: "Bolívia" },
-];
 
 function GoogleIcon() {
   return (
@@ -51,14 +34,10 @@ export default function LoginScreen() {
   const insets = useSafeAreaInsets();
   const { signIn } = useAuth();
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
-  const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
-  const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [focusEmail, setFocusEmail] = useState(false);
-  const [focusPhone, setFocusPhone] = useState(false);
   const [focusPass, setFocusPass] = useState(false);
 
   const loginMutation = useLogin();
@@ -72,7 +51,7 @@ export default function LoginScreen() {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const data = await loginMutation.mutateAsync({
-        data: { phone: phone.trim() || email.trim(), password },
+        data: { phone: email.trim(), password },
       });
       await signIn(data.token, data.user);
       router.replace("/(tabs)/");
@@ -90,7 +69,6 @@ export default function LoginScreen() {
 
   return (
     <View style={s.root}>
-      {/* Background blobs */}
       <View style={s.blob1} />
       <View style={s.blob2} />
       <View style={s.blob3} />
@@ -100,7 +78,7 @@ export default function LoginScreen() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView
-          contentContainerStyle={[s.scroll, { paddingTop: paddingTop + 40 }]}
+          contentContainerStyle={[s.scroll, { paddingTop: paddingTop + 60 }]}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
@@ -116,7 +94,11 @@ export default function LoginScreen() {
             <Text style={s.tagline}>Automatize seu WhatsApp com inteligência</Text>
           </View>
 
-          {/* Email field */}
+          {/* Título */}
+          <Text style={s.title}>Entrar na conta</Text>
+          <Text style={s.subtitle}>Acesse sua conta para gerenciar seus bots</Text>
+
+          {/* Email */}
           <Text style={s.label}>E-MAIL</Text>
           <View style={[s.inputRow, focusEmail && s.inputFocused]}>
             <Feather name="mail" size={18} color={focusEmail ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
@@ -134,38 +116,13 @@ export default function LoginScreen() {
             />
           </View>
 
-          {/* Phone with country selector */}
-          <Text style={s.label}>WHATSAPP</Text>
-          <View style={s.phoneRow}>
-            <Pressable
-              style={({ pressed }) => [s.countryBtn, pressed && { opacity: 0.8 }]}
-              onPress={() => setShowCountryPicker(true)}
-            >
-              <Text style={s.countryFlag}>{selectedCountry.flag}</Text>
-              <Text style={s.countryDial}>{selectedCountry.dial}</Text>
-              <Feather name="chevron-down" size={14} color="#4B4C6B" />
-            </Pressable>
-            <View style={[s.phoneInput, focusPhone && s.inputFocused]}>
-              <TextInput
-                style={s.input}
-                placeholder="(00) 00000-0000"
-                placeholderTextColor="#4B4C6B"
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-                onFocus={() => setFocusPhone(true)}
-                onBlur={() => setFocusPhone(false)}
-              />
-            </View>
-          </View>
-
-          {/* Password */}
+          {/* Senha */}
           <Text style={s.label}>SENHA</Text>
           <View style={[s.inputRow, focusPass && s.inputFocused]}>
             <Feather name="lock" size={18} color={focusPass ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
             <TextInput
               style={s.input}
-              placeholder="••••••••"
+              placeholder="Sua senha"
               placeholderTextColor="#4B4C6B"
               value={password}
               onChangeText={setPassword}
@@ -225,41 +182,14 @@ export default function LoginScreen() {
           </Pressable>
 
           {/* Register link */}
-          <View style={s.registerRow}>
-            <Text style={s.registerText}>Não tem conta? </Text>
+          <View style={s.linkRow}>
+            <Text style={s.linkText}>Não tem conta? </Text>
             <Pressable onPress={() => router.push("/(auth)/register")}>
-              <Text style={s.registerLink}>Criar agora</Text>
+              <Text style={s.linkAction}>Criar agora</Text>
             </Pressable>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
-
-      {/* Country picker modal */}
-      <Modal visible={showCountryPicker} animationType="slide" transparent onRequestClose={() => setShowCountryPicker(false)}>
-        <Pressable style={s.modalOverlay} onPress={() => setShowCountryPicker(false)} />
-        <View style={[s.modalSheet, { paddingBottom: insets.bottom + 20 }]}>
-          <View style={s.modalHandle} />
-          <Text style={s.modalTitle}>Selecionar país</Text>
-          <FlatList
-            data={COUNTRIES}
-            keyExtractor={(c) => c.code}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <Pressable
-                style={({ pressed }) => [s.countryRow, pressed && { backgroundColor: "rgba(124,58,237,0.1)" }]}
-                onPress={() => { setSelectedCountry(item); setShowCountryPicker(false); }}
-              >
-                <Text style={s.countryRowFlag}>{item.flag}</Text>
-                <Text style={s.countryRowName}>{item.name}</Text>
-                <Text style={s.countryRowDial}>{item.dial}</Text>
-                {item.code === selectedCountry.code && (
-                  <Feather name="check" size={18} color="#7C3AED" />
-                )}
-              </Pressable>
-            )}
-          />
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -305,7 +235,7 @@ const s = StyleSheet.create({
     paddingBottom: 40,
   },
   logoArea: {
-    marginBottom: 32,
+    marginBottom: 36,
   },
   logoBox: {
     width: 48,
@@ -346,6 +276,21 @@ const s = StyleSheet.create({
     marginTop: 8,
     lineHeight: 20,
   },
+  title: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: "#FFF",
+    fontFamily: "Inter_700Bold",
+    letterSpacing: -0.3,
+    marginBottom: 6,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "rgba(139,130,177,0.4)",
+    fontFamily: "Inter_400Regular",
+    marginBottom: 28,
+    lineHeight: 20,
+  },
   label: {
     fontSize: 11,
     fontWeight: "700",
@@ -383,42 +328,6 @@ const s = StyleSheet.create({
   eyeBtn: {
     padding: 4,
     marginLeft: 4,
-  },
-  phoneRow: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 16,
-  },
-  countryBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    height: 52,
-    paddingHorizontal: 12,
-    borderRadius: 12,
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-  },
-  countryFlag: {
-    fontSize: 20,
-  },
-  countryDial: {
-    fontSize: 13,
-    color: "rgba(139,130,177,0.6)",
-    fontFamily: "Inter_500Medium",
-    fontWeight: "500",
-  },
-  phoneInput: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.08)",
-    height: 52,
-    paddingHorizontal: 14,
   },
   forgotBtn: {
     alignSelf: "flex-end",
@@ -503,72 +412,21 @@ const s = StyleSheet.create({
     fontFamily: "Inter_600SemiBold",
     fontWeight: "600",
   },
-  registerRow: {
+  linkRow: {
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 32,
     paddingBottom: 20,
   },
-  registerText: {
+  linkText: {
     fontSize: 13,
     color: "rgba(139,130,177,0.3)",
     fontFamily: "Inter_400Regular",
   },
-  registerLink: {
+  linkAction: {
     fontSize: 13,
     color: "#7C3AED",
     fontWeight: "700",
     fontFamily: "Inter_700Bold",
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: "rgba(0,0,0,0.6)",
-  },
-  modalSheet: {
-    backgroundColor: "#0E0E16",
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    paddingHorizontal: 20,
-    maxHeight: "60%",
-  },
-  modalHandle: {
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: "#1A1B28",
-    alignSelf: "center",
-    marginTop: 12,
-    marginBottom: 16,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#FFF",
-    fontFamily: "Inter_700Bold",
-    marginBottom: 16,
-  },
-  countryRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 14,
-    paddingHorizontal: 4,
-    borderBottomWidth: 1,
-    borderBottomColor: "rgba(255,255,255,0.05)",
-    gap: 12,
-  },
-  countryRowFlag: {
-    fontSize: 24,
-  },
-  countryRowName: {
-    flex: 1,
-    fontSize: 15,
-    color: "rgba(255,255,255,0.8)",
-    fontFamily: "Inter_500Medium",
-  },
-  countryRowDial: {
-    fontSize: 13,
-    color: "rgba(139,130,177,0.4)",
-    fontFamily: "Inter_400Regular",
-    marginRight: 8,
   },
 });
