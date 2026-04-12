@@ -627,7 +627,11 @@ export default function BuilderScreen() {
   const ghostX = useSharedValue(0);
   const ghostY = useSharedValue(0);
   const ghostVisible = useSharedValue(0);
+
+  // Gesture state: track pointer count changes to prevent jump on finger lift
   const isPinching = useSharedValue(false);
+  const lastPointerCount = useSharedValue(0);
+  const skipPanFrames = useSharedValue(0);
 
   // Scale from top-left (0,0) — simplifies ALL coordinate math
   const canvasStyle = useAnimatedStyle(() => ({
@@ -648,9 +652,8 @@ export default function BuilderScreen() {
     zIndex: 999,
   }));
 
-  // --- Canvas gestures (stable via useMemo) ---
-  // Simultaneous pan+pinch: isPinching flag prevents pan from interfering
-  // When pinch is active, pan keeps its savedCX/CY in sync so there's no jump when finger lifts
+  // --- Canvas gestures ---
+  // Rule: pointer count change = new gesture. Skip frames during transition.
   const panGesture = useMemo(() =>
     Gesture.Pan()
       .minDistance(6)
@@ -658,15 +661,30 @@ export default function BuilderScreen() {
         "worklet";
         savedCX.value = canvasX.value;
         savedCY.value = canvasY.value;
+        lastPointerCount.value = 1;
       })
       .onUpdate((e) => {
         "worklet";
-        if (isPinching.value) {
-          // Resync so when pinch ends, pan resumes from current position without jump
+        const pointers = e.numberOfPointers;
+
+        // Pointer count changed → reset gesture, skip this frame
+        if (pointers !== lastPointerCount.value) {
+          lastPointerCount.value = pointers;
+          savedCX.value = canvasX.value - e.translationX;
+          savedCY.value = canvasY.value - e.translationY;
+          skipPanFrames.value = 3;
+          return;
+        }
+
+        // During pinch or cooldown → resync but don't move
+        if (isPinching.value || skipPanFrames.value > 0) {
+          if (skipPanFrames.value > 0) skipPanFrames.value--;
           savedCX.value = canvasX.value - e.translationX;
           savedCY.value = canvasY.value - e.translationY;
           return;
         }
+
+        // Normal 1-finger pan
         canvasX.value = savedCX.value + e.translationX;
         canvasY.value = savedCY.value + e.translationY;
       }),
@@ -689,17 +707,18 @@ export default function BuilderScreen() {
         const maxF = 2.5  / savedScale.value;
         const f = Math.max(minF, Math.min(maxF, e.scale));
         canvasScale.value = savedScale.value * f;
-        // Keep focal point stationary: newTX = fX*(1-f) + f*savedTX
         canvasX.value = e.focalX * (1 - f) + f * savedCX.value;
         canvasY.value = e.focalY * (1 - f) + f * savedCY.value;
       })
       .onEnd(() => {
         "worklet";
         isPinching.value = false;
+        skipPanFrames.value = 4;
       })
       .onFinalize(() => {
         "worklet";
         isPinching.value = false;
+        skipPanFrames.value = 4;
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
