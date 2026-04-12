@@ -632,7 +632,7 @@ export default function BuilderScreen() {
       canvasY.value = savedCY.value + e.translationY;
     });
 
-  // Pinch gesture — zoom toward viewport center
+  // Pinch gesture — zoom toward pinch focal point, using saved-at-start values as baseline
   const pinchGesture = Gesture.Pinch()
     .onStart(() => {
       "worklet";
@@ -642,11 +642,18 @@ export default function BuilderScreen() {
     })
     .onUpdate((e) => {
       "worklet";
-      const newScale = Math.max(0.25, Math.min(2.5, savedScale.value * e.scale));
-      const factor = newScale / canvasScale.value;
-      // Zoom toward viewport center: cx' = (1-f)*(cW/2 - CANVAS_SIZE/2) + f*cx
-      canvasX.value = (1 - factor) * (containerW.value / 2 - CANVAS_SIZE / 2) + factor * canvasX.value;
-      canvasY.value = (1 - factor) * (containerH.value / 2 - CANVAS_SIZE / 2) + factor * canvasY.value;
+      // Clamp the raw gesture scale factor
+      const minF = 0.25 / savedScale.value;
+      const maxF = 2.5  / savedScale.value;
+      const f = Math.max(minF, Math.min(maxF, e.scale));
+      const newScale = savedScale.value * f;
+
+      // Focal point of the pinch in container coords (always use saved baseline — no feedback loop)
+      // Formula: newCX = (1-f)*(focalX - CANVAS_SIZE/2) + f*savedCX
+      const fX = e.focalX;
+      const fY = e.focalY;
+      canvasX.value = (1 - f) * (fX - CANVAS_SIZE / 2) + f * savedCX.value;
+      canvasY.value = (1 - f) * (fY - CANVAS_SIZE / 2) + f * savedCY.value;
       canvasScale.value = newScale;
     });
 
