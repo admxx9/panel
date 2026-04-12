@@ -627,6 +627,7 @@ export default function BuilderScreen() {
   const ghostX = useSharedValue(0);
   const ghostY = useSharedValue(0);
   const ghostVisible = useSharedValue(0);
+  const isPinching = useSharedValue(false);
 
   const canvasStyle = useAnimatedStyle(() => ({
     transform: [
@@ -655,6 +656,13 @@ export default function BuilderScreen() {
       })
       .onUpdate((e) => {
         "worklet";
+        // During pinch, keep savedCX/CY in sync but don't move canvas
+        // (pinch handles translation itself)
+        if (isPinching.value) {
+          savedCX.value = canvasX.value - e.translationX;
+          savedCY.value = canvasY.value - e.translationY;
+          return;
+        }
         canvasX.value = savedCX.value + e.translationX;
         canvasY.value = savedCY.value + e.translationY;
       }),
@@ -666,6 +674,7 @@ export default function BuilderScreen() {
     Gesture.Pinch()
       .onStart(() => {
         "worklet";
+        isPinching.value = true;
         savedScale.value = canvasScale.value;
         savedCX.value = canvasX.value;
         savedCY.value = canvasY.value;
@@ -680,6 +689,14 @@ export default function BuilderScreen() {
         canvasX.value = (e.focalX - 1500) * (1 - f) + f * savedCX.value;
         canvasY.value = (e.focalY - 1500) * (1 - f) + f * savedCY.value;
         canvasScale.value = newScale;
+      })
+      .onEnd(() => {
+        "worklet";
+        isPinching.value = false;
+      })
+      .onFinalize(() => {
+        "worklet";
+        isPinching.value = false;
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
