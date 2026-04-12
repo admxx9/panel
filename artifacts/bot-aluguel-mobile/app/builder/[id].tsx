@@ -4,6 +4,7 @@ import {
   ScrollView, TextInput, Switch, Dimensions, KeyboardAvoidingView, Platform,
 } from "react-native";
 import { GestureDetector, Gesture } from "react-native-gesture-handler";
+import Svg, { Defs, Pattern, Circle, Rect } from "react-native-svg";
 import Animated, {
   useSharedValue, useAnimatedStyle, runOnJS, runOnUI, type SharedValue,
   withRepeat, withSequence, withTiming,
@@ -1012,7 +1013,21 @@ export default function BuilderScreen() {
           }}
         >
           <Animated.View style={[s.canvas, canvasStyle]}>
-            <View style={s.canvasBg} />
+            {/* Dot-grid background — tap to deselect selected node */}
+            <Pressable
+              style={{ position: "absolute", top: 0, left: 0, width: CANVAS_SIZE, height: CANVAS_SIZE }}
+              onPress={() => { setSelectedId(null); setConnectingFrom(null); setLiveLine(null); }}
+            >
+              <Svg width={CANVAS_SIZE} height={CANVAS_SIZE}>
+                <Defs>
+                  <Pattern id="dots" x="0" y="0" width={24} height={24} patternUnits="userSpaceOnUse">
+                    <Circle cx={12} cy={12} r={1.2} fill="rgba(255,255,255,0.13)" />
+                  </Pattern>
+                </Defs>
+                <Rect width={CANVAS_SIZE} height={CANVAS_SIZE} fill={C.bg} />
+                <Rect width={CANVAS_SIZE} height={CANVAS_SIZE} fill="url(#dots)" />
+              </Svg>
+            </Pressable>
 
             {/* Static edges */}
             <View pointerEvents="none" style={{ position: "absolute", top: 0, left: 0, width: CANVAS_SIZE, height: CANVAS_SIZE }}>
