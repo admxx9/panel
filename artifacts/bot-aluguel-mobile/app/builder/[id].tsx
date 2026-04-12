@@ -606,6 +606,9 @@ export default function BuilderScreen() {
   const canvasScale = useSharedValue(1);
   const savedCX = useSharedValue(0);
   const savedCY = useSharedValue(0);
+  const savedScale = useSharedValue(1);
+  const containerW = useSharedValue(300);
+  const containerH = useSharedValue(600);
 
   const canvasStyle = useAnimatedStyle(() => ({
     transform: [
@@ -628,6 +631,26 @@ export default function BuilderScreen() {
       canvasX.value = savedCX.value + e.translationX;
       canvasY.value = savedCY.value + e.translationY;
     });
+
+  // Pinch gesture — zoom toward viewport center
+  const pinchGesture = Gesture.Pinch()
+    .onStart(() => {
+      "worklet";
+      savedScale.value = canvasScale.value;
+      savedCX.value = canvasX.value;
+      savedCY.value = canvasY.value;
+    })
+    .onUpdate((e) => {
+      "worklet";
+      const newScale = Math.max(0.25, Math.min(2.5, savedScale.value * e.scale));
+      const factor = newScale / canvasScale.value;
+      // Zoom toward viewport center: cx' = (1-f)*(cW/2 - CANVAS_SIZE/2) + f*cx
+      canvasX.value = (1 - factor) * (containerW.value / 2 - CANVAS_SIZE / 2) + factor * canvasX.value;
+      canvasY.value = (1 - factor) * (containerH.value / 2 - CANVAS_SIZE / 2) + factor * canvasY.value;
+      canvasScale.value = newScale;
+    });
+
+  const composedGesture = Gesture.Simultaneous(panGesture, pinchGesture);
 
   /* --- Port drag handlers --- */
   const absToCanvas = useCallback((absX: number, absY: number) => ({
@@ -779,8 +802,16 @@ export default function BuilderScreen() {
   }, [botId, nodes, edges, saveMutation]);
 
   const zoom = useCallback((factor: number) => {
-    canvasScale.value = Math.max(0.25, Math.min(2.5, canvasScale.value * factor));
-  }, [canvasScale]);
+    const oldScale = canvasScale.value;
+    const newScale = Math.max(0.25, Math.min(2.5, oldScale * factor));
+    const f = newScale / oldScale;
+    // Zoom toward viewport center using: cx' = (1-f)*(cW/2 - CANVAS_SIZE/2) + f*cx
+    const newCX = (1 - f) * (containerW.value / 2 - CANVAS_SIZE / 2) + f * canvasX.value;
+    const newCY = (1 - f) * (containerH.value / 2 - CANVAS_SIZE / 2) + f * canvasY.value;
+    canvasX.value = withTiming(newCX, { duration: 180 });
+    canvasY.value = withTiming(newCY, { duration: 180 });
+    canvasScale.value = withTiming(newScale, { duration: 180 });
+  }, [canvasScale, canvasX, canvasY, containerW, containerH]);
 
   const paddingTop = Platform.OS === "web" ? insets.top + 60 : insets.top;
 
@@ -850,8 +881,15 @@ export default function BuilderScreen() {
         </View>
       )}
 
-      <GestureDetector gesture={panGesture}>
-        <View ref={canvasContainerRef} style={s.canvasContainer}>
+      <GestureDetector gesture={composedGesture}>
+        <View
+          ref={canvasContainerRef}
+          style={s.canvasContainer}
+          onLayout={(e) => {
+            containerW.value = e.nativeEvent.layout.width;
+            containerH.value = e.nativeEvent.layout.height;
+          }}
+        >
           <Animated.View style={[s.canvas, canvasStyle]}>
             <View style={s.canvasBg} />
 
