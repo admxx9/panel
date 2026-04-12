@@ -1020,8 +1020,8 @@ export default function BuilderScreen() {
             >
               <Svg width={CANVAS_SIZE} height={CANVAS_SIZE}>
                 <Defs>
-                  <Pattern id="dots" x="0" y="0" width={24} height={24} patternUnits="userSpaceOnUse">
-                    <Circle cx={12} cy={12} r={1.2} fill="rgba(255,255,255,0.13)" />
+                  <Pattern id="dots" x="0" y="0" width={14} height={14} patternUnits="userSpaceOnUse">
+                    <Circle cx={7} cy={7} r={0.9} fill="rgba(255,255,255,0.13)" />
                   </Pattern>
                 </Defs>
                 <Rect width={CANVAS_SIZE} height={CANVAS_SIZE} fill={C.bg} />
