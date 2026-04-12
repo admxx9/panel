@@ -627,6 +627,7 @@ export default function BuilderScreen() {
   const ghostX = useSharedValue(0);
   const ghostY = useSharedValue(0);
   const ghostVisible = useSharedValue(0);
+  const isPinching = useSharedValue(false);
 
   // Scale from top-left (0,0) — simplifies ALL coordinate math
   const canvasStyle = useAnimatedStyle(() => ({
@@ -648,7 +649,8 @@ export default function BuilderScreen() {
   }));
 
   // --- Canvas gestures (stable via useMemo) ---
-  // 1-finger = pan, 2-finger = pinch zoom (Exclusive: pinch takes priority)
+  // Simultaneous pan+pinch: isPinching flag prevents pan from interfering
+  // When pinch is active, pan keeps its savedCX/CY in sync so there's no jump when finger lifts
   const panGesture = useMemo(() =>
     Gesture.Pan()
       .minDistance(6)
@@ -659,6 +661,12 @@ export default function BuilderScreen() {
       })
       .onUpdate((e) => {
         "worklet";
+        if (isPinching.value) {
+          // Resync so when pinch ends, pan resumes from current position without jump
+          savedCX.value = canvasX.value - e.translationX;
+          savedCY.value = canvasY.value - e.translationY;
+          return;
+        }
         canvasX.value = savedCX.value + e.translationX;
         canvasY.value = savedCY.value + e.translationY;
       }),
@@ -670,6 +678,7 @@ export default function BuilderScreen() {
     Gesture.Pinch()
       .onStart(() => {
         "worklet";
+        isPinching.value = true;
         savedScale.value = canvasScale.value;
         savedCX.value = canvasX.value;
         savedCY.value = canvasY.value;
@@ -683,14 +692,21 @@ export default function BuilderScreen() {
         // Keep focal point stationary: newTX = fX*(1-f) + f*savedTX
         canvasX.value = e.focalX * (1 - f) + f * savedCX.value;
         canvasY.value = e.focalY * (1 - f) + f * savedCY.value;
+      })
+      .onEnd(() => {
+        "worklet";
+        isPinching.value = false;
+      })
+      .onFinalize(() => {
+        "worklet";
+        isPinching.value = false;
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
 
-  // Exclusive: pinch wins when 2 fingers detected, otherwise pan
   const composedGesture = useMemo(() =>
-    Gesture.Exclusive(pinchGesture, panGesture),
+    Gesture.Simultaneous(panGesture, pinchGesture),
     [panGesture, pinchGesture]
   );
 
