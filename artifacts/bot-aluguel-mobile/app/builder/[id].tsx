@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import {
   View, Text, StyleSheet, Pressable, Alert, Modal,
   ScrollView, TextInput, Switch, Dimensions, KeyboardAvoidingView, Platform,
@@ -643,46 +643,51 @@ export default function BuilderScreen() {
     zIndex: 999,
   }));
 
-  const panGesture = Gesture.Pan()
-    .minDistance(8)
-    .enabled(!liveLine)
-    .onStart(() => {
-      "worklet";
-      savedCX.value = canvasX.value;
-      savedCY.value = canvasY.value;
-    })
-    .onUpdate((e) => {
-      "worklet";
-      canvasX.value = savedCX.value + e.translationX;
-      canvasY.value = savedCY.value + e.translationY;
-    });
+  // Stable gesture objects — created once with useMemo to prevent re-registration on every render
+  const panGesture = useMemo(() =>
+    Gesture.Pan()
+      .minDistance(6)
+      .onStart(() => {
+        "worklet";
+        savedCX.value = canvasX.value;
+        savedCY.value = canvasY.value;
+      })
+      .onUpdate((e) => {
+        "worklet";
+        canvasX.value = savedCX.value + e.translationX;
+        canvasY.value = savedCY.value + e.translationY;
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
-  // Pinch gesture — zoom toward pinch focal point, using saved-at-start values as baseline
-  const pinchGesture = Gesture.Pinch()
-    .onStart(() => {
-      "worklet";
-      savedScale.value = canvasScale.value;
-      savedCX.value = canvasX.value;
-      savedCY.value = canvasY.value;
-    })
-    .onUpdate((e) => {
-      "worklet";
-      // Clamp the raw gesture scale factor
-      const minF = 0.25 / savedScale.value;
-      const maxF = 2.5  / savedScale.value;
-      const f = Math.max(minF, Math.min(maxF, e.scale));
-      const newScale = savedScale.value * f;
+  const pinchGesture = useMemo(() =>
+    Gesture.Pinch()
+      .onStart(() => {
+        "worklet";
+        savedScale.value = canvasScale.value;
+        savedCX.value = canvasX.value;
+        savedCY.value = canvasY.value;
+      })
+      .onUpdate((e) => {
+        "worklet";
+        const minF = 0.25 / savedScale.value;
+        const maxF = 2.5  / savedScale.value;
+        const f = Math.max(minF, Math.min(maxF, e.scale));
+        const newScale = savedScale.value * f;
+        // Pivot at pinch focal point:  newCX = (fX - 1500)*(1-f) + f*savedCX
+        canvasX.value = (e.focalX - 1500) * (1 - f) + f * savedCX.value;
+        canvasY.value = (e.focalY - 1500) * (1 - f) + f * savedCY.value;
+        canvasScale.value = newScale;
+      }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    []
+  );
 
-      // Pivot = pinch focal point. With RN scale (around canvas center 1500,1500):
-      // newCX = (focalX - 1500)*(1-f) + f*savedCX
-      const fX = e.focalX;
-      const fY = e.focalY;
-      canvasX.value = (fX - 1500) * (1 - f) + f * savedCX.value;
-      canvasY.value = (fY - 1500) * (1 - f) + f * savedCY.value;
-      canvasScale.value = newScale;
-    });
-
-  const composedGesture = Gesture.Simultaneous(panGesture, pinchGesture);
+  const composedGesture = useMemo(() =>
+    Gesture.Simultaneous(panGesture, pinchGesture),
+    [panGesture, pinchGesture]
+  );
 
   /* --- Port drag handlers --- */
   const absToCanvas = useCallback((absX: number, absY: number) => {
@@ -901,23 +906,19 @@ export default function BuilderScreen() {
   }, [botId, nodes, edges, saveMutation]);
 
   const zoom = useCallback((factor: number) => {
-    runOnUI(() => {
-      "worklet";
-      const oldS = canvasScale.value;
-      const newS = Math.max(0.25, Math.min(2.5, oldS * factor));
-      const f = newS / oldS;
-      // Pivot = viewport center in container coords.
-      // With RN scale (around canvas center 1500,1500):
-      //   container_x = (cx - 1500)*s + 1500 + tx
-      // Keeping pivot fixed: newTX = (cW/2 - 1500)*(1-f) + f*tx
-      const cW = containerW.value;
-      const cH = containerH.value;
-      const tx = canvasX.value;
-      const ty = canvasY.value;
-      canvasX.value = withTiming((cW / 2 - 1500) * (1 - f) + f * tx, { duration: 180 });
-      canvasY.value = withTiming((cH / 2 - 1500) * (1 - f) + f * ty, { duration: 180 });
-      canvasScale.value = withTiming(newS, { duration: 180 });
-    })();
+    const oldS = canvasScale.value;
+    const newS = Math.max(0.25, Math.min(2.5, oldS * factor));
+    const f = newS / oldS;
+    // With RN scale around canvas center (1500,1500):
+    //   container_x = (cx - 1500)*s + 1500 + tx
+    // Keeping viewport center (cW/2) stationary: newTX = (cW/2 - 1500)*(1-f) + f*tx
+    const cW = containerW.value > 50 ? containerW.value : 390;
+    const cH = containerH.value > 50 ? containerH.value : 600;
+    const tx = canvasX.value;
+    const ty = canvasY.value;
+    canvasX.value = withTiming((cW / 2 - 1500) * (1 - f) + f * tx, { duration: 200 });
+    canvasY.value = withTiming((cH / 2 - 1500) * (1 - f) + f * ty, { duration: 200 });
+    canvasScale.value = withTiming(newS, { duration: 200 });
   }, [canvasScale, canvasX, canvasY, containerW, containerH]);
 
   const paddingTop = Platform.OS === "web" ? insets.top + 60 : insets.top;
@@ -1003,8 +1004,10 @@ export default function BuilderScreen() {
         <View
           ref={canvasContainerRef}
           style={s.canvasContainer}
-          onLayout={() => {
-            // Re-measure on every layout change for accurate absolute coordinates
+          onLayout={(e) => {
+            containerW.value = e.nativeEvent.layout.width;
+            containerH.value = e.nativeEvent.layout.height;
+            // Also measure absolute position for drag-drop coordinate mapping
             setTimeout(measureCanvas, 50);
           }}
         >
