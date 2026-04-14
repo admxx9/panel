@@ -1,0 +1,62 @@
+{
+  "expo": {
+    "name": "BotAluguel Pro",
+    "slug": "bot-aluguel-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "botaluguel",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/images/icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#090A0F"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.botaluguel.pro",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Necessário para escanear QR Code do WhatsApp",
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["botaluguel"]
+          }
+        ]
+      }
+    },
+    "android": {
+      "backgroundColor": "#090A0F",
+      "package": "com.botaluguel.pro",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "botaluguel"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "web": {
+      "favicon": "./assets/images/icon.png"
+    },
+    "plugins": [
+      [
+        "expo-router",
+        {
+          "origin": "https://replit.com/"
+        }
+      ],
+      "expo-font",
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true,
+      "reactCompiler": true
+    }
+  }
+}

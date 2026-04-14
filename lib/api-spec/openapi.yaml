@@ -1,0 +1,1499 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: BotAluguel Pro API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+  - name: auth
+    description: Authentication
+  - name: users
+    description: User management
+  - name: bots
+    description: WhatsApp bot management
+  - name: plans
+    description: Plan management
+  - name: payments
+    description: PIX payment operations
+  - name: commands
+    description: Bot command builder
+  - name: admin
+    description: Admin panel
+  - name: notifications
+    description: In-app notifications
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with phone and password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginBody"
+      responses:
+        "200":
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Register new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterBody"
+      responses:
+        "201":
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user info
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/profile:
+    patch:
+      operationId: updateProfile
+      tags: [auth]
+      summary: Update user profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateProfileBody"
+      responses:
+        "200":
+          description: Profile updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+        "400":
+          description: Invalid data
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/reset-password/request:
+    post:
+      operationId: requestResetCode
+      tags: [auth]
+      summary: Request a password reset verification code via SMS
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+              required:
+                - phone
+      responses:
+        "200":
+          description: Verification code sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "404":
+          description: Phone not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/reset-password:
+    post:
+      operationId: resetPassword
+      tags: [auth]
+      summary: Reset password using phone number and verification code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ResetPasswordBody"
+      responses:
+        "200":
+          description: Password reset successful
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400":
+          description: Invalid or expired code
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Phone not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /auth/account:
+    delete:
+      operationId: deleteAccount
+      tags: [auth]
+      summary: Delete user account and all associated data
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Account deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /users/dashboard:
+    get:
+      operationId: getDashboardStats
+      tags: [users]
+      summary: Get dashboard stats for current user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /bots:
+    get:
+      operationId: listBots
+      tags: [bots]
+      summary: List user's bots
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of bots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Bot"
+    post:
+      operationId: createBot
+      tags: [bots]
+      summary: Create a new bot
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateBotBody"
+      responses:
+        "201":
+          description: Bot created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bot"
+
+  /bots/{botId}:
+    get:
+      operationId: getBot
+      tags: [bots]
+      summary: Get bot details
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bot details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bot"
+    delete:
+      operationId: deleteBot
+      tags: [bots]
+      summary: Delete a bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "204":
+          description: Bot deleted
+
+  /bots/{botId}/connect:
+    post:
+      operationId: connectBot
+      tags: [bots]
+      summary: Connect bot to WhatsApp
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConnectBotBody"
+      responses:
+        "200":
+          description: Connection initiated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConnectionResponse"
+
+  /bots/{botId}/disconnect:
+    post:
+      operationId: disconnectBot
+      tags: [bots]
+      summary: Disconnect bot from WhatsApp
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bot disconnected
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bot"
+
+  /bots/{botId}/settings:
+    patch:
+      operationId: updateBotSettings
+      tags: [bots]
+      summary: Update bot settings (name, prefix, ownerPhone)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateBotSettingsBody"
+      responses:
+        "200":
+          description: Bot updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Bot"
+
+  /bots/{botId}/commands:
+    get:
+      operationId: getBotCommands
+      tags: [commands]
+      summary: Get bot command configuration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bot commands
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandFlow"
+    put:
+      operationId: saveBotCommands
+      tags: [commands]
+      summary: Save bot command configuration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: botId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommandFlow"
+      responses:
+        "200":
+          description: Commands saved
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommandFlow"
+
+  /plans:
+    get:
+      operationId: listPlans
+      tags: [plans]
+      summary: List available plans
+      responses:
+        "200":
+          description: Available plans
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Plan"
+
+  /plans/active:
+    get:
+      operationId: getActivePlan
+      tags: [plans]
+      summary: Get user's active plan
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Active plan or null
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivePlan"
+
+  /plans/{planId}/activate:
+    post:
+      operationId: activatePlan
+      tags: [plans]
+      summary: Activate a plan using coins
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: planId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Plan activated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ActivePlan"
+        "402":
+          description: Insufficient coins
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+
+  /payments/pix:
+    post:
+      operationId: createPixCharge
+      tags: [payments]
+      summary: Create a PIX charge for coin top-up
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreatePixBody"
+      responses:
+        "201":
+          description: PIX charge created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PixCharge"
+
+  /payments/pix/{txid}:
+    get:
+      operationId: checkPixStatus
+      tags: [payments]
+      summary: Check PIX payment status
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: txid
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: PIX status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PixStatus"
+
+  /payments/history:
+    get:
+      operationId: getPaymentHistory
+      tags: [payments]
+      summary: Get user's payment history
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Payment history
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+
+  /admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [admin]
+      summary: List all users (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+
+  /admin/stats:
+    get:
+      operationId: adminGetStats
+      tags: [admin]
+      summary: Get platform statistics (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Platform stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AdminStats"
+
+  /admin/payments:
+    get:
+      operationId: adminListPayments
+      tags: [admin]
+      summary: List all payments (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+
+  /admin/notifications/send:
+    post:
+      operationId: adminSendNotification
+      tags: [admin]
+      summary: Send notification to users (admin only)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                body:
+                  type: string
+                type:
+                  type: string
+                targetUserId:
+                  type: string
+              required:
+                - title
+                - body
+      responses:
+        "200":
+          description: Notification sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  sent:
+                    type: number
+                required:
+                  - ok
+                  - sent
+
+  /admin/notifications:
+    get:
+      operationId: adminListNotifications
+      tags: [admin]
+      summary: List all notifications (admin only)
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: All notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppNotification"
+
+  /notifications:
+    get:
+      operationId: listNotifications
+      tags: [notifications]
+      summary: List user notifications
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: User notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/AppNotification"
+
+  /notifications/unread-count:
+    get:
+      operationId: getUnreadCount
+      tags: [notifications]
+      summary: Get unread notification count
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Unread count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  count:
+                    type: number
+                required:
+                  - count
+
+  /notifications/read-all:
+    post:
+      operationId: markAllNotificationsRead
+      tags: [notifications]
+      summary: Mark all notifications as read
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required:
+                  - ok
+
+  /notifications/{id}/read:
+    post:
+      operationId: markNotificationRead
+      tags: [notifications]
+      summary: Mark a single notification as read
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                required:
+                  - ok
+
+  /hosted-bots:
+    get:
+      operationId: listHostedBots
+      tags: [hosting]
+      summary: List user hosted bots
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: List of hosted bots
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/HostedBot"
+    post:
+      operationId: createHostedBot
+      tags: [hosting]
+      summary: Upload a Node.js bot (ZIP or GitHub)
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                githubUrl:
+                  type: string
+                file:
+                  type: string
+                  format: binary
+              required:
+                - name
+      responses:
+        "200":
+          description: Bot created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostedBot"
+
+  /hosted-bots/{id}:
+    get:
+      operationId: getHostedBot
+      tags: [hosting]
+      summary: Get a hosted bot by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Hosted bot details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HostedBot"
+    delete:
+      operationId: deleteHostedBot
+      tags: [hosting]
+      summary: Delete a hosted bot
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bot deleted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /hosted-bots/{id}/start:
+    post:
+      operationId: startHostedBot
+      tags: [hosting]
+      summary: Start a hosted bot process
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bot started
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /hosted-bots/{id}/stop:
+    post:
+      operationId: stopHostedBot
+      tags: [hosting]
+      summary: Stop a hosted bot process
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bot stopped
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /hosted-bots/{id}/restart:
+    post:
+      operationId: restartHostedBot
+      tags: [hosting]
+      summary: Restart a hosted bot process
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: Bot restarted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /hosted-bots/{id}/files:
+    get:
+      operationId: getHostedBotFiles
+      tags: [hosting]
+      summary: List files in a hosted bot project
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: File list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  files:
+                    type: array
+                    items:
+                      type: string
+
+  /hosted-bots/{id}/file:
+    get:
+      operationId: getHostedBotFile
+      tags: [hosting]
+      summary: Read a file from a hosted bot project
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        "200":
+          description: File content
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  path:
+                    type: string
+                  content:
+                    type: string
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+        error:
+          type: string
+      required:
+        - message
+
+    HostedBot:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+        sourceType:
+          type: string
+        githubUrl:
+          type: string
+          nullable: true
+        mainFile:
+          type: string
+        status:
+          type: string
+        isRunning:
+          type: boolean
+        pid:
+          type: number
+          nullable: true
+        files:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    LoginBody:
+      type: object
+      properties:
+        phone:
+          type: string
+        password:
+          type: string
+      required:
+        - phone
+        - password
+
+    RegisterBody:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        password:
+          type: string
+      required:
+        - name
+        - phone
+        - password
+
+    AuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+      required:
+        - token
+        - user
+
+    UpdateProfileBody:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+
+    ResetPasswordBody:
+      type: object
+      properties:
+        phone:
+          type: string
+        code:
+          type: string
+        newPassword:
+          type: string
+      required:
+        - phone
+        - code
+        - newPassword
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+      required:
+        - message
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+        coins:
+          type: number
+        isAdmin:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - name
+        - phone
+        - coins
+        - isAdmin
+        - createdAt
+
+    DashboardStats:
+      type: object
+      properties:
+        totalBots:
+          type: number
+        activeBots:
+          type: number
+        coins:
+          type: number
+        activePlan:
+          type: string
+          nullable: true
+        planExpiresAt:
+          type: string
+          nullable: true
+          format: date-time
+        totalMessages:
+          type: number
+        recentActivity:
+          type: array
+          items:
+            $ref: "#/components/schemas/ActivityItem"
+      required:
+        - totalBots
+        - activeBots
+        - coins
+        - activePlan
+        - planExpiresAt
+        - totalMessages
+        - recentActivity
+
+    ActivityItem:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+        description:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - type
+        - description
+        - createdAt
+
+    Bot:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        name:
+          type: string
+        phone:
+          type: string
+          nullable: true
+        status:
+          type: string
+          enum: [disconnected, connecting, connected, error]
+        connectionType:
+          type: string
+          enum: [qrcode, code]
+          nullable: true
+        qrCode:
+          type: string
+          nullable: true
+        pairCode:
+          type: string
+          nullable: true
+        totalGroups:
+          type: number
+        createdAt:
+          type: string
+          format: date-time
+        connectedAt:
+          type: string
+          nullable: true
+          format: date-time
+        prefix:
+          type: string
+        ownerPhone:
+          type: string
+          nullable: true
+      required:
+        - id
+        - userId
+        - name
+        - status
+        - totalGroups
+        - createdAt
+        - prefix
+
+    CreateBotBody:
+      type: object
+      properties:
+        name:
+          type: string
+      required:
+        - name
+
+    UpdateBotSettingsBody:
+      type: object
+      properties:
+        name:
+          type: string
+        prefix:
+          type: string
+        ownerPhone:
+          type: string
+          nullable: true
+
+    ConnectBotBody:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [qrcode, code]
+        phone:
+          type: string
+          nullable: true
+      required:
+        - type
+
+    ConnectionResponse:
+      type: object
+      properties:
+        type:
+          type: string
+          enum: [qrcode, code]
+        qrCode:
+          type: string
+          nullable: true
+        pairCode:
+          type: string
+          nullable: true
+        sessionId:
+          type: string
+      required:
+        - type
+        - sessionId
+
+    CommandFlow:
+      type: object
+      properties:
+        botId:
+          type: string
+        nodes:
+          type: array
+          items:
+            $ref: "#/components/schemas/FlowNode"
+        edges:
+          type: array
+          items:
+            $ref: "#/components/schemas/FlowEdge"
+        updatedAt:
+          type: string
+          format: date-time
+      required:
+        - botId
+        - nodes
+        - edges
+
+    FlowNode:
+      type: object
+      properties:
+        id:
+          type: string
+        type:
+          type: string
+          enum: [command, action, condition, response]
+        label:
+          type: string
+        config:
+          type: object
+          additionalProperties: true
+        position:
+          type: object
+          properties:
+            x:
+              type: number
+            y:
+              type: number
+          required:
+            - x
+            - y
+      required:
+        - id
+        - type
+        - label
+        - position
+
+    FlowEdge:
+      type: object
+      properties:
+        id:
+          type: string
+        source:
+          type: string
+        target:
+          type: string
+      required:
+        - id
+        - source
+        - target
+
+    Plan:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        coins:
+          type: number
+        days:
+          type: number
+        maxGroups:
+          type: number
+        features:
+          type: array
+          items:
+            type: string
+      required:
+        - id
+        - name
+        - description
+        - coins
+        - days
+        - maxGroups
+        - features
+
+    ActivePlan:
+      type: object
+      properties:
+        id:
+          type: string
+          nullable: true
+        planId:
+          type: string
+          nullable: true
+        planName:
+          type: string
+          nullable: true
+        status:
+          type: string
+          nullable: true
+        maxGroups:
+          type: number
+          nullable: true
+        activatedAt:
+          type: string
+          nullable: true
+          format: date-time
+        expiresAt:
+          type: string
+          nullable: true
+          format: date-time
+      required: []
+
+    CreatePixBody:
+      type: object
+      properties:
+        amount:
+          type: number
+          description: Amount in BRL
+      required:
+        - amount
+
+    PixCharge:
+      type: object
+      properties:
+        txid:
+          type: string
+        amount:
+          type: number
+        coins:
+          type: number
+        status:
+          type: string
+        qrCodeBase64:
+          type: string
+          nullable: true
+        copyPaste:
+          type: string
+          nullable: true
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - txid
+        - amount
+        - coins
+        - status
+        - expiresAt
+        - createdAt
+
+    PixStatus:
+      type: object
+      properties:
+        txid:
+          type: string
+        status:
+          type: string
+          enum: [pending, paid, expired, error]
+        coins:
+          type: number
+          nullable: true
+        paidAt:
+          type: string
+          nullable: true
+          format: date-time
+      required:
+        - txid
+        - status
+
+    Payment:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        type:
+          type: string
+          enum: [topup, plan]
+        amount:
+          type: number
+        coins:
+          type: number
+        status:
+          type: string
+          enum: [pending, paid, expired, error]
+        txid:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+        paidAt:
+          type: string
+          nullable: true
+          format: date-time
+      required:
+        - id
+        - userId
+        - type
+        - amount
+        - coins
+        - status
+        - txid
+        - createdAt
+
+    AdminStats:
+      type: object
+      properties:
+        totalUsers:
+          type: number
+        totalBots:
+          type: number
+        activeBots:
+          type: number
+        totalRevenue:
+          type: number
+        pendingPayments:
+          type: number
+        totalPlans:
+          type: number
+      required:
+        - totalUsers
+        - totalBots
+        - activeBots
+        - totalRevenue
+        - pendingPayments
+        - totalPlans
+
+    AppNotification:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        title:
+          type: string
+        body:
+          type: string
+        type:
+          type: string
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+      required:
+        - id
+        - userId
+        - title
+        - body
+        - type
+        - read
+        - createdAt

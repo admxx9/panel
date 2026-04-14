@@ -1,0 +1,139 @@
+uploads = []
+
+[[generated]]
+id = "FKRCFi--gTcmf07X5LqrJ"
+uri = "file://artifacts/bot-aluguel-mobile/assets/images/icon.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "1un9-qZCismq_Sea7_eWo"
+uri = "file://artifacts/mockup-sandbox/public/images/avatar.png"
+type = "image"
+title = "User Avatar"
+
+[[generated]]
+id = "CgtadFv9-nVApC2RA4mtY"
+uri = "file://artifacts/mockup-sandbox/public/images/bot-studio-create.png"
+type = "image"
+title = "Bot studio create bot"
+
+[[generated]]
+id = "h61HzE44h8wQ4TmvH6oXV"
+uri = "file://attached_assets/logo-bot-v1.png"
+type = "image"
+title = "bot-logo-robot-purple-dark"
+
+[[generated]]
+id = "CcgU35MNJturHxyiNEFcI"
+uri = "file://attached_assets/logo-bot-v2.png"
+type = "image"
+title = "bot-logo-chat-bubble-dark"
+
+[[generated]]
+id = "jDAx96QTxIoZV25R8EuO1"
+uri = "file://attached_assets/logo-bot-v3.png"
+type = "image"
+title = "bot-logo-terminal-bot-dark"
+
+[[generated]]
+id = "WtENjKOq-MP31czv4pYg2"
+uri = "file://attached_assets/logo-bot-v4.png"
+type = "image"
+title = "bot-logo-smart-bot-minimal"
+
+[[generated]]
+id = "fmarjApBDiM5kkY1WKPFz"
+uri = "file://attached_assets/logo-terminal-v1.png"
+type = "image"
+title = "terminal-prompt-purple-dark"
+
+[[generated]]
+id = "GSCBiQnH_lYBSM4v-l2IB"
+uri = "file://attached_assets/logo-terminal-v2.png"
+type = "image"
+title = "chevron-cursor-neon-dark"
+
+[[generated]]
+id = "Z71BBWaLWYUTMWtoWEqGo"
+uri = "file://attached_assets/logo-terminal-v3.png"
+type = "image"
+title = "hash-prompt-minimal-dark"
+
+[[generated]]
+id = "UGzDULELElXbrie3XfitP"
+uri = "file://attached_assets/logo-terminal-v4.png"
+type = "image"
+title = "terminal-brackets-neon-dark"
+
+[[generated]]
+id = "P6YSa-JtLk-yKIMTUVu8G"
+uri = "file://attached_assets/logo-terminal-v5.png"
+type = "image"
+title = "pure-terminal-cursor-dark"
+
+[[generated]]
+id = "M-kzFSDG2vFuZLMDoI7bp"
+uri = "file://attached_assets/logo-robot-v1.png"
+type = "image"
+title = "robot-head-neon-minimal"
+
+[[generated]]
+id = "c4gn31L3yIf4IwQq6qE_P"
+uri = "file://attached_assets/logo-robot-v2.png"
+type = "image"
+title = "robot-face-outline-neon"
+
+[[generated]]
+id = "NtDm0YMm9n98I1LVdlloI"
+uri = "file://attached_assets/logo-robot-v3.png"
+type = "image"
+title = "robot-visor-cyberpunk"
+
+[[generated]]
+id = "G7SXz5M6aJGyB-mVz3OwQ"
+uri = "file://attached_assets/logo-robot-v4.png"
+type = "image"
+title = "robot-pixel-minimal"
+
+[[generated]]
+id = "k2tN-k7HjpS65LdH-PIhY"
+uri = "file://attached_assets/logo-robot-v5.png"
+type = "image"
+title = "robot-code-brackets"
+
+[[generated]]
+id = "KB5d5trd4Qn_pTtUbHTUP"
+uri = "file://attached_assets/logo-robot-v6.png"
+type = "image"
+title = "robot-friendly-rounded"
+
+[[generated]]
+id = "cF0JtlbFymTYUKeOE2CcY"
+uri = "file://attached_assets/logo-robot-v7.png"
+type = "image"
+title = "robot-wireframe-neon"
+
+[[generated]]
+id = "UY-gpPKqFNOA7-K20cCaN"
+uri = "file://attached_assets/logo-robot-v8.png"
+type = "image"
+title = "robot-android-style-purple"
+
+[[generated]]
+id = "ODowAqtaQFx660suuiUvM"
+uri = "file://attached_assets/logo-robot-v9.png"
+type = "image"
+title = "robot-chat-bubble-hybrid"
+
+[[generated]]
+id = "E9y4UzAxJdSgoxgz9vUoL"
+uri = "file://attached_assets/logo-robot-v10.png"
+type = "image"
+title = "robot-scifi-visor-sleek"
+
+[[outputs]]
+id = "wFKJ1pyz9QbxxEJbH8e13"
+uri = "file://RELATORIO_BOTALUGUEL_PRO.md"
+type = "text"
+title = "Relatório Completo — BotAluguel Pro"
