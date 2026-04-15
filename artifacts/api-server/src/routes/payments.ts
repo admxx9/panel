@@ -150,7 +150,7 @@ router.post("/pix/webhook", async (req, res) => {
         ip: req.ip,
         userAgent: req.headers["user-agent"],
         contentType: req.headers["content-type"],
-        authorization: authHeader ? `${authHeader.substring(0, 15)}...` : undefined,
+        hasAuthorization: !!authHeader,
         hasQueryToken: !!queryToken,
         payloadKeys: req.body ? Object.keys(req.body) : [],
       }, "PIX webhook rejected — invalid or missing token");
