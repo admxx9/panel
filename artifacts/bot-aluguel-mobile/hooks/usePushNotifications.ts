@@ -42,10 +42,10 @@ async function getExpoPushToken(): Promise<string | null> {
   }
 }
 
-function handleNotificationResponse(response: Notifications.NotificationResponse) {
+function navigateToBotFromNotification(response: Notifications.NotificationResponse) {
   const data = response.notification.request.content.data as Record<string, string> | undefined;
   if (data?.botId) {
-    router.push(`/bot/${data.botId}` as any);
+    router.push({ pathname: "/bot/[id]", params: { id: data.botId } });
   }
 }
 
@@ -62,8 +62,12 @@ export function usePushNotifications(
       if (token) onToken(token);
     });
 
+    Notifications.getLastNotificationResponseAsync().then((response) => {
+      if (response) navigateToBotFromNotification(response);
+    });
+
     responseListenerRef.current = Notifications.addNotificationResponseReceivedListener(
-      handleNotificationResponse
+      navigateToBotFromNotification
     );
 
     return () => {

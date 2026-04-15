@@ -1714,6 +1714,7 @@ export async function startWhatsAppSession(
 
       if (!loggedOut) {
         sessions.delete(botId);
+        void notifyBotOwner(botId, "Bot caiu 🔄", `Seu bot perdeu a conexão e está reconectando automaticamente.`);
         setTimeout(() => startWhatsAppSession(botId, type, phone), 5000);
       } else {
         sessions.delete(botId);
