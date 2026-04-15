@@ -27,9 +27,13 @@ app.use(
   }),
 );
 const REPLIT_DEV_DOMAIN = process.env["REPLIT_DEV_DOMAIN"];
+const REPLIT_EXPO_DEV_DOMAIN = process.env["REPLIT_EXPO_DEV_DOMAIN"];
 const defaultOrigins: string[] = [];
 if (REPLIT_DEV_DOMAIN) {
   defaultOrigins.push(`https://${REPLIT_DEV_DOMAIN}`);
+}
+if (REPLIT_EXPO_DEV_DOMAIN) {
+  defaultOrigins.push(`https://${REPLIT_EXPO_DEV_DOMAIN}`);
 }
 
 const allowedOrigins = process.env["CORS_ORIGINS"]
