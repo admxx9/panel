@@ -9,6 +9,9 @@ import { db, hostedBotsTable } from "@workspace/db";
 import { eq, and } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { processManager } from "../lib/processManager.js";
+import { logger } from "../lib/logger.js";
+
+const GITHUB_URL_RE = /^https:\/\/github\.com\/[\w.\-]+\/[\w.\-]+(\.git)?$/;
 
 const router = Router();
 const HOSTED_DIR = path.resolve(process.cwd(), ".hosted-bots");
@@ -86,11 +89,20 @@ router.post("/", requireAuth, upload.single("file"), async (req: AuthRequest, re
 
     if (githubUrl) {
       sourceType = "github";
+
+      if (!GITHUB_URL_RE.test(githubUrl)) {
+        fs.rmSync(botDir, { recursive: true, force: true });
+        logger.warn({ userId, githubUrl }, "Blocked invalid GitHub URL for hosted bot");
+        res.status(400).json({ message: "URL inválida. Apenas repositórios públicos do GitHub são aceitos (https://github.com/user/repo)." });
+        return;
+      }
+
       try {
-        execSync(`git clone --depth 1 ${githubUrl} .`, {
+        execSync("git clone --depth 1 -- " + JSON.stringify(githubUrl) + " .", {
           cwd: botDir,
           timeout: 60000,
           stdio: "pipe",
+          env: { PATH: process.env.PATH ?? "/usr/bin:/bin", HOME: botDir, GIT_TERMINAL_PROMPT: "0" },
         });
       } catch (err) {
         fs.rmSync(botDir, { recursive: true, force: true });
@@ -101,6 +113,17 @@ router.post("/", requireAuth, upload.single("file"), async (req: AuthRequest, re
       try {
         const zip = new AdmZip(req.file.buffer);
         const entries = zip.getEntries();
+
+        const botDirBoundary = path.resolve(botDir) + path.sep;
+        for (const entry of entries) {
+          const resolved = path.resolve(botDir, entry.entryName);
+          if (!resolved.startsWith(botDirBoundary) && resolved !== path.resolve(botDir)) {
+            fs.rmSync(botDir, { recursive: true, force: true });
+            logger.warn({ userId, entryName: entry.entryName }, "Blocked path traversal in ZIP upload");
+            res.status(400).json({ message: "Arquivo ZIP contém caminhos inválidos" });
+            return;
+          }
+        }
 
         const hasRootFolder = entries.length > 0 &&
           entries.every(e => e.entryName.startsWith(entries[0].entryName.split("/")[0] + "/"));
@@ -257,13 +280,9 @@ router.post("/:id/start", requireAuth, async (req: AuthRequest, res) => {
       return;
     }
 
-    const managed = processManager.start(botId, userId, botDir, bot.mainFile ?? "index.js");
-
-    if (fs.existsSync(path.join(botDir, "package.json"))) {
-      managed.proc.stdin?.write("npm install && node " + (bot.mainFile ?? "index.js") + "\n");
-    } else {
-      managed.proc.stdin?.write("node " + (bot.mainFile ?? "index.js") + "\n");
-    }
+    const mainFile = bot.mainFile ?? "index.js";
+    const hasPackageJson = fs.existsSync(path.join(botDir, "package.json"));
+    const managed = processManager.startBot(botId, userId, botDir, mainFile, hasPackageJson);
 
     await db.update(hostedBotsTable)
       .set({ status: "running", pid: managed.proc.pid ?? null })
@@ -324,13 +343,9 @@ router.post("/:id/restart", requireAuth, async (req: AuthRequest, res) => {
     processManager.stop(botId);
 
     const botDir = getBotDir(userId, botId);
-    const managed = processManager.start(botId, userId, botDir, bot.mainFile ?? "index.js");
-
-    if (fs.existsSync(path.join(botDir, "package.json"))) {
-      managed.proc.stdin?.write("npm install && node " + (bot.mainFile ?? "index.js") + "\n");
-    } else {
-      managed.proc.stdin?.write("node " + (bot.mainFile ?? "index.js") + "\n");
-    }
+    const mainFile = bot.mainFile ?? "index.js";
+    const hasPackageJson = fs.existsSync(path.join(botDir, "package.json"));
+    const managed = processManager.startBot(botId, userId, botDir, mainFile, hasPackageJson);
 
     await db.update(hostedBotsTable)
       .set({ status: "running", pid: managed.proc.pid ?? null })
@@ -406,8 +421,10 @@ router.get("/:id/file", requireAuth, async (req: AuthRequest, res) => {
     }
 
     const botDir = getBotDir(userId, botId);
+    const botDirRoot = path.resolve(botDir) + path.sep;
     const resolved = path.resolve(botDir, filePath);
-    if (!resolved.startsWith(botDir)) {
+    if (!resolved.startsWith(botDirRoot)) {
+      logger.warn({ userId, botId, filePath }, "Blocked file access outside bot directory");
       res.status(403).json({ message: "Acesso negado" });
       return;
     }
