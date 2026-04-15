@@ -132,8 +132,8 @@ export default function PaymentsScreen() {
   const copyScale = useRef(new Animated.Value(1)).current;
 
   const createPix = useCreatePixCharge();
-  const { data: history, isLoading: historyLoading, refetch: refetchHistory } = useGetPaymentHistory();
-  const { data: plans, isLoading: plansLoading } = useListPlans();
+  const { data: history, isLoading: historyLoading, isError: historyError, refetch: refetchHistory } = useGetPaymentHistory();
+  const { data: plans, isLoading: plansLoading, isError: plansError, refetch: refetchPlans } = useListPlans();
   const { data: stats, refetch: refetchStats } = useGetDashboardStats();
   const activatePlan = useActivatePlan();
 
@@ -194,7 +194,7 @@ export default function PaymentsScreen() {
 
   const paddingBottom = Platform.OS === "web" ? 34 + 110 : insets.bottom + 110;
   const paddingTop    = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
-  const historyList   = (history as any[] | undefined) ?? [];
+  const historyList   = Array.isArray(history) ? history : [];
   const planList      = (plans as Plan[] | undefined) ?? [];
   const coins         = stats?.coins ?? 0;
   const activePlan    = stats?.activePlan;
@@ -242,6 +242,17 @@ export default function PaymentsScreen() {
         {/* Plans carousel */}
         {plansLoading ? (
           <View style={s.loaderBox}><ActivityIndicator color="#6D28D9" size="large" /></View>
+        ) : plansError ? (
+          <View style={s.inner}>
+            <View style={s.retryBlock}>
+              <Feather name="alert-triangle" size={20} color="#EF4444" />
+              <Text style={s.retryText}>Não foi possível carregar os planos.</Text>
+              <Pressable style={s.retryBtn} onPress={() => refetchPlans()}>
+                <Feather name="refresh-cw" size={13} color="#FFF" />
+                <Text style={s.retryBtnText}>Tentar novamente</Text>
+              </Pressable>
+            </View>
+          </View>
         ) : planList.length === 0 ? (
           <View style={s.inner}>
             <View style={s.emptyBlock}>
@@ -398,6 +409,15 @@ export default function PaymentsScreen() {
 
           {historyLoading ? (
             <View style={s.loaderBox}><ActivityIndicator color="#6D28D9" /></View>
+          ) : historyError ? (
+            <View style={s.retryBlock}>
+              <Feather name="alert-triangle" size={20} color="#EF4444" />
+              <Text style={s.retryText}>Não foi possível carregar o histórico.</Text>
+              <Pressable style={s.retryBtn} onPress={() => refetchHistory()}>
+                <Feather name="refresh-cw" size={13} color="#FFF" />
+                <Text style={s.retryBtnText}>Tentar novamente</Text>
+              </Pressable>
+            </View>
           ) : historyList.length === 0 ? (
             <View style={s.emptyBlock}>
               <Feather name="inbox" size={24} color="#8E8E9E" />
@@ -659,4 +679,15 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: "#20202B", marginBottom: 16,
   },
   emptyText: { fontSize: 14, color: "#8E8E9E", fontFamily: "Inter_400Regular" },
+  retryBlock: {
+    alignItems: "center", gap: 10, paddingVertical: 24,
+    backgroundColor: "#13131D", borderRadius: 16,
+    borderWidth: 1, borderColor: "#EF444420", marginBottom: 16,
+  },
+  retryText: { fontSize: 14, color: "#8E8E9E", fontFamily: "Inter_400Regular", textAlign: "center" },
+  retryBtn: {
+    flexDirection: "row", alignItems: "center", gap: 6,
+    backgroundColor: "#6D28D9", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, marginTop: 4,
+  },
+  retryBtnText: { fontSize: 13, color: "#FFF", fontFamily: "Inter_600SemiBold" },
 });

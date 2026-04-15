@@ -2,6 +2,7 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React, { useState } from "react";
+import { parseApiError } from "@/utils/parseApiError";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -45,9 +46,8 @@ export default function ForgotPasswordScreen() {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await requestCodeMutation.mutateAsync({ data: { phone: phone.trim() } });
       setStep("code");
-    } catch (err: any) {
-      const msg = err?.data?.message ?? err?.message ?? "Erro ao enviar código";
-      setError(msg);
+    } catch (err) {
+      setError(parseApiError(err, "Erro ao enviar código. Verifique o número e tente novamente."));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }
@@ -83,9 +83,8 @@ export default function ForgotPasswordScreen() {
       await signIn(data.token, data.user);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       router.replace("/(tabs)" as any);
-    } catch (err: any) {
-      const msg = err?.data?.message ?? err?.message ?? "Erro ao redefinir senha";
-      setError(msg);
+    } catch (err) {
+      setError(parseApiError(err, "Erro ao redefinir senha. Tente novamente."));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }

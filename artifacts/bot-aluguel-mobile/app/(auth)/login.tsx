@@ -4,7 +4,7 @@ import * as WebBrowser from "expo-web-browser";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
-import { parseApiError } from "@/utils/parseApiError";
+import { parseApiError, parseLoginFieldErrors, FieldErrors } from "@/utils/parseApiError";
 import {
   ActivityIndicator,
   Image,
@@ -55,6 +55,7 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors<"phone" | "password">>({});
   const [focusEmail, setFocusEmail] = useState(false);
   const [focusPass, setFocusPass] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -107,23 +108,25 @@ export default function LoginScreen() {
         showTitle: false,
       });
       await startPolling(state);
-    } catch (err: any) {
+    } catch (err) {
       stopPolling(); setGoogleLoading(false);
-      setError(err?.message ?? "Erro ao conectar com Google");
+      setError(parseApiError(err, "Erro ao conectar com Google"));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }
 
   async function handleLogin() {
-    if (!email.trim() || !password.trim()) { setError("Preencha todos os campos"); return; }
-    setError("");
+    if (!email.trim()) { setFieldErrors({ phone: "Informe seu e-mail ou telefone" }); return; }
+    if (!password.trim()) { setFieldErrors({ password: "Informe sua senha" }); return; }
+    setError(""); setFieldErrors({});
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const data = await loginMutation.mutateAsync({ data: { phone: email.trim(), password } });
       await signIn(data.token, data.user);
       router.replace("/(tabs)/");
     } catch (err) {
-      setError(parseApiError(err, "Telefone ou senha incorretos"));
+      const fe = parseLoginFieldErrors(err);
+      setFieldErrors(fe);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }
@@ -201,21 +204,33 @@ export default function LoginScreen() {
           <Text style={s.formSub}>Acesse sua conta para gerenciar seus bots</Text>
 
           <Text style={s.label}>E-MAIL</Text>
-          <View style={[s.inputRow, focusEmail && s.inputFocused]}>
-            <Feather name="mail" size={18} color={focusEmail ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
-            <TextInput style={s.input} placeholder="seu@email.com" placeholderTextColor="#4B4C6B" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" onFocus={() => setFocusEmail(true)} onBlur={() => setFocusEmail(false)} />
+          <View style={[s.inputRow, focusEmail && s.inputFocused, !!fieldErrors.phone && s.inputError]}>
+            <Feather name="mail" size={18} color={fieldErrors.phone ? "#EF4444" : focusEmail ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
+            <TextInput style={s.input} placeholder="seu@email.com" placeholderTextColor="#4B4C6B" value={email} onChangeText={(v) => { setEmail(v); setFieldErrors((f) => ({ ...f, phone: undefined })); }} keyboardType="email-address" autoCapitalize="none" autoComplete="email" onFocus={() => setFocusEmail(true)} onBlur={() => setFocusEmail(false)} />
           </View>
+          {fieldErrors.phone ? (
+            <View style={s.fieldErrorRow}>
+              <Feather name="alert-circle" size={12} color="#EF4444" />
+              <Text style={s.fieldErrorText}>{fieldErrors.phone}</Text>
+            </View>
+          ) : null}
 
-          <Text style={s.label}>SENHA</Text>
-          <View style={[s.inputRow, focusPass && s.inputFocused]}>
-            <Feather name="lock" size={18} color={focusPass ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
-            <TextInput style={s.input} placeholder="Sua senha" placeholderTextColor="#4B4C6B" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} onFocus={() => setFocusPass(true)} onBlur={() => setFocusPass(false)} />
+          <Text style={[s.label, { marginTop: fieldErrors.phone ? 8 : 0 }]}>SENHA</Text>
+          <View style={[s.inputRow, focusPass && s.inputFocused, !!fieldErrors.password && s.inputError]}>
+            <Feather name="lock" size={18} color={fieldErrors.password ? "#EF4444" : focusPass ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
+            <TextInput style={s.input} placeholder="Sua senha" placeholderTextColor="#4B4C6B" value={password} onChangeText={(v) => { setPassword(v); setFieldErrors((f) => ({ ...f, password: undefined })); }} secureTextEntry={!showPassword} onFocus={() => setFocusPass(true)} onBlur={() => setFocusPass(false)} />
             <Pressable onPress={() => setShowPassword(v => !v)} style={s.eyeBtn}>
               <Feather name={showPassword ? "eye-off" : "eye"} size={18} color="#4B4C6B" />
             </Pressable>
           </View>
+          {fieldErrors.password ? (
+            <View style={s.fieldErrorRow}>
+              <Feather name="alert-circle" size={12} color="#EF4444" />
+              <Text style={s.fieldErrorText}>{fieldErrors.password}</Text>
+            </View>
+          ) : null}
 
-          <Pressable style={s.forgotBtn} onPress={() => router.push("/(auth)/forgot-password" as any)}>
+          <Pressable style={[s.forgotBtn, { marginTop: fieldErrors.password ? 4 : -8 }]} onPress={() => router.push("/(auth)/forgot-password" as any)}>
             <Text style={s.forgotText}>Esqueci minha senha</Text>
           </Pressable>
 
@@ -276,8 +291,11 @@ const s = StyleSheet.create({
   formSub: { fontSize: 14, color: "rgba(139,130,177,0.4)", fontFamily: "Inter_400Regular", marginBottom: 28, lineHeight: 20 },
 
   label: { fontSize: 11, fontWeight: "700", color: "rgba(139,130,177,0.45)", fontFamily: "Inter_700Bold", letterSpacing: 1.5, marginBottom: 8, marginTop: 4 },
-  inputRow: { flexDirection: "row", alignItems: "center", backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.07)", height: 54, paddingHorizontal: 16, marginBottom: 16 },
+  inputRow: { flexDirection: "row", alignItems: "center", backgroundColor: "rgba(255,255,255,0.04)", borderRadius: 14, borderWidth: 1, borderColor: "rgba(255,255,255,0.07)", height: 54, paddingHorizontal: 16, marginBottom: 4 },
   inputFocused: { borderColor: "rgba(124,58,237,0.4)", backgroundColor: "rgba(124,58,237,0.04)" },
+  inputError: { borderColor: "rgba(239,68,68,0.5)", backgroundColor: "rgba(239,68,68,0.04)" },
+  fieldErrorRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 12, paddingLeft: 4 },
+  fieldErrorText: { fontSize: 12, color: "#EF4444", fontFamily: "Inter_500Medium", flex: 1 },
   inputIcon: { marginRight: 12 },
   input: { flex: 1, color: "#FFF", fontSize: 15, fontFamily: "Inter_400Regular", paddingVertical: 0, height: "100%" },
   eyeBtn: { padding: 4, marginLeft: 4 },
