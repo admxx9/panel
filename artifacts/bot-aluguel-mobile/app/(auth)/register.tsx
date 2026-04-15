@@ -4,7 +4,7 @@ import * as WebBrowser from "expo-web-browser";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
-import { parseApiError } from "@/utils/parseApiError";
+import { parseApiError, parseRegisterFieldErrors, FieldErrors, RegisterField } from "@/utils/parseApiError";
 import {
   ActivityIndicator,
   FlatList,
@@ -89,6 +89,7 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors<RegisterField>>({});
   const [selectedCountry, setSelectedCountry] = useState(COUNTRIES[0]);
   const [showCountryPicker, setShowCountryPicker] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -148,20 +149,26 @@ export default function RegisterScreen() {
         showTitle: false,
       });
       await startPolling(state);
-    } catch (err: any) {
+    } catch (err) {
       stopPolling(); setGoogleLoading(false);
-      setError(err?.message ?? "Erro ao conectar com Google");
+      setError(parseApiError(err, "Erro ao conectar com Google"));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }
 
+  function clearField(field: RegisterField) {
+    setFieldErrors((f) => ({ ...f, [field]: undefined }));
+  }
+
   async function handleRegister() {
-    if (!name.trim() || !email.trim() || !password) {
-      setError("Preencha todos os campos obrigatórios"); return;
-    }
-    if (password.length < 6) { setError("A senha deve ter no mínimo 6 caracteres"); return; }
-    if (password !== confirmPassword) { setError("As senhas não coincidem"); return; }
-    setError("");
+    const fe: FieldErrors<RegisterField> = {};
+    if (!name.trim()) fe.name = "Informe seu nome completo";
+    if (!email.trim()) fe.phone = "Informe seu e-mail";
+    if (!password) fe.password = "Informe uma senha";
+    else if (password.length < 6) fe.password = "A senha deve ter no mínimo 6 caracteres";
+    if (password && password !== confirmPassword) fe.confirmPassword = "As senhas não coincidem";
+    if (Object.keys(fe).length > 0) { setFieldErrors(fe); return; }
+    setFieldErrors({}); setError("");
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       const fullPhone = phone.trim() ? `${selectedCountry.dial}${phone.trim()}` : "";
@@ -171,7 +178,8 @@ export default function RegisterScreen() {
       await signIn(result.token, result.user);
       router.replace("/(tabs)/");
     } catch (err) {
-      setError(parseApiError(err, "Erro ao criar conta. Tente novamente."));
+      const fe2 = parseRegisterFieldErrors(err);
+      setFieldErrors(fe2);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }
@@ -252,20 +260,22 @@ export default function RegisterScreen() {
 
           {/* Nome */}
           <Text style={s.label}>NOME COMPLETO</Text>
-          <View style={[s.inputRow, focusName && s.inputFocused]}>
-            <Feather name="user" size={18} color={focusName ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
-            <TextInput style={s.input} placeholder="Seu nome completo" placeholderTextColor="#4B4C6B" value={name} onChangeText={setName} autoCapitalize="words" onFocus={() => setFocusName(true)} onBlur={() => setFocusName(false)} />
+          <View style={[s.inputRow, focusName && s.inputFocused, !!fieldErrors.name && s.inputError]}>
+            <Feather name="user" size={18} color={fieldErrors.name ? "#EF4444" : focusName ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
+            <TextInput style={s.input} placeholder="Seu nome completo" placeholderTextColor="#4B4C6B" value={name} onChangeText={(v) => { setName(v); clearField("name"); }} autoCapitalize="words" onFocus={() => setFocusName(true)} onBlur={() => setFocusName(false)} />
           </View>
+          {fieldErrors.name ? <Text style={s.fieldError}>{fieldErrors.name}</Text> : null}
 
           {/* Email */}
-          <Text style={s.label}>E-MAIL</Text>
-          <View style={[s.inputRow, focusEmail && s.inputFocused]}>
-            <Feather name="mail" size={18} color={focusEmail ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
-            <TextInput style={s.input} placeholder="seu@email.com" placeholderTextColor="#4B4C6B" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" autoComplete="email" onFocus={() => setFocusEmail(true)} onBlur={() => setFocusEmail(false)} />
+          <Text style={[s.label, { marginTop: fieldErrors.name ? 4 : 0 }]}>E-MAIL</Text>
+          <View style={[s.inputRow, focusEmail && s.inputFocused, !!fieldErrors.phone && s.inputError]}>
+            <Feather name="mail" size={18} color={fieldErrors.phone ? "#EF4444" : focusEmail ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
+            <TextInput style={s.input} placeholder="seu@email.com" placeholderTextColor="#4B4C6B" value={email} onChangeText={(v) => { setEmail(v); clearField("phone"); }} keyboardType="email-address" autoCapitalize="none" autoComplete="email" onFocus={() => setFocusEmail(true)} onBlur={() => setFocusEmail(false)} />
           </View>
+          {fieldErrors.phone ? <Text style={s.fieldError}>{fieldErrors.phone}</Text> : null}
 
           {/* WhatsApp opcional */}
-          <Text style={s.label}>WHATSAPP <Text style={s.optional}>(opcional)</Text></Text>
+          <Text style={[s.label, { marginTop: fieldErrors.phone ? 4 : 0 }]}>WHATSAPP <Text style={s.optional}>(opcional)</Text></Text>
           <View style={s.phoneRow}>
             <Pressable style={({ pressed }) => [s.countryBtn, pressed && { opacity: 0.8 }]} onPress={() => setShowCountryPicker(true)}>
               <Text style={s.countryFlag}>{selectedCountry.flag}</Text>
@@ -279,16 +289,17 @@ export default function RegisterScreen() {
 
           {/* Senha */}
           <Text style={s.label}>SENHA</Text>
-          <View style={[s.inputRow, focusPass && s.inputFocused]}>
-            <Feather name="lock" size={18} color={focusPass ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
-            <TextInput style={s.input} placeholder="Mínimo 6 caracteres" placeholderTextColor="#4B4C6B" value={password} onChangeText={setPassword} secureTextEntry={!showPassword} onFocus={() => setFocusPass(true)} onBlur={() => setFocusPass(false)} />
+          <View style={[s.inputRow, focusPass && s.inputFocused, !!fieldErrors.password && s.inputError]}>
+            <Feather name="lock" size={18} color={fieldErrors.password ? "#EF4444" : focusPass ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
+            <TextInput style={s.input} placeholder="Mínimo 6 caracteres" placeholderTextColor="#4B4C6B" value={password} onChangeText={(v) => { setPassword(v); clearField("password"); }} secureTextEntry={!showPassword} onFocus={() => setFocusPass(true)} onBlur={() => setFocusPass(false)} />
             <Pressable onPress={() => setShowPassword(v => !v)} style={s.eyeBtn}>
               <Feather name={showPassword ? "eye-off" : "eye"} size={18} color="#4B4C6B" />
             </Pressable>
           </View>
+          {fieldErrors.password ? <Text style={s.fieldError}>{fieldErrors.password}</Text> : null}
 
           {/* Password strength bar */}
-          {password.length > 0 && (
+          {password.length > 0 && !fieldErrors.password && (
             <View style={s.strengthWrap}>
               <View style={s.strengthTrack}>
                 <View style={[s.strengthFill, { width: `${strength.pct}%` as any, backgroundColor: strength.color }]} />
@@ -298,20 +309,22 @@ export default function RegisterScreen() {
           )}
 
           {/* Confirmar senha */}
-          <Text style={[s.label, { marginTop: password.length > 0 ? 8 : 4 }]}>CONFIRMAR SENHA</Text>
-          <View style={[s.inputRow, focusConfirm && s.inputFocused, confirmPassword && password !== confirmPassword ? s.inputError : null]}>
-            <Feather name="lock" size={18} color={focusConfirm ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
-            <TextInput style={s.input} placeholder="Repita a senha" placeholderTextColor="#4B4C6B" value={confirmPassword} onChangeText={setConfirmPassword} secureTextEntry={!showConfirm} onFocus={() => setFocusConfirm(true)} onBlur={() => setFocusConfirm(false)} />
+          <Text style={[s.label, { marginTop: password.length > 0 && !fieldErrors.password ? 8 : 4 }]}>CONFIRMAR SENHA</Text>
+          <View style={[s.inputRow, focusConfirm && s.inputFocused, !!fieldErrors.confirmPassword && s.inputError]}>
+            <Feather name="lock" size={18} color={fieldErrors.confirmPassword ? "#EF4444" : focusConfirm ? "#7C3AED" : "#4B4C6B"} style={s.inputIcon} />
+            <TextInput style={s.input} placeholder="Repita a senha" placeholderTextColor="#4B4C6B" value={confirmPassword} onChangeText={(v) => { setConfirmPassword(v); clearField("confirmPassword"); }} secureTextEntry={!showConfirm} onFocus={() => setFocusConfirm(true)} onBlur={() => setFocusConfirm(false)} />
             <Pressable onPress={() => setShowConfirm(v => !v)} style={s.eyeBtn}>
               <Feather name={showConfirm ? "eye-off" : "eye"} size={18} color="#4B4C6B" />
             </Pressable>
           </View>
-          {confirmPassword.length > 0 && password !== confirmPassword && (
+          {fieldErrors.confirmPassword ? (
+            <Text style={s.fieldError}>{fieldErrors.confirmPassword}</Text>
+          ) : confirmPassword.length > 0 && password !== confirmPassword ? (
             <Text style={s.mismatch}>As senhas não coincidem</Text>
-          )}
+          ) : null}
 
           {error ? (
-            <View style={s.errorRow}>
+            <View style={[s.errorRow, { marginTop: 8 }]}>
               <Feather name="alert-circle" size={14} color="#EF4444" />
               <Text style={s.errorText}>{error}</Text>
             </View>
@@ -407,6 +420,7 @@ const s = StyleSheet.create({
   strengthFill: { height: "100%", borderRadius: 2 },
   strengthLabel: { fontSize: 11, fontFamily: "Inter_600SemiBold", fontWeight: "600", minWidth: 36 },
 
+  fieldError: { fontSize: 12, color: "#EF4444", fontFamily: "Inter_500Medium", marginTop: 4, marginBottom: 10, marginLeft: 4 },
   mismatch: { fontSize: 12, color: "#EF4444", fontFamily: "Inter_400Regular", marginTop: -10, marginBottom: 12, marginLeft: 4 },
 
   errorRow: { flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "rgba(239,68,68,0.08)", borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, marginBottom: 16, borderWidth: 1, borderColor: "rgba(239,68,68,0.15)" },

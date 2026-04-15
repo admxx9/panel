@@ -2,7 +2,7 @@ import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React, { useState } from "react";
-import { parseApiError } from "@/utils/parseApiError";
+import { parseApiError, FieldErrors } from "@/utils/parseApiError";
 import {
   ActivityIndicator,
   KeyboardAvoidingView,
@@ -30,51 +30,49 @@ export default function ForgotPasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState<FieldErrors<"phone" | "code" | "newPassword" | "confirmPassword">>({});
 
   const requestCodeMutation = useRequestResetCode();
   const resetMutation = useResetPassword();
 
   const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
 
+  function clearFieldError(field: "phone" | "code" | "newPassword" | "confirmPassword") {
+    setFieldErrors((f) => ({ ...f, [field]: undefined }));
+  }
+
   async function handleRequestCode() {
     if (!phone.trim()) {
-      setError("Digite seu telefone");
+      setFieldErrors({ phone: "Informe seu número de telefone" });
       return;
     }
-    setError("");
+    setError(""); setFieldErrors({});
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await requestCodeMutation.mutateAsync({ data: { phone: phone.trim() } });
       setStep("code");
     } catch (err) {
-      setError(parseApiError(err, "Erro ao enviar código. Verifique o número e tente novamente."));
+      setFieldErrors({ phone: parseApiError(err, "Erro ao enviar código. Verifique o número e tente novamente.") });
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }
 
   function handleVerifyCode() {
     if (!code.trim() || code.trim().length !== 6) {
-      setError("Digite o código de 6 dígitos");
+      setFieldErrors({ code: "Digite o código de 6 dígitos enviado para seu telefone" });
       return;
     }
-    setError("");
+    setError(""); setFieldErrors({});
     setStep("password");
   }
 
   async function handleReset() {
-    if (!newPassword.trim()) {
-      setError("Digite a nova senha");
-      return;
-    }
-    if (newPassword.length < 6) {
-      setError("A senha deve ter no mínimo 6 caracteres");
-      return;
-    }
-    if (newPassword !== confirmPassword) {
-      setError("As senhas não coincidem");
-      return;
-    }
-    setError("");
+    const fe: FieldErrors<"newPassword" | "confirmPassword"> = {};
+    if (!newPassword.trim()) fe.newPassword = "Informe a nova senha";
+    else if (newPassword.length < 6) fe.newPassword = "A senha deve ter no mínimo 6 caracteres";
+    if (newPassword && newPassword !== confirmPassword) fe.confirmPassword = "As senhas não coincidem";
+    if (Object.keys(fe).length > 0) { setFieldErrors(fe); return; }
+    setError(""); setFieldErrors({});
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const data = await resetMutation.mutateAsync({
@@ -142,12 +140,12 @@ export default function ForgotPasswordScreen() {
               </Text>
 
               <Text style={s.label}>TELEFONE</Text>
-              <View style={s.inputWrap}>
-                <Feather name="phone" size={16} color="#8E8E9E" />
+              <View style={[s.inputWrap, !!fieldErrors.phone && s.inputWrapError]}>
+                <Feather name="phone" size={16} color={fieldErrors.phone ? "#EF4444" : "#8E8E9E"} />
                 <TextInput
                   style={s.input}
                   value={phone}
-                  onChangeText={setPhone}
+                  onChangeText={(v) => { setPhone(v); clearFieldError("phone"); }}
                   placeholder="55 11 99999-9999"
                   placeholderTextColor="#555568"
                   keyboardType="phone-pad"
@@ -155,11 +153,10 @@ export default function ForgotPasswordScreen() {
                   accessibilityLabel="Telefone"
                 />
               </View>
-
-              {error ? (
-                <View style={s.errorBox}>
-                  <Feather name="alert-circle" size={14} color="#EF4444" />
-                  <Text style={s.errorText}>{error}</Text>
+              {fieldErrors.phone ? (
+                <View style={s.fieldErrorRow}>
+                  <Feather name="alert-circle" size={12} color="#EF4444" />
+                  <Text style={s.fieldErrorText}>{fieldErrors.phone}</Text>
                 </View>
               ) : null}
 
@@ -190,12 +187,12 @@ export default function ForgotPasswordScreen() {
               </Text>
 
               <Text style={s.label}>CÓDIGO</Text>
-              <View style={s.inputWrap}>
-                <Feather name="hash" size={16} color="#8E8E9E" />
+              <View style={[s.inputWrap, !!fieldErrors.code && s.inputWrapError]}>
+                <Feather name="hash" size={16} color={fieldErrors.code ? "#EF4444" : "#8E8E9E"} />
                 <TextInput
                   style={[s.input, { letterSpacing: 8, fontSize: 20, textAlign: "center" }]}
                   value={code}
-                  onChangeText={(t) => setCode(t.replace(/\D/g, "").slice(0, 6))}
+                  onChangeText={(t) => { setCode(t.replace(/\D/g, "").slice(0, 6)); clearFieldError("code"); }}
                   placeholder="000000"
                   placeholderTextColor="#555568"
                   keyboardType="number-pad"
@@ -204,11 +201,10 @@ export default function ForgotPasswordScreen() {
                   accessibilityLabel="Código de verificação"
                 />
               </View>
-
-              {error ? (
-                <View style={s.errorBox}>
-                  <Feather name="alert-circle" size={14} color="#EF4444" />
-                  <Text style={s.errorText}>{error}</Text>
+              {fieldErrors.code ? (
+                <View style={s.fieldErrorRow}>
+                  <Feather name="alert-circle" size={12} color="#EF4444" />
+                  <Text style={s.fieldErrorText}>{fieldErrors.code}</Text>
                 </View>
               ) : null}
 
@@ -243,12 +239,12 @@ export default function ForgotPasswordScreen() {
               </Text>
 
               <Text style={s.label}>NOVA SENHA</Text>
-              <View style={s.inputWrap}>
-                <Feather name="lock" size={16} color="#8E8E9E" />
+              <View style={[s.inputWrap, !!fieldErrors.newPassword && s.inputWrapError]}>
+                <Feather name="lock" size={16} color={fieldErrors.newPassword ? "#EF4444" : "#8E8E9E"} />
                 <TextInput
                   style={s.input}
                   value={newPassword}
-                  onChangeText={setNewPassword}
+                  onChangeText={(v) => { setNewPassword(v); clearFieldError("newPassword"); }}
                   placeholder="Mínimo 6 caracteres"
                   placeholderTextColor="#555568"
                   secureTextEntry={!showPassword}
@@ -259,20 +255,32 @@ export default function ForgotPasswordScreen() {
                   <Feather name={showPassword ? "eye-off" : "eye"} size={18} color="#555568" />
                 </Pressable>
               </View>
+              {fieldErrors.newPassword ? (
+                <View style={s.fieldErrorRow}>
+                  <Feather name="alert-circle" size={12} color="#EF4444" />
+                  <Text style={s.fieldErrorText}>{fieldErrors.newPassword}</Text>
+                </View>
+              ) : null}
 
-              <Text style={[s.label, { marginTop: 16 }]}>CONFIRMAR SENHA</Text>
-              <View style={s.inputWrap}>
-                <Feather name="lock" size={16} color="#8E8E9E" />
+              <Text style={[s.label, { marginTop: fieldErrors.newPassword ? 4 : 16 }]}>CONFIRMAR SENHA</Text>
+              <View style={[s.inputWrap, !!fieldErrors.confirmPassword && s.inputWrapError]}>
+                <Feather name="lock" size={16} color={fieldErrors.confirmPassword ? "#EF4444" : "#8E8E9E"} />
                 <TextInput
                   style={s.input}
                   value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  onChangeText={(v) => { setConfirmPassword(v); clearFieldError("confirmPassword"); }}
                   placeholder="Repita a senha"
                   placeholderTextColor="#555568"
                   secureTextEntry={!showPassword}
                   accessibilityLabel="Confirmar senha"
                 />
               </View>
+              {fieldErrors.confirmPassword ? (
+                <View style={s.fieldErrorRow}>
+                  <Feather name="alert-circle" size={12} color="#EF4444" />
+                  <Text style={s.fieldErrorText}>{fieldErrors.confirmPassword}</Text>
+                </View>
+              ) : null}
 
               {error ? (
                 <View style={s.errorBox}>
@@ -333,7 +341,10 @@ const s = StyleSheet.create({
     backgroundColor: "#13131D", borderRadius: 14, borderWidth: 1, borderColor: "#20202B",
     paddingHorizontal: 16, paddingVertical: 14,
   },
+  inputWrapError: { borderColor: "rgba(239,68,68,0.5)", backgroundColor: "rgba(239,68,68,0.04)" },
   input: { flex: 1, fontSize: 15, color: "#EBEBF2", fontFamily: "Inter_500Medium" },
+  fieldErrorRow: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 6, marginBottom: 8, paddingLeft: 2 },
+  fieldErrorText: { fontSize: 12, color: "#EF4444", fontFamily: "Inter_500Medium", flex: 1 },
   errorBox: {
     flexDirection: "row", alignItems: "center", gap: 8,
     backgroundColor: "#EF444410", borderRadius: 10, padding: 12, marginTop: 16,

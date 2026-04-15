@@ -8,6 +8,7 @@ import {
 } from "@workspace/api-client-react";
 import { Clipboard } from "react-native";
 import { parseApiError } from "@/utils/parseApiError";
+import { ErrorCard } from "@/components/ErrorCard";
 import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
@@ -244,14 +245,7 @@ export default function PaymentsScreen() {
           <View style={s.loaderBox}><ActivityIndicator color="#6D28D9" size="large" /></View>
         ) : plansError ? (
           <View style={s.inner}>
-            <View style={s.retryBlock}>
-              <Feather name="alert-triangle" size={20} color="#EF4444" />
-              <Text style={s.retryText}>Não foi possível carregar os planos.</Text>
-              <Pressable style={s.retryBtn} onPress={() => refetchPlans()}>
-                <Feather name="refresh-cw" size={13} color="#FFF" />
-                <Text style={s.retryBtnText}>Tentar novamente</Text>
-              </Pressable>
-            </View>
+            <ErrorCard message="Não foi possível carregar os planos." onRetry={() => refetchPlans()} />
           </View>
         ) : planList.length === 0 ? (
           <View style={s.inner}>
@@ -410,14 +404,7 @@ export default function PaymentsScreen() {
           {historyLoading ? (
             <View style={s.loaderBox}><ActivityIndicator color="#6D28D9" /></View>
           ) : historyError ? (
-            <View style={s.retryBlock}>
-              <Feather name="alert-triangle" size={20} color="#EF4444" />
-              <Text style={s.retryText}>Não foi possível carregar o histórico.</Text>
-              <Pressable style={s.retryBtn} onPress={() => refetchHistory()}>
-                <Feather name="refresh-cw" size={13} color="#FFF" />
-                <Text style={s.retryBtnText}>Tentar novamente</Text>
-              </Pressable>
-            </View>
+            <ErrorCard message="Não foi possível carregar o histórico de pagamentos." onRetry={() => refetchHistory()} />
           ) : historyList.length === 0 ? (
             <View style={s.emptyBlock}>
               <Feather name="inbox" size={24} color="#8E8E9E" />

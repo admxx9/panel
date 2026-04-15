@@ -10,6 +10,7 @@ import React, { useState } from "react";
 import { maybeRequestReview } from "@/utils/requestReview";
 import { parseApiError } from "@/utils/parseApiError";
 import { BotListSkeleton } from "@/components/SkeletonLoader";
+import { ErrorCard } from "@/components/ErrorCard";
 import {
   ActivityIndicator,
   Alert,
@@ -205,22 +206,10 @@ export default function BotsScreen() {
           ListEmptyComponent={
             isError ? (
               <View style={s.empty}>
-                <View style={[s.emptyIcon, { backgroundColor: "#EF444412", borderColor: "#EF444420" }]}>
-                  <Feather name="alert-triangle" size={32} color="#EF4444" />
-                </View>
-                <Text style={s.emptyTitle}>Erro ao carregar</Text>
-                <Text style={s.emptyDesc}>
-                  Não foi possível carregar seus bots.
-                </Text>
-                <Pressable
-                  style={s.emptyBtn}
-                  onPress={() => refetch()}
-                  accessibilityLabel="Tentar novamente"
-                  accessibilityRole="button"
-                >
-                  <Feather name="refresh-cw" size={14} color="#FFF" />
-                  <Text style={s.emptyBtnText}>Tentar novamente</Text>
-                </Pressable>
+                <ErrorCard
+                  message="Não foi possível carregar seus bots."
+                  onRetry={refetch}
+                />
               </View>
             ) : (
               <View style={s.empty}>

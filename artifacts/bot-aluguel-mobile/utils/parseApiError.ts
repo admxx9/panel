@@ -56,6 +56,8 @@ export type FieldErrors<T extends string> = Partial<Record<T, string>>;
 
 const PHONE_KEYWORDS = ["telefone", "phone", "número", "numero"];
 const PASSWORD_KEYWORDS = ["senha", "password", "credencial"];
+const NAME_KEYWORDS = ["nome", "name"];
+const DUPLICATE_KEYWORDS = ["cadastrado", "já existe", "already", "duplicate", "exists"];
 
 export function parseLoginFieldErrors(err: unknown): FieldErrors<"phone" | "password"> {
   const msg = parseApiError(err, "").toLowerCase();
@@ -67,4 +69,22 @@ export function parseLoginFieldErrors(err: unknown): FieldErrors<"phone" | "pass
   if (isPhone && !isPass) return { phone: parseApiError(err) };
   if (isPass && !isPhone) return { password: parseApiError(err) };
   return { password: parseApiError(err) };
+}
+
+export type RegisterField = "name" | "phone" | "password" | "confirmPassword";
+
+export function parseRegisterFieldErrors(err: unknown): FieldErrors<RegisterField> {
+  const friendly = parseApiError(err);
+  const msg = friendly.toLowerCase();
+
+  const isPhone = PHONE_KEYWORDS.some((k) => msg.includes(k));
+  const isPass = PASSWORD_KEYWORDS.some((k) => msg.includes(k));
+  const isName = NAME_KEYWORDS.some((k) => msg.includes(k));
+  const isDuplicate = DUPLICATE_KEYWORDS.some((k) => msg.includes(k));
+
+  if (isDuplicate && isPhone) return { phone: friendly };
+  if (isName && !isPhone && !isPass) return { name: friendly };
+  if (isPhone && !isPass) return { phone: friendly };
+  if (isPass) return { password: friendly };
+  return { phone: friendly };
 }
