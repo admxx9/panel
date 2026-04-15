@@ -1,21 +1,27 @@
 import { useEffect, useRef } from "react";
-import * as Notifications from "expo-notifications";
 import { Platform } from "react-native";
 import { router } from "expo-router";
 import Constants from "expo-constants";
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: true,
-    shouldSetBadge: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-  }),
-});
+let Notifications: typeof import("expo-notifications") | null = null;
+
+try {
+  Notifications = require("expo-notifications");
+  Notifications!.setNotificationHandler({
+    handleNotification: async () => ({
+      shouldShowAlert: true,
+      shouldPlaySound: true,
+      shouldSetBadge: true,
+      shouldShowBanner: true,
+      shouldShowList: true,
+    }),
+  });
+} catch {
+  // expo-notifications not available (e.g. Expo Go SDK 53+)
+}
 
 async function getExpoPushToken(): Promise<string | null> {
-  if (Platform.OS === "web") return null;
+  if (Platform.OS === "web" || !Notifications) return null;
 
   try {
     const { status: existing } = await Notifications.getPermissionsAsync();
@@ -42,8 +48,8 @@ async function getExpoPushToken(): Promise<string | null> {
   }
 }
 
-function navigateToBotFromNotification(response: Notifications.NotificationResponse) {
-  const data = response.notification.request.content.data as Record<string, string> | undefined;
+function navigateToBotFromNotification(response: any) {
+  const data = response?.notification?.request?.content?.data as Record<string, string> | undefined;
   if (data?.botId) {
     router.push({ pathname: "/bot/[id]", params: { id: data.botId } });
   }
@@ -53,10 +59,10 @@ export function usePushNotifications(
   isAuthenticated: boolean,
   onToken: (token: string) => void
 ) {
-  const responseListenerRef = useRef<Notifications.EventSubscription | null>(null);
+  const responseListenerRef = useRef<any>(null);
 
   useEffect(() => {
-    if (!isAuthenticated) return;
+    if (!isAuthenticated || !Notifications) return;
 
     getExpoPushToken().then((token) => {
       if (token) onToken(token);
