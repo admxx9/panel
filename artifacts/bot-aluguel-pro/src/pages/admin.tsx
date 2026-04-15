@@ -190,7 +190,7 @@ export default function AdminPage() {
                   key={payment.id}
                   className={`grid grid-cols-[1fr_auto_auto_auto_auto] gap-4 px-4 py-3 items-center hover:bg-[#090A0F] transition-colors ${i < paymentList.length - 1 ? "border-b border-[#1a1b28]" : ""}`}
                 >
-                  <p className="text-[11px] text-[#4b4c6b] font-mono truncate">{payment.userId.substring(0, 12)}...</p>
+                  <p className="text-[11px] text-[#4b4c6b] truncate">{userList.find((u: any) => u.id === payment.userId)?.name ?? payment.userId.substring(0, 12)}</p>
                   <p className="text-[13px] font-semibold text-[#c9cadb]">R$ {payment.amount.toFixed(2)}</p>
                   <p className="text-[13px] font-bold text-[#7C3AED]">{payment.coins}</p>
                   <div

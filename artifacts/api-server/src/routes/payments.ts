@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { db, usersTable, paymentsTable } from "@workspace/db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import {
   createPixCharge,
@@ -86,18 +86,17 @@ router.get("/pix/:txid", requireAuth, async (req: AuthRequest, res) => {
       try {
         const efStatus = await getPixChargeStatus(txid);
         if (efStatus.status === "paid") {
-          await db
-            .update(paymentsTable)
-            .set({ status: "paid", paidAt: efStatus.paidAt ?? new Date() })
-            .where(eq(paymentsTable.txid, txid));
+          await db.transaction(async (tx) => {
+            await tx
+              .update(paymentsTable)
+              .set({ status: "paid", paidAt: efStatus.paidAt ?? new Date() })
+              .where(eq(paymentsTable.txid, txid));
 
-          const [user] = await db.select().from(usersTable).where(eq(usersTable.id, payment.userId));
-          if (user) {
-            await db
+            await tx
               .update(usersTable)
-              .set({ coins: (user.coins ?? 0) + payment.coins })
+              .set({ coins: sql`${usersTable.coins} + ${payment.coins}` })
               .where(eq(usersTable.id, payment.userId));
-          }
+          });
 
           return res.json({
             txid: payment.txid,
@@ -131,8 +130,23 @@ router.get("/pix/:txid", requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
+const WEBHOOK_PIX_TOKEN = process.env["WEBHOOK_PIX_TOKEN"] || "";
+
 router.post("/pix/webhook", async (req, res) => {
   try {
+    if (WEBHOOK_PIX_TOKEN) {
+      const authHeader = req.headers["authorization"];
+      const queryToken = req.query?.["token"] as string | undefined;
+      const provided = authHeader?.startsWith("Bearer ")
+        ? authHeader.slice(7)
+        : queryToken;
+      if (provided !== WEBHOOK_PIX_TOKEN) {
+        req.log.warn({ ip: req.ip }, "PIX webhook rejected — invalid token");
+        res.status(401).json({ message: "Token inválido" });
+        return;
+      }
+    }
+
     const payload = req.body as EfiBankWebhookPayload;
     req.log.info({ payload }, "EFI Bank webhook received");
 
@@ -154,22 +168,17 @@ router.post("/pix/webhook", async (req, res) => {
 
       const paidAt = horario ? new Date(horario) : new Date();
 
-      await db
-        .update(paymentsTable)
-        .set({ status: "paid", paidAt })
-        .where(eq(paymentsTable.txid, txid));
+      await db.transaction(async (tx) => {
+        await tx
+          .update(paymentsTable)
+          .set({ status: "paid", paidAt })
+          .where(eq(paymentsTable.txid, txid));
 
-      const [user] = await db
-        .select()
-        .from(usersTable)
-        .where(eq(usersTable.id, payment.userId));
-
-      if (user) {
-        await db
+        await tx
           .update(usersTable)
-          .set({ coins: (user.coins ?? 0) + payment.coins })
+          .set({ coins: sql`${usersTable.coins} + ${payment.coins}` })
           .where(eq(usersTable.id, payment.userId));
-      }
+      });
 
       req.log.info({ txid, coins: payment.coins, userId: payment.userId }, "PIX payment confirmed — coins credited");
     }

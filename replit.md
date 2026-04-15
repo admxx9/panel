@@ -58,7 +58,18 @@
 - WhatsApp: auto-reconnect de sessoes ao iniciar servidor (restoreSessions), sessoes persistentes em `.baileys-sessions/`
 - Planos: Basico (100), Pro (250), Premium (500) moedas/30 dias
 - Pagamentos: recarga PIX com codigo copia-e-cola, historico
-- Admin: stats da plataforma, tabela de usuarios e pagamentos
+- Admin: stats da plataforma, tabela de usuarios e pagamentos, nomes de usuarios nos pagamentos
+- **Hosted Bots Page** (`/dashboard/hosted`): criar, iniciar, parar, reiniciar e excluir bots hospedados via hooks gerados
+- **Profile Page** (`/dashboard/profile`): visualizar/editar nome e telefone, excluir conta com confirmacao dupla
+- **Rate Limiting**: global 100/min, auth 5/min, SMS 3/hr, criacao 10/hr via express-rate-limit
+- **Webhook PIX Auth**: token Bearer via `WEBHOOK_PIX_TOKEN` env var
+- **Atomic Payments**: transacoes DB atomicas (drizzle transaction) para creditar moedas + atualizar status
+- **CORS Hardening**: origens restritas via `CORS_ORIGINS` env var (comma-separated)
+- **JWT Secret**: SERVER_SECRET obrigatorio (fatal error se nao definido)
+- **WhatsApp Reconnect**: exponential backoff (2s, 4s, 8s... max 2min), reset no connect
+- **Variaveis {moedas}/{plano}**: lidas do banco (owner real coins/plan) em vez de hardcoded
+- **Busca Dashboard**: campo de busca funcional filtra bots por nome
+- **Settings hooks**: usa useUpdateBotSettings em vez de fetch manual
 - **Web — Tema Pterodactyl**: fundo muito escuro (#090A0F), roxo primário (#7C3AED), accent indigo (#6D28D9). Sem shadcn nos pages — HTML raw com Tailwind. CSS variables em `index.css` — `--primary: 263 84% 57%`, `--accent: 263 70% 50%`. Dashboard redesenhado: wave header SVG, feature cards (Criar Bot/Construtor/Moedas/Planos), lista "SEUS BOTS" com status, painel lateral com stats e pré-visualização de comandos.
 - **Mobile — Tema HubPlatform Dark**: fundo `#0F0F14`, cards `#1A1A24` com `borderWidth: 1, borderColor: #2A2A35`, inputs `#1E1E28`, texto primário `#F0F0F5`, secundário `#A0A0B0`, accent `#A78BFA`. **Todas as telas usam headers flat dark** (sem LinearGradient) com borda inferior sutil. **Dashboard HubPlatform** (`index.tsx`): header com ícone terminal + PRO badge + avatar, card "Criar Novo Bot" com seletor de plataforma (WhatsApp/Discord/Telegram com cores nativas), stats overview (Bots Ativos + Msgs Hoje), bot cards com top glow colorido por plataforma + badges + botão Builder, plan usage meter com barras de progresso. **BottomNav** (`components/BottomNav.tsx`): barra semi-transparente, ícones + labels (Hub/Bots/Moedas/Planos/Config), floating purple FAB "+" central (marginTop -28, shadow roxo). Tabs: Hub (grid), Bots (cpu), Moedas (credit-card), Planos (star), Config (settings). **Bots** (`bots.tsx`): header flat dark, bot cards com top glow, badges de status com border, ações Builder/Gerenciar/Deletar. **Settings** (`settings.tsx`): profile card com avatar roxo + plan badge, seções CONTA/NAVEGAÇÃO/SESSÃO (sem tutorial/tour). **Plans** (`plans.tsx`): coins card, plan cards com features. **Payments** (`payments.tsx`): PIX card, presets, histórico. **Admin** (`admin.tsx`): stats grid, tabs Users/Payments. **Bot detail/settings**: nav flat dark com botões back/settings arredondados, cards com bordas. **Builder** (`builder/[id].tsx`): n8n-style canvas INTOCADO — infinite scroll, SVG edges, GestureDetector, Reanimated. QR code box mantém fundo branco.
 - **Sem TourOverlay interativo**: TourContext/TourOverlay e botão "Iniciar Tutorial" nos settings foram removidos; onboarding é feito via `app/onboarding.tsx` (slides)

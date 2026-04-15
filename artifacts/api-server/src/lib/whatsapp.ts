@@ -44,6 +44,7 @@ if (!fs.existsSync(SESSION_DIR)) {
 }
 
 const sessions = new Map<string, ReturnType<typeof makeWASocket>>();
+const reconnectAttempts = new Map<string, number>();
 const sseClients = new Map<string, Set<Response>>();
 const warnCounts = new Map<string, Map<string, number>>();
 
@@ -255,6 +256,16 @@ async function replaceVars(
   const prefix = bot?.prefix || ".";
   const botName = bot?.name || "Bot";
 
+  let userCoins = "0";
+  let userPlan = "Free";
+  if (bot?.userId) {
+    const [owner] = await db.select({ coins: usersTable.coins, plan: usersTable.plan }).from(usersTable).where(eq(usersTable.id, bot.userId));
+    if (owner) {
+      userCoins = String(owner.coins ?? 0);
+      userPlan = owner.plan ?? "Free";
+    }
+  }
+
   const quotedText = msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.conversation ||
     msg.message?.extendedTextMessage?.contextInfo?.quotedMessage?.extendedTextMessage?.text || "";
 
@@ -266,8 +277,8 @@ async function replaceVars(
     .replace(/\{group\}/g, groupName)
     .replace(/\{membros\}/g, membros)
     .replace(/\{admins\}/g, adminsCount)
-    .replace(/\{moedas\}/g, "0")
-    .replace(/\{plano\}/g, "Free")
+    .replace(/\{moedas\}/g, userCoins)
+    .replace(/\{plano\}/g, userPlan)
     .replace(/\{prefix\}/g, prefix)
     .replace(/\{bot\}/g, botName)
     .replace(/\{botname\}/g, botName)
@@ -1692,6 +1703,7 @@ export async function startWhatsAppSession(
     if (connection === "open") {
       const rawId = sock.user?.id ?? "";
       const phoneNumber = rawId.split(":")[0].split("@")[0] || phone?.replace(/\D/g, "") || "";
+      reconnectAttempts.delete(botId);
       logger.info({ botId, phoneNumber }, "WhatsApp connected");
       await db
         .update(botsTable)
@@ -1714,8 +1726,15 @@ export async function startWhatsAppSession(
 
       if (!loggedOut) {
         sessions.delete(botId);
-        void notifyBotOwner(botId, "Bot caiu 🔄", `Seu bot perdeu a conexão e está reconectando automaticamente.`);
-        setTimeout(() => startWhatsAppSession(botId, type, phone), 5000);
+        const attempt = (reconnectAttempts.get(botId) ?? 0) + 1;
+        reconnectAttempts.set(botId, attempt);
+        const maxDelay = 120_000;
+        const delay = Math.min(2000 * Math.pow(2, attempt - 1), maxDelay);
+        logger.info({ botId, attempt, delay }, "Scheduling WhatsApp reconnect");
+        if (attempt === 1) {
+          void notifyBotOwner(botId, "Bot caiu 🔄", `Seu bot perdeu a conexão e está reconectando automaticamente.`);
+        }
+        setTimeout(() => startWhatsAppSession(botId, type, phone), delay);
       } else {
         sessions.delete(botId);
         const sessionPath = path.join(SESSION_DIR, botId);

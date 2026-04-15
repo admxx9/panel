@@ -73,6 +73,7 @@ export default function DashboardPage() {
   const { data: stats, isLoading } = useGetDashboardStats();
   const { data: bots, isLoading: botsLoading } = useListBots();
   const { user } = useAuth();
+  const [botSearch, setBotSearch] = useState("");
 
   const planExpiry = stats?.planExpiresAt
     ? format(new Date(stats.planExpiresAt), "dd/MM/yyyy", { locale: ptBR })
@@ -104,8 +105,9 @@ export default function DashboardPage() {
               <input
                 type="text"
                 placeholder="Buscar bot por nome..."
+                value={botSearch}
+                onChange={(e) => setBotSearch(e.target.value)}
                 className="bg-transparent text-[12px] text-[#c9cadb] placeholder-[#2a2b3e] outline-none flex-1"
-                readOnly
               />
             </div>
 
@@ -115,11 +117,15 @@ export default function DashboardPage() {
                   <div key={i} className="h-14 bg-[#090A0F] animate-pulse" />
                 ))}
               </div>
-            ) : bots && bots.length > 0 ? (
+            ) : bots && bots.length > 0 ? (() => {
+              const filtered = bots.filter((b: any) =>
+                !botSearch || b.name?.toLowerCase().includes(botSearch.toLowerCase())
+              );
+              return filtered.length > 0 ? (
               <div>
-                {bots.slice(0, 5).map((bot: any, i: number) => (
+                {filtered.slice(0, 5).map((bot: any, i: number) => (
                   <Link key={bot.id} href={`/dashboard/bots/${bot.id}`}>
-                    <div className={`flex items-center justify-between px-4 py-3 ${i < Math.min(bots.length, 5) - 1 ? "border-b border-[#1a1b28]" : ""} hover:bg-white/[0.02] transition-all duration-200 group cursor-pointer`}>
+                    <div className={`flex items-center justify-between px-4 py-3 ${i < Math.min(filtered.length, 5) - 1 ? "border-b border-[#1a1b28]" : ""} hover:bg-white/[0.02] transition-all duration-200 group cursor-pointer`}>
                       <div className="flex items-center gap-3">
                         <div className="h-8 w-8 rounded-lg bg-[#131420] border border-[#1e1f2e] flex items-center justify-center">
                           <Terminal className="h-3.5 w-3.5 text-[#7C3AED]" />
@@ -143,6 +149,12 @@ export default function DashboardPage() {
                 ))}
               </div>
             ) : (
+              <div className="flex flex-col items-center justify-center py-10 gap-2">
+                <Search className="h-6 w-6 text-[#2a2b3e]" />
+                <p className="text-[12px] text-[#4b4c6b]">Nenhum bot encontrado para "{botSearch}"</p>
+              </div>
+            );
+            })() : (
               <div className="flex flex-col items-center justify-center py-10 gap-2">
                 <Bot className="h-6 w-6 text-[#2a2b3e]" />
                 <p className="text-[12px] text-[#4b4c6b]">Nenhum bot criado ainda</p>

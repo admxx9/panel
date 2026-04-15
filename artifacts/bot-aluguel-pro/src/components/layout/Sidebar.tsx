@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, MessageSquare, CreditCard, Wallet, LogOut, Settings, Wrench, SlidersHorizontal, Shield, Cpu, Upload } from "lucide-react";
+import { LayoutDashboard, MessageSquare, CreditCard, Wallet, LogOut, Settings, Wrench, SlidersHorizontal, Shield, Cpu, Upload, User } from "lucide-react";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
@@ -11,6 +11,7 @@ const navItems = [
   { href: "/dashboard/settings", label: "Configurações", icon: SlidersHorizontal },
   { href: "/dashboard/plans", label: "Planos", icon: CreditCard },
   { href: "/dashboard/payments", label: "Comprar Moedas", icon: Wallet },
+  { href: "/dashboard/profile", label: "Meu Perfil", icon: User },
 ];
 
 function NavItem({ href, label, icon: Icon, isActive }: { href: string; label: string; icon: React.ElementType; isActive: boolean }) {

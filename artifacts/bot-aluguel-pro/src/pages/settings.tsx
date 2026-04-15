@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { useListBots } from "@workspace/api-client-react";
+import { useListBots, useUpdateBotSettings } from "@workspace/api-client-react";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Save, Bot, Hash, Phone, Settings, HelpCircle } from "lucide-react";
 
@@ -12,10 +12,10 @@ type BotSettings = {
 
 export default function SettingsPage() {
   const { data: bots, isLoading: botsLoading } = useListBots();
+  const updateSettings = useUpdateBotSettings();
   const { toast } = useToast();
   const [selectedBotId, setSelectedBotId] = useState<string>("");
   const [settings, setSettings] = useState<BotSettings>({ name: "", prefix: ".", ownerPhone: "" });
-  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!selectedBotId || !bots) return;
@@ -34,24 +34,17 @@ export default function SettingsPage() {
       toast({ title: "Selecione um bot", variant: "destructive" });
       return;
     }
-    setSaving(true);
-    try {
-      const token = localStorage.getItem("bot_token") ?? "";
-      const res = await fetch(`/api/bots/${selectedBotId}/settings`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(settings),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message ?? "Erro ao salvar");
+    updateSettings.mutate(
+      { botId: selectedBotId, data: settings },
+      {
+        onSuccess: () => {
+          toast({ title: "Configurações salvas!", description: "As configurações do bot foram atualizadas." });
+        },
+        onError: (err) => {
+          toast({ title: "Erro", description: (err as Error).message ?? "Não foi possível salvar.", variant: "destructive" });
+        },
       }
-      toast({ title: "Configurações salvas!", description: "As configurações do bot foram atualizadas." });
-    } catch (err) {
-      toast({ title: "Erro", description: (err as Error).message ?? "Não foi possível salvar.", variant: "destructive" });
-    } finally {
-      setSaving(false);
-    }
+    );
   };
 
   return (
@@ -142,10 +135,10 @@ export default function SettingsPage() {
             <div className="pt-1">
               <button
                 onClick={handleSave}
-                disabled={saving}
+                disabled={updateSettings.isPending}
                 className="bg-[#7C3AED] hover:bg-[#6D28D9] disabled:opacity-60 text-white text-[13px] font-bold px-5 py-2.5 rounded-md transition-colors flex items-center gap-2"
               >
-                {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                {updateSettings.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
                 Salvar Configurações
               </button>
             </div>

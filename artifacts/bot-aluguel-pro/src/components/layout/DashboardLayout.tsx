@@ -2,7 +2,7 @@ import { Sidebar } from "./Sidebar";
 import { ProtectedRoute } from "../ProtectedRoute";
 import { ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { LayoutDashboard, MessageSquare, Wrench, Wallet, CreditCard, Menu, Cpu, Settings } from "lucide-react";
+import { LayoutDashboard, MessageSquare, Wrench, Wallet, CreditCard, Menu, Cpu, Settings, MoreHorizontal } from "lucide-react";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth";
@@ -11,8 +11,8 @@ const bottomNavItems = [
   { href: "/dashboard", label: "Painel", icon: LayoutDashboard, exact: true },
   { href: "/dashboard/bots", label: "Bots", icon: MessageSquare },
   { href: "/dashboard/builder", label: "Builder", icon: Wrench },
-  { href: "/dashboard/plans", label: "Planos", icon: CreditCard },
   { href: "/dashboard/payments", label: "Moedas", icon: Wallet },
+  { href: "/dashboard/settings", label: "Config", icon: Settings },
 ];
 
 export function DashboardLayout({ children }: { children: ReactNode }) {
@@ -71,6 +71,7 @@ export function DashboardLayout({ children }: { children: ReactNode }) {
                     key={item.href}
                     href={item.href}
                     aria-current={active ? "page" : undefined}
+                    aria-label={item.label}
                     className="flex flex-col items-center justify-center gap-1 flex-1 relative"
                   >
                     {active && <div className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-[#7C3AED] rounded-b" />}

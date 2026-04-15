@@ -2,7 +2,10 @@ import jwt from "jsonwebtoken";
 import bcryptjs from "bcryptjs";
 import type { Request, Response, NextFunction } from "express";
 
-const JWT_SECRET = process.env["SESSION_SECRET"] || "botaluguel-pro-secret-2024";
+const JWT_SECRET = process.env["SESSION_SECRET"];
+if (!JWT_SECRET) {
+  throw new Error("SESSION_SECRET environment variable is required. Server cannot start without it.");
+}
 
 export function hashPassword(password: string): string {
   return bcryptjs.hashSync(password, 10);
