@@ -131,6 +131,9 @@ router.get("/pix/:txid", requireAuth, async (req: AuthRequest, res) => {
 });
 
 const WEBHOOK_PIX_TOKEN = process.env["WEBHOOK_PIX_TOKEN"] || "";
+if (!WEBHOOK_PIX_TOKEN) {
+  console.warn("[SECURITY] WEBHOOK_PIX_TOKEN not set — PIX webhook is unprotected. Set this env var in production.");
+}
 
 router.post("/pix/webhook", async (req, res) => {
   try {
@@ -141,7 +144,14 @@ router.post("/pix/webhook", async (req, res) => {
         ? authHeader.slice(7)
         : queryToken;
       if (provided !== WEBHOOK_PIX_TOKEN) {
-        req.log.warn({ ip: req.ip }, "PIX webhook rejected — invalid token");
+        req.log.warn({
+          ip: req.ip,
+          userAgent: req.headers["user-agent"],
+          contentType: req.headers["content-type"],
+          hasAuth: !!authHeader,
+          hasQueryToken: !!queryToken,
+          payloadKeys: req.body ? Object.keys(req.body) : [],
+        }, "PIX webhook rejected — invalid or missing token");
         res.status(401).json({ message: "Token inválido" });
         return;
       }
