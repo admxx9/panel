@@ -7,6 +7,7 @@ import {
   useListPlans,
 } from "@workspace/api-client-react";
 import { Clipboard } from "react-native";
+import { parseApiError } from "@/utils/parseApiError";
 import * as Haptics from "expo-haptics";
 import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
@@ -155,7 +156,7 @@ export default function PaymentsScreen() {
       const result = await createPix.mutateAsync({ data: { amount: amtNum } });
       setPixData({ copyPaste: result.copyPaste, qrCodeBase64: result.qrCodeBase64, coins: result.coins, amount: amtNum });
       setPendingTxid(result.txid ?? null);
-    } catch { Alert.alert("Erro", "Não foi possível gerar o PIX."); }
+    } catch (err) { Alert.alert("Erro ao gerar PIX", parseApiError(err)); }
   };
 
   const handleCopy = async () => {
@@ -183,8 +184,8 @@ export default function PaymentsScreen() {
           try {
             await activatePlan.mutateAsync({ planId: plan.id });
             await refetchStats();
-          } catch {
-            Alert.alert("Erro", "Não foi possível ativar o plano.");
+          } catch (err) {
+            Alert.alert("Erro ao ativar plano", parseApiError(err));
           } finally { setActivatingId(null); }
         },
       },

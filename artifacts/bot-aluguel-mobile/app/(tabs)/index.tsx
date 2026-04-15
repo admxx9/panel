@@ -4,7 +4,6 @@ import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React from "react";
 import {
-  ActivityIndicator,
   Platform,
   Pressable,
   RefreshControl,
@@ -16,6 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { ErrorView } from "@/components/StateViews";
+import { DashboardSkeleton } from "@/components/SkeletonLoader";
 
 const PLATFORM_CONFIG: Record<string, { color: string; bg: string; icon: string; label: string }> = {
   whatsapp:     { color: "#25D366", bg: "#25D36615", icon: "message-circle", label: "WhatsApp" },
@@ -100,9 +100,7 @@ export default function DashboardScreen() {
         </View>
 
         {isLoading ? (
-          <View style={s.loader}>
-            <ActivityIndicator color="#6D28D9" size="large" />
-          </View>
+          <DashboardSkeleton />
         ) : isError ? (
           <ErrorView message="Não foi possível carregar o painel" onRetry={refetch} />
         ) : (

@@ -35,7 +35,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
   };
 
   const formatErrorDetails = (): string => {
-    let details = `Error: ${error.message}\n\n`;
+    let details = `Erro: ${error.message}\n\n`;
     if (error.stack) {
       details += `Stack Trace:\n${error.stack}`;
     }
@@ -53,7 +53,7 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
       {__DEV__ ? (
         <Pressable
           onPress={() => setIsModalVisible(true)}
-          accessibilityLabel="View error details"
+          accessibilityLabel="Ver detalhes do erro"
           accessibilityRole="button"
           style={({ pressed }) => [
             styles.topButton,
@@ -69,12 +69,16 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
       ) : null}
 
       <View style={styles.content}>
+        <View style={styles.iconWrap}>
+          <Feather name="alert-triangle" size={36} color="#EF4444" />
+        </View>
+
         <Text style={[styles.title, { color: colors.foreground }]}>
-          Something went wrong
+          Algo deu errado
         </Text>
 
         <Text style={[styles.message, { color: colors.mutedForeground }]}>
-          Please reload the app to continue.
+          Ocorreu um erro inesperado. Recarregue o app para continuar.
         </Text>
 
         <Pressable
@@ -88,13 +92,9 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
             },
           ]}
         >
-          <Text
-            style={[
-              styles.buttonText,
-              { color: colors.primaryForeground },
-            ]}
-          >
-            Try Again
+          <Feather name="refresh-cw" size={16} color="#FFF" style={{ marginRight: 8 }} />
+          <Text style={[styles.buttonText, { color: colors.primaryForeground }]}>
+            Tentar novamente
           </Text>
         </Pressable>
       </View>
@@ -120,11 +120,11 @@ export function ErrorFallback({ error, resetError }: ErrorFallbackProps) {
                 ]}
               >
                 <Text style={[styles.modalTitle, { color: colors.foreground }]}>
-                  Error Details
+                  Detalhes do Erro
                 </Text>
                 <Pressable
                   onPress={() => setIsModalVisible(false)}
-                  accessibilityLabel="Close error details"
+                  accessibilityLabel="Fechar detalhes do erro"
                   accessibilityRole="button"
                   style={({ pressed }) => [
                     styles.closeButton,
@@ -187,16 +187,27 @@ const styles = StyleSheet.create({
     width: "100%",
     maxWidth: 600,
   },
+  iconWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: "rgba(239,68,68,0.12)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
+  },
   title: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "700",
     textAlign: "center",
-    lineHeight: 40,
+    lineHeight: 32,
+    fontFamily: "Inter_700Bold",
   },
   message: {
-    fontSize: 16,
+    fontSize: 15,
     textAlign: "center",
     lineHeight: 24,
+    fontFamily: "Inter_400Regular",
   },
   topButton: {
     position: "absolute",
@@ -210,15 +221,15 @@ const styles = StyleSheet.create({
     zIndex: 10,
   },
   button: {
-    paddingVertical: 16,
-    borderRadius: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
     paddingHorizontal: 24,
     minWidth: 200,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
@@ -226,7 +237,8 @@ const styles = StyleSheet.create({
   buttonText: {
     fontWeight: "600",
     textAlign: "center",
-    fontSize: 16,
+    fontSize: 15,
+    fontFamily: "Inter_600SemiBold",
   },
   modalOverlay: {
     flex: 1,
@@ -251,6 +263,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "600",
+    fontFamily: "Inter_600SemiBold",
   },
   closeButton: {
     width: 44,

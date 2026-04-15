@@ -6,8 +6,10 @@ import {
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import React, { useCallback, useState } from "react";
+import React, { useState } from "react";
 import { maybeRequestReview } from "@/utils/requestReview";
+import { parseApiError } from "@/utils/parseApiError";
+import { BotListSkeleton } from "@/components/SkeletonLoader";
 import {
   ActivityIndicator,
   Alert,
@@ -133,8 +135,8 @@ export default function BotsScreen() {
       setNewBotName("");
       setShowCreate(false);
       setTimeout(() => maybeRequestReview(), 2000);
-    } catch {
-      Alert.alert("Erro", "Não foi possível criar o bot.");
+    } catch (err) {
+      Alert.alert("Erro ao criar bot", parseApiError(err));
     }
   };
 
@@ -188,49 +190,57 @@ export default function BotsScreen() {
         </Pressable>
       </View>
 
-      <FlatList
-        data={botList}
-        keyExtractor={(b) => b.id}
-        contentContainerStyle={{ padding: 16, paddingBottom }}
-        showsVerticalScrollIndicator={false}
-        ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
-        refreshControl={
-          <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#6D28D9" />
-        }
-        ListEmptyComponent={
-          isLoading ? (
-            <View style={s.empty}>
-              <ActivityIndicator color="#6D28D9" size="large" />
-              <Text style={s.emptyText}>Carregando bots...</Text>
-            </View>
-          ) : isError ? (
-            <View style={s.empty}>
-              <View style={[s.emptyIcon, { backgroundColor: "#EF444412", borderColor: "#EF444420" }]}>
-                <Feather name="alert-triangle" size={32} color="#EF4444" />
+      {isLoading && botList.length === 0 ? (
+        <BotListSkeleton />
+      ) : (
+        <FlatList
+          data={botList}
+          keyExtractor={(b) => b.id}
+          contentContainerStyle={{ padding: 16, paddingBottom }}
+          showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
+          refreshControl={
+            <RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor="#6D28D9" />
+          }
+          ListEmptyComponent={
+            isError ? (
+              <View style={s.empty}>
+                <View style={[s.emptyIcon, { backgroundColor: "#EF444412", borderColor: "#EF444420" }]}>
+                  <Feather name="alert-triangle" size={32} color="#EF4444" />
+                </View>
+                <Text style={s.emptyTitle}>Erro ao carregar</Text>
+                <Text style={s.emptyDesc}>
+                  Não foi possível carregar seus bots.
+                </Text>
+                <Pressable
+                  style={s.emptyBtn}
+                  onPress={() => refetch()}
+                  accessibilityLabel="Tentar novamente"
+                  accessibilityRole="button"
+                >
+                  <Feather name="refresh-cw" size={14} color="#FFF" />
+                  <Text style={s.emptyBtnText}>Tentar novamente</Text>
+                </Pressable>
               </View>
-              <Text style={s.emptyTitle}>Erro ao carregar</Text>
-              <Text style={s.emptyDesc}>
-                Não foi possível carregar seus bots. Puxe para baixo para tentar novamente.
-              </Text>
-            </View>
-          ) : (
-            <View style={s.empty}>
-              <View style={s.emptyIcon}>
-                <Feather name="cpu" size={32} color="#A78BFA" />
+            ) : (
+              <View style={s.empty}>
+                <View style={s.emptyIcon}>
+                  <Feather name="cpu" size={32} color="#A78BFA" />
+                </View>
+                <Text style={s.emptyTitle}>Nenhum bot criado</Text>
+                <Text style={s.emptyDesc}>
+                  Crie seu primeiro bot e comece a automatizar grupos no WhatsApp
+                </Text>
+                <Pressable style={s.emptyBtn} onPress={() => setShowCreate(true)} accessibilityLabel="Criar primeiro bot" accessibilityRole="button">
+                  <Feather name="plus" size={14} color="#FFF" />
+                  <Text style={s.emptyBtnText}>Criar primeiro bot</Text>
+                </Pressable>
               </View>
-              <Text style={s.emptyTitle}>Nenhum bot criado</Text>
-              <Text style={s.emptyDesc}>
-                Crie seu primeiro bot e comece a automatizar grupos no WhatsApp
-              </Text>
-              <Pressable style={s.emptyBtn} onPress={() => setShowCreate(true)} accessibilityLabel="Criar primeiro bot" accessibilityRole="button">
-                <Feather name="plus" size={14} color="#FFF" />
-                <Text style={s.emptyBtnText}>Criar primeiro bot</Text>
-              </Pressable>
-            </View>
-          )
-        }
-        renderItem={({ item }) => <BotCard bot={item} onDelete={handleDelete} />}
-      />
+            )
+          }
+          renderItem={({ item }) => <BotCard bot={item} onDelete={handleDelete} />}
+        />
+      )}
 
       <Modal
         visible={showCreate}

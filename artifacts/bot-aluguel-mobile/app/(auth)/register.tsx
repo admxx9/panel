@@ -4,6 +4,7 @@ import * as WebBrowser from "expo-web-browser";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
+import { parseApiError } from "@/utils/parseApiError";
 import {
   ActivityIndicator,
   FlatList,
@@ -169,9 +170,8 @@ export default function RegisterScreen() {
       });
       await signIn(result.token, result.user);
       router.replace("/(tabs)/");
-    } catch (err: any) {
-      const msg = err?.data?.message ?? err?.message ?? "Erro ao criar conta";
-      setError(msg);
+    } catch (err) {
+      setError(parseApiError(err, "Erro ao criar conta. Tente novamente."));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }

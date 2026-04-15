@@ -4,6 +4,7 @@ import * as WebBrowser from "expo-web-browser";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React, { useEffect, useRef, useState } from "react";
+import { parseApiError } from "@/utils/parseApiError";
 import {
   ActivityIndicator,
   Image,
@@ -121,8 +122,8 @@ export default function LoginScreen() {
       const data = await loginMutation.mutateAsync({ data: { phone: email.trim(), password } });
       await signIn(data.token, data.user);
       router.replace("/(tabs)/");
-    } catch {
-      setError("E-mail ou senha incorretos");
+    } catch (err) {
+      setError(parseApiError(err, "Telefone ou senha incorretos"));
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }
