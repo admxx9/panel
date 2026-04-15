@@ -12,7 +12,7 @@ import { processManager } from "../lib/processManager.js";
 import { logger } from "../lib/logger.js";
 import { createResourceLimiter } from "../lib/rateLimiter.js";
 
-const GITHUB_URL_RE = /^https:\/\/github\.com\/[\w.\-]+\/[\w.\-]+(\.git)?$/;
+const GITHUB_URL_RE = /^https:\/\/github\.com\/[\w.\-]+\/[\w.\-]+(\.git)?\/?$/;
 
 const router = Router();
 const HOSTED_DIR = path.resolve(process.cwd(), ".hosted-bots");
@@ -91,7 +91,8 @@ router.post("/", requireAuth, createResourceLimiter, upload.single("file"), asyn
     if (githubUrl) {
       sourceType = "github";
 
-      if (!GITHUB_URL_RE.test(githubUrl)) {
+      const cleanUrl = githubUrl.trim().replace(/\/+$/, "");
+      if (!GITHUB_URL_RE.test(cleanUrl)) {
         fs.rmSync(botDir, { recursive: true, force: true });
         logger.warn({ userId, githubUrl }, "Blocked invalid GitHub URL for hosted bot");
         res.status(400).json({ message: "URL inválida. Apenas repositórios públicos do GitHub são aceitos (https://github.com/user/repo)." });
@@ -99,7 +100,7 @@ router.post("/", requireAuth, createResourceLimiter, upload.single("file"), asyn
       }
 
       try {
-        execSync("git clone --depth 1 -- " + JSON.stringify(githubUrl) + " .", {
+        execSync("git clone --depth 1 -- " + JSON.stringify(cleanUrl) + " .", {
           cwd: botDir,
           timeout: 60000,
           stdio: "pipe",
