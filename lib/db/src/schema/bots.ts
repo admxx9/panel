@@ -17,7 +17,6 @@ export const botsTable = pgTable("bots", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
   connectedAt: timestamp("connected_at"),
   messagesProcessed: integer("messages_processed").notNull().default(0),
-  messagesWindowStart: timestamp("messages_window_start"),
 });
 
 export const insertBotSchema = createInsertSchema(botsTable).omit({
