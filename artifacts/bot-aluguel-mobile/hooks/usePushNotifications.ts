@@ -3,21 +3,24 @@ import { Platform } from "react-native";
 import { router } from "expo-router";
 import Constants from "expo-constants";
 
+const isExpoGo = Constants.appOwnership === "expo";
+
 let Notifications: typeof import("expo-notifications") | null = null;
 
-try {
-  Notifications = require("expo-notifications");
-  Notifications!.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: true,
-      shouldShowBanner: true,
-      shouldShowList: true,
-    }),
-  });
-} catch {
-  // expo-notifications not available (e.g. Expo Go SDK 53+)
+if (!isExpoGo) {
+  try {
+    Notifications = require("expo-notifications");
+    Notifications!.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
+      }),
+    });
+  } catch {
+  }
 }
 
 async function getExpoPushToken(): Promise<string | null> {
