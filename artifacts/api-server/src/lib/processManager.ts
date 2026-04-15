@@ -180,6 +180,18 @@ class ProcessManager extends EventEmitter {
       const text = data.toString();
       for (const line of text.split("\n").filter(Boolean)) {
         this.appendLog(botId, `[err] ${line}`);
+
+        if (
+          line.includes("ERR_ACCESS_DENIED") ||
+          line.includes("permission denied") ||
+          line.includes("EACCES") ||
+          line.includes("SecurityError")
+        ) {
+          logger.warn(
+            { botId, userId, line },
+            "Sandbox permission denial detected in hosted bot",
+          );
+        }
       }
       this.emit(`stderr:${botId}`, text);
     });
