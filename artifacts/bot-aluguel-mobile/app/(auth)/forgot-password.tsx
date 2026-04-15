@@ -50,9 +50,14 @@ export default function ForgotPasswordScreen() {
     try {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       await requestCodeMutation.mutateAsync({ data: { phone: phone.trim() } });
-      setStep("code");
+      if (step === "phone") setStep("code");
     } catch (err) {
-      setFieldErrors({ phone: parseApiError(err, "Erro ao enviar código. Verifique o número e tente novamente.") });
+      const msg = parseApiError(err, "Erro ao enviar código. Verifique o número e tente novamente.");
+      if (step === "code") {
+        setError(msg);
+      } else {
+        setFieldErrors({ phone: msg });
+      }
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
     }
   }
@@ -206,6 +211,11 @@ export default function ForgotPasswordScreen() {
                   <Feather name="alert-circle" size={12} color="#EF4444" />
                   <Text style={s.fieldErrorText}>{fieldErrors.code}</Text>
                 </View>
+              ) : error ? (
+                <View style={s.errorBox}>
+                  <Feather name="alert-circle" size={14} color="#EF4444" />
+                  <Text style={s.errorText}>{error}</Text>
+                </View>
               ) : null}
 
               <Pressable
@@ -220,7 +230,7 @@ export default function ForgotPasswordScreen() {
 
               <Pressable
                 style={s.resendBtn}
-                onPress={handleRequestCode}
+                onPress={() => { setError(""); handleRequestCode(); }}
                 disabled={requestCodeMutation.isPending}
                 accessibilityLabel="Reenviar código"
               >
