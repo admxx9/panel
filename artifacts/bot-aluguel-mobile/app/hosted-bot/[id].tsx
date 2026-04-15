@@ -12,7 +12,7 @@ import {
 import * as Haptics from "expo-haptics";
 import { router, useLocalSearchParams } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -24,6 +24,138 @@ import {
   Text,
   View,
 } from "react-native";
+
+type Token = { text: string; color: string };
+
+const C = {
+  keyword:  "#C792EA",
+  string:   "#C3E88D",
+  comment:  "#546E7A",
+  number:   "#F78C6C",
+  property: "#82AAFF",
+  plain:    "#D1D1DB",
+  punct:    "#89DDFF",
+};
+
+const JS_KW = /^(const|let|var|function|return|if|else|for|while|do|switch|case|break|continue|new|this|class|extends|import|export|default|from|of|in|typeof|instanceof|async|await|try|catch|finally|throw|true|false|null|undefined|void|delete|yield|static|super|get|set|type|interface|enum|namespace|as|implements|abstract|declare|module|require)$/;
+
+function tokenizeJs(line: string): Token[] {
+  const tokens: Token[] = [];
+  let i = 0;
+  while (i < line.length) {
+    if (line[i] === "/" && line[i + 1] === "/") {
+      tokens.push({ text: line.slice(i), color: C.comment });
+      break;
+    }
+    if (line[i] === "/" && line[i + 1] === "*") {
+      const end = line.indexOf("*/", i + 2);
+      const chunk = end === -1 ? line.slice(i) : line.slice(i, end + 2);
+      tokens.push({ text: chunk, color: C.comment });
+      i += chunk.length;
+      continue;
+    }
+    if (line[i] === '"' || line[i] === "'" || line[i] === "`") {
+      const q = line[i];
+      let j = i + 1;
+      while (j < line.length && line[j] !== q) {
+        if (line[j] === "\\") j++;
+        j++;
+      }
+      tokens.push({ text: line.slice(i, j + 1), color: C.string });
+      i = j + 1;
+      continue;
+    }
+    if (/\d/.test(line[i])) {
+      let j = i;
+      while (j < line.length && /[\d._xXa-fA-F]/.test(line[j])) j++;
+      tokens.push({ text: line.slice(i, j), color: C.number });
+      i = j;
+      continue;
+    }
+    if (/[a-zA-Z_$]/.test(line[i])) {
+      let j = i;
+      while (j < line.length && /[\w$]/.test(line[j])) j++;
+      const word = line.slice(i, j);
+      tokens.push({ text: word, color: JS_KW.test(word) ? C.keyword : C.plain });
+      i = j;
+      continue;
+    }
+    if (/[(){}[\];,.]/.test(line[i])) {
+      tokens.push({ text: line[i], color: C.punct });
+      i++;
+      continue;
+    }
+    tokens.push({ text: line[i], color: C.plain });
+    i++;
+  }
+  return tokens;
+}
+
+function tokenizeJson(line: string): Token[] {
+  const tokens: Token[] = [];
+  let i = 0;
+  while (i < line.length) {
+    if (line[i] === '"') {
+      let j = i + 1;
+      while (j < line.length && line[j] !== '"') {
+        if (line[j] === "\\") j++;
+        j++;
+      }
+      const str = line.slice(i, j + 1);
+      const nextNonSpace = line.slice(j + 1).trimStart();
+      tokens.push({ text: str, color: nextNonSpace.startsWith(":") ? C.property : C.string });
+      i = j + 1;
+      continue;
+    }
+    if (/[\d\-]/.test(line[i])) {
+      let j = i;
+      while (j < line.length && /[\d.\-eE+]/.test(line[j])) j++;
+      tokens.push({ text: line.slice(i, j), color: C.number });
+      i = j;
+      continue;
+    }
+    if (line.slice(i, i + 4) === "true" || line.slice(i, i + 5) === "false" || line.slice(i, i + 4) === "null") {
+      const w = line.slice(i, i + 4) === "true" ? "true" : line.slice(i, i + 5) === "false" ? "false" : "null";
+      tokens.push({ text: w, color: C.keyword });
+      i += w.length;
+      continue;
+    }
+    tokens.push({ text: line[i], color: /[{}[\]:,]/.test(line[i]) ? C.punct : C.plain });
+    i++;
+  }
+  return tokens;
+}
+
+function getLanguage(filename: string): "js" | "json" | "plain" {
+  const ext = filename.split(".").pop()?.toLowerCase() ?? "";
+  if (["js", "ts", "jsx", "tsx", "mjs", "cjs"].includes(ext)) return "js";
+  if (ext === "json") return "json";
+  return "plain";
+}
+
+function SyntaxLine({ line, lang }: { line: string; lang: "js" | "json" | "plain" }) {
+  const tokens = useMemo(() => {
+    if (lang === "js") return tokenizeJs(line);
+    if (lang === "json") return tokenizeJson(line);
+    return [{ text: line, color: C.plain }];
+  }, [line, lang]);
+  return (
+    <Text style={sh.line} selectable>
+      {tokens.map((t, i) => (
+        <Text key={i} style={{ color: t.color }}>{t.text}</Text>
+      ))}
+      {"\n"}
+    </Text>
+  );
+}
+
+const sh = StyleSheet.create({
+  line: {
+    fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
+    fontSize: 12,
+    lineHeight: 20,
+  },
+});
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { useHostedBotLogs } from "@/hooks/useHostedBotLogs";
@@ -299,13 +431,21 @@ export default function HostedBotDetailScreen() {
             <ScrollView
               style={s.codeBox}
               contentContainerStyle={{ padding: 14, paddingBottom }}
-              horizontal={false}
               showsVerticalScrollIndicator
             >
               <ScrollView horizontal showsHorizontalScrollIndicator>
-                <Text style={s.codeText} selectable>
-                  {fileContent?.content ?? "Não foi possível carregar o arquivo."}
-                </Text>
+                <View>
+                  {fileContent?.content
+                    ? fileContent.content.split("\n").map((line, idx) => (
+                        <SyntaxLine
+                          key={idx}
+                          line={line}
+                          lang={getLanguage(selectedFile)}
+                        />
+                      ))
+                    : <Text style={s.codeText}>Não foi possível carregar o arquivo.</Text>
+                  }
+                </View>
               </ScrollView>
             </ScrollView>
           )}

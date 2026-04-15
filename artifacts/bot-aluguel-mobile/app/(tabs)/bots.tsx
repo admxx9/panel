@@ -1,9 +1,9 @@
 import {
   useCreateBot,
+  useCreateHostedBot,
   useDeleteBot,
   useListBots,
   useListHostedBots,
-  useCreateHostedBot,
   useDeleteHostedBot,
   useStartHostedBot,
   useStopHostedBot,
@@ -11,6 +11,7 @@ import {
   getListHostedBotsQueryKey,
   type HostedBot,
 } from "@workspace/api-client-react";
+import * as DocumentPicker from "expo-document-picker";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
@@ -35,6 +36,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
 import { getListBotsQueryKey, getGetDashboardStatsQueryKey } from "@workspace/api-client-react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 
 type Bot = {
@@ -230,6 +232,9 @@ export default function BotsScreen() {
   const [showCreateHosted, setShowCreateHosted] = useState(false);
   const [hostedBotName, setHostedBotName] = useState("");
   const [githubUrl, setGithubUrl] = useState("");
+  const [hostedSourceType, setHostedSourceType] = useState<"github" | "zip">("github");
+  const [zipFile, setZipFile] = useState<{ name: string; uri: string; mimeType?: string } | null>(null);
+  const [isUploadingZip, setIsUploadingZip] = useState(false);
 
   const { data: hostedBots, isLoading: isHostedLoading, isError: isHostedError, refetch: refetchHosted, isRefetching: isHostedRefetching } = useListHostedBots();
   const createHostedBot = useCreateHostedBot();
@@ -269,16 +274,66 @@ export default function BotsScreen() {
     ]);
   };
 
-  const handleCreateHosted = async () => {
-    if (!hostedBotName.trim() || !githubUrl.trim()) return;
+  const handlePickZip = async () => {
     try {
-      await createHostedBot.mutateAsync({ data: { name: hostedBotName.trim(), githubUrl: githubUrl.trim() } });
-      queryClient.invalidateQueries({ queryKey: getListHostedBotsQueryKey() });
-      setHostedBotName("");
-      setGithubUrl("");
-      setShowCreateHosted(false);
-    } catch (err) {
-      Alert.alert("Erro ao criar bot hospedado", parseApiError(err));
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ["application/zip", "application/x-zip-compressed", "*/*"],
+        copyToCacheDirectory: true,
+      });
+      if (!result.canceled && result.assets.length > 0) {
+        const asset = result.assets[0];
+        if (!asset.name.endsWith(".zip")) {
+          Alert.alert("Arquivo inválido", "Selecione um arquivo .zip");
+          return;
+        }
+        setZipFile({ name: asset.name, uri: asset.uri, mimeType: asset.mimeType ?? "application/zip" });
+      }
+    } catch {
+      Alert.alert("Erro", "Não foi possível selecionar o arquivo.");
+    }
+  };
+
+  const handleCreateHosted = async () => {
+    if (!hostedBotName.trim()) return;
+    if (hostedSourceType === "github") {
+      if (!githubUrl.trim()) return;
+      try {
+        await createHostedBot.mutateAsync({ data: { name: hostedBotName.trim(), githubUrl: githubUrl.trim() } });
+        queryClient.invalidateQueries({ queryKey: getListHostedBotsQueryKey() });
+        setHostedBotName("");
+        setGithubUrl("");
+        setShowCreateHosted(false);
+      } catch (err) {
+        Alert.alert("Erro ao criar bot hospedado", parseApiError(err));
+      }
+    } else {
+      if (!zipFile) return;
+      setIsUploadingZip(true);
+      try {
+        const token = await AsyncStorage.getItem("auth_token");
+        const domain = process.env.EXPO_PUBLIC_DOMAIN;
+        const baseUrl = domain ? `https://${domain}` : "http://localhost:8080";
+        const form = new FormData();
+        form.append("name", hostedBotName.trim());
+        form.append("file", { uri: zipFile.uri, name: zipFile.name, type: zipFile.mimeType ?? "application/zip" } as any);
+        const res = await fetch(`${baseUrl}/api/hosted-bots`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+          body: form,
+        });
+        if (!res.ok) {
+          const body = await res.json().catch(() => ({}));
+          throw new Error((body as any)?.error ?? "Erro ao fazer upload");
+        }
+        queryClient.invalidateQueries({ queryKey: getListHostedBotsQueryKey() });
+        setHostedBotName("");
+        setZipFile(null);
+        setShowCreateHosted(false);
+      } catch (err: any) {
+        Alert.alert("Erro ao criar bot hospedado", err?.message ?? "Tente novamente");
+      } finally {
+        setIsUploadingZip(false);
+      }
     }
   };
 
@@ -515,16 +570,34 @@ export default function BotsScreen() {
         visible={showCreateHosted}
         transparent
         animationType="fade"
-        onRequestClose={() => setShowCreateHosted(false)}
+        onRequestClose={() => { setShowCreateHosted(false); setZipFile(null); setHostedSourceType("github"); }}
       >
-        <Pressable style={s.overlay} onPress={() => setShowCreateHosted(false)}>
+        <Pressable style={s.overlay} onPress={() => { setShowCreateHosted(false); setZipFile(null); setHostedSourceType("github"); }}>
           <Pressable style={s.modal} onPress={() => {}}>
             <View style={s.modalHeader}>
               <View style={s.modalIconWrap}>
                 <Feather name="server" size={16} color="#A78BFA" />
               </View>
-              <Text style={s.modalTitle}>Adicionar bot via GitHub</Text>
+              <Text style={s.modalTitle}>Adicionar bot hospedado</Text>
             </View>
+
+            <View style={s.srcToggle}>
+              <Pressable
+                style={[s.srcBtn, hostedSourceType === "github" && s.srcBtnActive]}
+                onPress={() => setHostedSourceType("github")}
+              >
+                <Feather name="github" size={12} color={hostedSourceType === "github" ? "#A78BFA" : "#8E8E9E"} />
+                <Text style={[s.srcBtnText, hostedSourceType === "github" && s.srcBtnTextActive]}>GitHub</Text>
+              </Pressable>
+              <Pressable
+                style={[s.srcBtn, hostedSourceType === "zip" && s.srcBtnActive]}
+                onPress={() => setHostedSourceType("zip")}
+              >
+                <Feather name="upload" size={12} color={hostedSourceType === "zip" ? "#A78BFA" : "#8E8E9E"} />
+                <Text style={[s.srcBtnText, hostedSourceType === "zip" && s.srcBtnTextActive]}>Upload ZIP</Text>
+              </Pressable>
+            </View>
+
             <Text style={s.modalLabel}>NOME DO BOT</Text>
             <TextInput
               style={s.modalInput}
@@ -534,26 +607,42 @@ export default function BotsScreen() {
               onChangeText={setHostedBotName}
               autoFocus
             />
-            <Text style={[s.modalLabel, { marginTop: 14 }]}>URL DO REPOSITÓRIO GITHUB</Text>
-            <TextInput
-              style={s.modalInput}
-              placeholder="https://github.com/user/repo"
-              placeholderTextColor="#6B7280"
-              value={githubUrl}
-              onChangeText={setGithubUrl}
-              autoCapitalize="none"
-              keyboardType="url"
-            />
+
+            {hostedSourceType === "github" ? (
+              <>
+                <Text style={[s.modalLabel, { marginTop: 14 }]}>URL DO REPOSITÓRIO GITHUB</Text>
+                <TextInput
+                  style={s.modalInput}
+                  placeholder="https://github.com/user/repo"
+                  placeholderTextColor="#6B7280"
+                  value={githubUrl}
+                  onChangeText={setGithubUrl}
+                  autoCapitalize="none"
+                  keyboardType="url"
+                />
+              </>
+            ) : (
+              <>
+                <Text style={[s.modalLabel, { marginTop: 14 }]}>ARQUIVO ZIP</Text>
+                <Pressable style={s.zipPickerBtn} onPress={handlePickZip}>
+                  <Feather name={zipFile ? "check-circle" : "upload-cloud"} size={16} color={zipFile ? "#22C55E" : "#A78BFA"} />
+                  <Text style={[s.zipPickerText, zipFile && { color: "#22C55E" }]} numberOfLines={1}>
+                    {zipFile ? zipFile.name : "Selecionar arquivo .zip"}
+                  </Text>
+                </Pressable>
+              </>
+            )}
+
             <View style={s.modalActions}>
-              <Pressable style={s.cancelBtn} onPress={() => setShowCreateHosted(false)}>
+              <Pressable style={s.cancelBtn} onPress={() => { setShowCreateHosted(false); setZipFile(null); setHostedSourceType("github"); }}>
                 <Text style={s.cancelText}>Cancelar</Text>
               </Pressable>
               <Pressable
-                style={[s.confirmBtn, { opacity: createHostedBot.isPending ? 0.7 : 1 }]}
+                style={[s.confirmBtn, { opacity: (createHostedBot.isPending || isUploadingZip) ? 0.7 : 1 }]}
                 onPress={handleCreateHosted}
-                disabled={createHostedBot.isPending}
+                disabled={createHostedBot.isPending || isUploadingZip}
               >
-                {createHostedBot.isPending ? (
+                {(createHostedBot.isPending || isUploadingZip) ? (
                   <ActivityIndicator color="#FFF" size="small" />
                 ) : (
                   <Text style={s.confirmText}>Adicionar</Text>
@@ -910,4 +999,47 @@ const hcard = StyleSheet.create({
   btnStartText: { fontSize: 12, color: "#22C55E", fontFamily: "Inter_600SemiBold" },
   btnStopText: { fontSize: 12, color: "#EF4444", fontFamily: "Inter_600SemiBold" },
   btnRestartText: { fontSize: 12, color: "#F59E0B", fontFamily: "Inter_600SemiBold" },
+
+  srcToggle: {
+    flexDirection: "row",
+    gap: 8,
+    marginBottom: 16,
+  },
+  srcBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#20202B",
+    backgroundColor: "#13131D",
+    flex: 1,
+    justifyContent: "center",
+  },
+  srcBtnActive: {
+    borderColor: "#6D28D940",
+    backgroundColor: "#6D28D915",
+  },
+  srcBtnText: { fontSize: 12, color: "#8E8E9E", fontFamily: "Inter_600SemiBold" },
+  srcBtnTextActive: { color: "#A78BFA" },
+
+  zipPickerBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    backgroundColor: "#13131D",
+    borderWidth: 1,
+    borderColor: "#20202B",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  zipPickerText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#8E8E9E",
+    fontFamily: "Inter_400Regular",
+  },
 });
