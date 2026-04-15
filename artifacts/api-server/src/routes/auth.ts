@@ -4,10 +4,11 @@ import { db, usersTable, botsTable, botCommandsTable, activePlansTable, payments
 import { and, eq, ne } from "drizzle-orm";
 import { hashPassword, verifyPassword, signToken, requireAuth, type AuthRequest } from "../lib/auth.js";
 import { sendSms } from "../lib/sms.js";
+import { authLimiter, smsLimiter } from "../lib/rateLimiter.js";
 
 const router = Router();
 
-router.post("/login", async (req, res) => {
+router.post("/login", authLimiter, async (req, res) => {
   try {
     const { phone, password } = req.body as { phone?: string; password?: string };
     if (!phone || !password) {
@@ -150,7 +151,7 @@ router.patch("/profile", requireAuth, async (req: AuthRequest, res) => {
 
 const resetCodes = new Map<string, { code: string; expiresAt: number }>();
 
-router.post("/reset-password/request", async (req, res) => {
+router.post("/reset-password/request", smsLimiter, async (req, res) => {
   try {
     const { phone } = req.body as { phone?: string };
     if (!phone) {

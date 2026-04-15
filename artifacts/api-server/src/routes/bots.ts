@@ -9,6 +9,7 @@ import {
   addSseClient,
   removeSseClient,
 } from "../lib/whatsapp.js";
+import { createResourceLimiter } from "../lib/rateLimiter.js";
 
 const router = Router();
 
@@ -22,7 +23,7 @@ router.get("/", requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
-router.post("/", requireAuth, async (req: AuthRequest, res) => {
+router.post("/", requireAuth, createResourceLimiter, async (req: AuthRequest, res) => {
   try {
     const { name } = req.body as { name?: string };
     if (!name) {

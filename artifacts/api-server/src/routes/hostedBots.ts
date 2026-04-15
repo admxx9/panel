@@ -10,6 +10,7 @@ import { eq, and } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 import { processManager } from "../lib/processManager.js";
 import { logger } from "../lib/logger.js";
+import { createResourceLimiter } from "../lib/rateLimiter.js";
 
 const GITHUB_URL_RE = /^https:\/\/github\.com\/[\w.\-]+\/[\w.\-]+(\.git)?$/;
 
@@ -71,7 +72,7 @@ function listFilesRecursive(dir: string, base = ""): string[] {
   return result;
 }
 
-router.post("/", requireAuth, upload.single("file"), async (req: AuthRequest, res) => {
+router.post("/", requireAuth, createResourceLimiter, upload.single("file"), async (req: AuthRequest, res) => {
   try {
     const userId = req.userId!;
     const { name, githubUrl } = req.body as { name?: string; githubUrl?: string };
