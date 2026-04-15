@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { v4 as uuidv4 } from "uuid";
 import { db, usersTable, botsTable, botCommandsTable, activePlansTable, paymentsTable, notificationsTable } from "@workspace/db";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { hashPassword, verifyPassword, signToken, requireAuth, type AuthRequest } from "../lib/auth.js";
 import { sendSms } from "../lib/sms.js";
 
@@ -122,6 +122,10 @@ router.patch("/profile", requireAuth, async (req: AuthRequest, res) => {
       if (expoPushToken === null || expoPushToken === "") {
         updates.expoPushToken = null;
       } else if (expoPushToken.startsWith("ExponentPushToken[")) {
+        await db
+          .update(usersTable)
+          .set({ expoPushToken: null })
+          .where(and(eq(usersTable.expoPushToken, expoPushToken), ne(usersTable.id, req.userId!)));
         updates.expoPushToken = expoPushToken;
       }
     }

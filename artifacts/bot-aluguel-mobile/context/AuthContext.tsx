@@ -86,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    updateProfile({ expoPushToken: null }).catch(() => {});
     registeredToken.current = null;
     await Promise.all([
       AsyncStorage.removeItem(TOKEN_KEY),
