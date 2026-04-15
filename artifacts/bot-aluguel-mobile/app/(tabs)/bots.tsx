@@ -26,7 +26,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient } from "@tanstack/react-query";
-import { getListBotsQueryKey } from "@workspace/api-client-react";
+import { getListBotsQueryKey, getGetDashboardStatsQueryKey } from "@workspace/api-client-react";
 import { LinearGradient } from "expo-linear-gradient";
 
 type Bot = {
@@ -133,6 +133,7 @@ export default function BotsScreen() {
     try {
       await createBot.mutateAsync({ data: { name: newBotName.trim() } });
       queryClient.invalidateQueries({ queryKey: getListBotsQueryKey() });
+      queryClient.invalidateQueries({ queryKey: getGetDashboardStatsQueryKey() });
       setNewBotName("");
       setShowCreate(false);
       setTimeout(() => maybeRequestReview(), 2000);
@@ -150,6 +151,7 @@ export default function BotsScreen() {
         onPress: async () => {
           await deleteBot.mutateAsync({ botId: id });
           queryClient.invalidateQueries({ queryKey: getListBotsQueryKey() });
+          queryClient.invalidateQueries({ queryKey: getGetDashboardStatsQueryKey() });
         },
       },
     ]);
