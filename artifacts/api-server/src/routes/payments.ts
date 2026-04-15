@@ -131,30 +131,31 @@ router.get("/pix/:txid", requireAuth, async (req: AuthRequest, res) => {
 });
 
 const WEBHOOK_PIX_TOKEN = process.env["WEBHOOK_PIX_TOKEN"] || "";
-if (!WEBHOOK_PIX_TOKEN) {
-  console.warn("[SECURITY] WEBHOOK_PIX_TOKEN not set — PIX webhook is unprotected. Set this env var in production.");
-}
 
 router.post("/pix/webhook", async (req, res) => {
   try {
-    if (WEBHOOK_PIX_TOKEN) {
-      const authHeader = req.headers["authorization"];
-      const queryToken = req.query?.["token"] as string | undefined;
-      const provided = authHeader?.startsWith("Bearer ")
-        ? authHeader.slice(7)
-        : queryToken;
-      if (provided !== WEBHOOK_PIX_TOKEN) {
-        req.log.warn({
-          ip: req.ip,
-          userAgent: req.headers["user-agent"],
-          contentType: req.headers["content-type"],
-          hasAuth: !!authHeader,
-          hasQueryToken: !!queryToken,
-          payloadKeys: req.body ? Object.keys(req.body) : [],
-        }, "PIX webhook rejected — invalid or missing token");
-        res.status(401).json({ message: "Token inválido" });
-        return;
-      }
+    if (!WEBHOOK_PIX_TOKEN) {
+      req.log.error({ ip: req.ip }, "PIX webhook called but WEBHOOK_PIX_TOKEN is not configured — rejecting");
+      res.status(503).json({ message: "Webhook não configurado" });
+      return;
+    }
+
+    const authHeader = req.headers["authorization"];
+    const queryToken = req.query?.["token"] as string | undefined;
+    const provided = authHeader?.startsWith("Bearer ")
+      ? authHeader.slice(7)
+      : queryToken;
+    if (provided !== WEBHOOK_PIX_TOKEN) {
+      req.log.warn({
+        ip: req.ip,
+        userAgent: req.headers["user-agent"],
+        contentType: req.headers["content-type"],
+        authorization: authHeader ? `${authHeader.substring(0, 15)}...` : undefined,
+        hasQueryToken: !!queryToken,
+        payloadKeys: req.body ? Object.keys(req.body) : [],
+      }, "PIX webhook rejected — invalid or missing token");
+      res.status(401).json({ message: "Token inválido" });
+      return;
     }
 
     const payload = req.body as EfiBankWebhookPayload;
