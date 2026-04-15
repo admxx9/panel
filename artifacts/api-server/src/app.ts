@@ -26,9 +26,21 @@ app.use(
     },
   }),
 );
+const REPLIT_DEV_DOMAIN = process.env["REPLIT_DEV_DOMAIN"];
+const defaultOrigins: string[] = [];
+if (REPLIT_DEV_DOMAIN) {
+  defaultOrigins.push(`https://${REPLIT_DEV_DOMAIN}`);
+}
+
 const allowedOrigins = process.env["CORS_ORIGINS"]
   ? process.env["CORS_ORIGINS"].split(",").map(o => o.trim())
-  : undefined;
+  : defaultOrigins.length > 0
+    ? defaultOrigins
+    : null;
+
+if (!allowedOrigins && process.env["NODE_ENV"] === "production") {
+  logger.error("CORS_ORIGINS not set in production — CORS is unrestricted. Set CORS_ORIGINS to restrict allowed origins.");
+}
 
 app.use(cors(allowedOrigins ? {
   origin: (origin, callback) => {
@@ -40,7 +52,7 @@ app.use(cors(allowedOrigins ? {
     }
   },
   credentials: true,
-} : undefined));
+} : { credentials: true }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
