@@ -5,3 +5,4 @@ export * from "./payments";
 export * from "./botCommands";
 export * from "./notifications";
 export * from "./hostedBots";
+export * from "./botMessageEvents";

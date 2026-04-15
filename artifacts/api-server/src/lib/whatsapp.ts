@@ -13,7 +13,8 @@ import path from "path";
 import fs from "fs";
 import sharp from "sharp";
 import { logger } from "./logger.js";
-import { db, botsTable, botCommandsTable, usersTable } from "@workspace/db";
+import { v4 as uuidv4 } from "uuid";
+import { db, botsTable, botCommandsTable, usersTable, botMessageEventsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import type { Response } from "express";
 
@@ -1543,13 +1544,10 @@ async function processMessage(
     logger.info({ botId, command: commandText, jid }, "Executing command");
     await executeFlow(sock, msg, commandNode, nodes, edges, botId);
 
-    await db
-      .update(botsTable)
-      .set({
-        messagesProcessed: sql`CASE WHEN messages_window_start IS NULL OR messages_window_start < NOW() - INTERVAL '24 hours' THEN 1 ELSE messages_processed + 1 END`,
-        messagesWindowStart: sql`CASE WHEN messages_window_start IS NULL OR messages_window_start < NOW() - INTERVAL '24 hours' THEN NOW() ELSE messages_window_start END`,
-      })
-      .where(eq(botsTable.id, botId));
+    await Promise.all([
+      db.insert(botMessageEventsTable).values({ id: uuidv4(), botId, processedAt: new Date() }),
+      db.update(botsTable).set({ messagesProcessed: sql`messages_processed + 1` }).where(eq(botsTable.id, botId)),
+    ]);
   } catch (err) {
     logger.error({ err, botId }, "Error processing message");
   }

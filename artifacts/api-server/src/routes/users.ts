@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { db, usersTable, botsTable, activePlansTable, paymentsTable } from "@workspace/db";
-import { eq, and, gte } from "drizzle-orm";
+import { db, usersTable, botsTable, activePlansTable, paymentsTable, botMessageEventsTable } from "@workspace/db";
+import { eq, and, gte, inArray, sql } from "drizzle-orm";
 import { requireAuth, type AuthRequest } from "../lib/auth.js";
 
 const router = Router();
@@ -18,11 +18,17 @@ router.get("/dashboard", requireAuth, async (req: AuthRequest, res) => {
     const activeBots = bots.filter((b) => b.status === "connected");
 
     const now = new Date();
-    const windowCutoff = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const totalMessages = bots.reduce((sum, b) => {
-      const inWindow = b.messagesWindowStart !== null && b.messagesWindowStart > windowCutoff;
-      return inWindow ? sum + b.messagesProcessed : sum;
-    }, 0);
+    const cutoff24h = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+
+    let totalMessages = 0;
+    if (bots.length > 0) {
+      const botIds = bots.map((b) => b.id);
+      const [countRow] = await db
+        .select({ count: sql<number>`CAST(COUNT(*) AS INTEGER)` })
+        .from(botMessageEventsTable)
+        .where(and(inArray(botMessageEventsTable.botId, botIds), gte(botMessageEventsTable.processedAt, cutoff24h)));
+      totalMessages = countRow?.count ?? 0;
+    }
 
     let activePlanName: string | null = null;
     let planExpiresAt: Date | null = null;
