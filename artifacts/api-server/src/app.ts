@@ -39,7 +39,7 @@ const allowedOrigins = process.env["CORS_ORIGINS"]
     : null;
 
 if (!allowedOrigins && process.env["NODE_ENV"] === "production") {
-  logger.error("CORS_ORIGINS not set in production — CORS is unrestricted. Set CORS_ORIGINS to restrict allowed origins.");
+  throw new Error("CORS_ORIGINS environment variable is required in production. Set it to a comma-separated list of allowed origins.");
 }
 
 app.use(cors(allowedOrigins ? {
