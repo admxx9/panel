@@ -2,9 +2,9 @@ import jwt from "jsonwebtoken";
 import bcryptjs from "bcryptjs";
 import type { Request, Response, NextFunction } from "express";
 
-const JWT_SECRET = process.env["SESSION_SECRET"];
+const JWT_SECRET = process.env["JWT_SECRET"] || process.env["SESSION_SECRET"];
 if (!JWT_SECRET) {
-  throw new Error("SESSION_SECRET environment variable is required — server cannot start without it. No fallback or default value is used.");
+  throw new Error("JWT_SECRET (or SESSION_SECRET) environment variable is required — server cannot start without it. No fallback or default value is used.");
 }
 
 export function hashPassword(password: string): string {
