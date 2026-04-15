@@ -27,6 +27,15 @@ function daysUntil(date: string | Date | null | undefined): number | null {
   return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
 }
 
+function formatExpiryLabel(date: string | Date | null | undefined): string | null {
+  if (!date) return null;
+  const d = new Date(date);
+  const days = daysUntil(d);
+  const formatted = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  if (days === 0) return `Expira hoje (${formatted})`;
+  return `${days}d restantes · ${formatted}`;
+}
+
 type Plan = {
   id: string;
   name: string;
@@ -104,8 +113,9 @@ function PlanCard({ plan, isActive, coins, onActivate, loading }: {
 
 export default function PlansScreen() {
   const insets = useSafeAreaInsets();
-  const { data: plans, isLoading: plansLoading, isError: plansError, refetch: refetchPlans } = useListPlans();
-  const { data: stats, refetch: refetchStats, isRefetching } = useGetDashboardStats();
+  const { data: plans, isLoading: plansLoading, isError: plansError, refetch: refetchPlans, isRefetching: plansRefetching } = useListPlans();
+  const { data: stats, refetch: refetchStats, isRefetching: statsRefetching } = useGetDashboardStats();
+  const isRefreshing = plansRefetching || statsRefetching;
   const activatePlan = useActivatePlan();
   const [activatingId, setActivatingId] = useState<string | null>(null);
 
@@ -140,7 +150,7 @@ export default function PlansScreen() {
   const coins = stats?.coins ?? 0;
   const activePlan = stats?.activePlan;
   const planExpiresAt = stats?.planExpiresAt ?? null;
-  const daysLeft = daysUntil(planExpiresAt);
+  const expiryLabel = formatExpiryLabel(planExpiresAt);
 
   async function handleRefresh() {
     await Promise.all([refetchStats(), refetchPlans()]);
@@ -156,7 +166,7 @@ export default function PlansScreen() {
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor="#6D28D9" />}
+        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={handleRefresh} tintColor="#6D28D9" />}
       >
         <View style={s.coinsCard}>
           <View style={s.coinsIconWrap}>
@@ -169,10 +179,8 @@ export default function PlansScreen() {
           {activePlan && (
             <View style={s.activePlanBadge}>
               <Text style={s.activePlanText}>{activePlan}</Text>
-              {daysLeft !== null && (
-                <Text style={s.activePlanExpiry}>
-                  {daysLeft === 0 ? "Expira hoje" : `${daysLeft}d restantes`}
-                </Text>
+              {expiryLabel && (
+                <Text style={s.activePlanExpiry}>{expiryLabel}</Text>
               )}
             </View>
           )}

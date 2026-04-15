@@ -16,10 +16,13 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useGetDashboardStats, useListBots, useDeleteAccount } from "@workspace/api-client-react";
 
-function daysUntil(date: string | Date | null | undefined): number | null {
+function formatPlanExpiry(date: string | Date | null | undefined): string | null {
   if (!date) return null;
-  const diff = new Date(date).getTime() - Date.now();
-  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  const d = new Date(date);
+  const days = Math.max(0, Math.ceil((d.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+  const formatted = d.toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" });
+  if (days === 0) return `Expira hoje · ${formatted}`;
+  return `Expira em ${days} dias · ${formatted}`;
 }
 
 type RowProps = {
@@ -71,7 +74,7 @@ export default function SettingsScreen() {
   const coins = stats?.coins ?? user?.coins ?? 0;
   const planName = stats?.activePlan ?? user?.plan ?? "Gratuito";
   const planExpiresAt = stats?.planExpiresAt ?? null;
-  const daysLeft = daysUntil(planExpiresAt);
+  const expiryLabel = formatPlanExpiry(planExpiresAt);
   const botList = (bots as any[] | undefined) ?? [];
   const activeBots = botList.filter((b) => b.status === "active" || b.isConnected).length;
 
@@ -183,11 +186,7 @@ export default function SettingsScreen() {
             <Text style={s.statSub}>
               {planName === "Gratuito"
                 ? "Toque para ativar"
-                : daysLeft !== null
-                ? daysLeft === 0
-                  ? "Expira hoje"
-                  : `Expira em ${daysLeft} dias`
-                : "Ativo no momento"}
+                : expiryLabel ?? "Ativo no momento"}
             </Text>
           </Pressable>
         </View>
