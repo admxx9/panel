@@ -315,22 +315,24 @@ export default function BotsScreen() {
         const baseUrl = domain ? `https://${domain}` : "http://localhost:8080";
         const form = new FormData();
         form.append("name", hostedBotName.trim());
-        form.append("file", { uri: zipFile.uri, name: zipFile.name, type: zipFile.mimeType ?? "application/zip" } as any);
+        const fileEntry = { uri: zipFile.uri, name: zipFile.name, type: zipFile.mimeType ?? "application/zip" };
+        form.append("file", fileEntry as unknown as Blob);
         const res = await fetch(`${baseUrl}/api/hosted-bots`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
           body: form,
         });
         if (!res.ok) {
-          const body = await res.json().catch(() => ({}));
-          throw new Error((body as any)?.error ?? "Erro ao fazer upload");
+          const body: { error?: string } = await res.json().catch(() => ({}));
+          throw new Error(body.error ?? "Erro ao fazer upload");
         }
         queryClient.invalidateQueries({ queryKey: getListHostedBotsQueryKey() });
         setHostedBotName("");
         setZipFile(null);
         setShowCreateHosted(false);
-      } catch (err: any) {
-        Alert.alert("Erro ao criar bot hospedado", err?.message ?? "Tente novamente");
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : "Tente novamente";
+        Alert.alert("Erro ao criar bot hospedado", msg);
       } finally {
         setIsUploadingZip(false);
       }
@@ -919,6 +921,48 @@ const s = StyleSheet.create({
   },
   segText: { fontSize: 13, color: "#8E8E9E", fontFamily: "Inter_600SemiBold" },
   segTextActive: { color: "#EBEBF2" },
+
+  srcToggle: {
+    flexDirection: "row" as const,
+    gap: 8,
+    marginBottom: 16,
+  },
+  srcBtn: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: "#20202B",
+    backgroundColor: "#13131D",
+    flex: 1,
+    justifyContent: "center" as const,
+  },
+  srcBtnActive: {
+    borderColor: "#6D28D940",
+    backgroundColor: "#6D28D915",
+  },
+  srcBtnText: { fontSize: 12, color: "#8E8E9E", fontFamily: "Inter_600SemiBold" },
+  srcBtnTextActive: { color: "#A78BFA" },
+  zipPickerBtn: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 10,
+    backgroundColor: "#13131D",
+    borderWidth: 1,
+    borderColor: "#20202B",
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 14,
+  },
+  zipPickerText: {
+    flex: 1,
+    fontSize: 13,
+    color: "#8E8E9E",
+    fontFamily: "Inter_400Regular",
+  },
 });
 
 const hcard = StyleSheet.create({
@@ -999,47 +1043,4 @@ const hcard = StyleSheet.create({
   btnStartText: { fontSize: 12, color: "#22C55E", fontFamily: "Inter_600SemiBold" },
   btnStopText: { fontSize: 12, color: "#EF4444", fontFamily: "Inter_600SemiBold" },
   btnRestartText: { fontSize: 12, color: "#F59E0B", fontFamily: "Inter_600SemiBold" },
-
-  srcToggle: {
-    flexDirection: "row",
-    gap: 8,
-    marginBottom: 16,
-  },
-  srcBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: "#20202B",
-    backgroundColor: "#13131D",
-    flex: 1,
-    justifyContent: "center",
-  },
-  srcBtnActive: {
-    borderColor: "#6D28D940",
-    backgroundColor: "#6D28D915",
-  },
-  srcBtnText: { fontSize: 12, color: "#8E8E9E", fontFamily: "Inter_600SemiBold" },
-  srcBtnTextActive: { color: "#A78BFA" },
-
-  zipPickerBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: "#13131D",
-    borderWidth: 1,
-    borderColor: "#20202B",
-    borderRadius: 12,
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-  },
-  zipPickerText: {
-    flex: 1,
-    fontSize: 13,
-    color: "#8E8E9E",
-    fontFamily: "Inter_400Regular",
-  },
 });

@@ -24,6 +24,10 @@ import {
   Text,
   View,
 } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useQueryClient } from "@tanstack/react-query";
+import { useHostedBotLogs } from "@/hooks/useHostedBotLogs";
+import { parseApiError } from "@/utils/parseApiError";
 
 type Token = { text: string; color: string };
 
@@ -156,10 +160,6 @@ const sh = StyleSheet.create({
     lineHeight: 20,
   },
 });
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useQueryClient } from "@tanstack/react-query";
-import { useHostedBotLogs } from "@/hooks/useHostedBotLogs";
-import { parseApiError } from "@/utils/parseApiError";
 
 const STATUS_CFG: Record<string, { color: string; label: string }> = {
   running:  { color: "#22C55E", label: "Rodando" },
