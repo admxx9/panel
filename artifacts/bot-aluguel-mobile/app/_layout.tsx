@@ -5,8 +5,11 @@ import {
   Inter_700Bold,
   useFonts,
 } from "@expo-google-fonts/inter";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { setBaseUrl } from "@workspace/api-client-react";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClient } from "@tanstack/react-query";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
@@ -14,6 +17,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import { AuthProvider } from "@/context/AuthContext";
 
 if (process.env.EXPO_PUBLIC_DOMAIN) {
@@ -30,7 +34,23 @@ if (typeof global !== "undefined" && (global as any).ErrorUtils) {
   });
 }
 
-const queryClient = new QueryClient();
+const ONE_DAY_MS = 1000 * 60 * 60 * 24;
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      gcTime: ONE_DAY_MS,
+      staleTime: 1000 * 60 * 5,
+      retry: 2,
+    },
+  },
+});
+
+const persister = createAsyncStoragePersister({
+  storage: AsyncStorage,
+  key: "QUERY_CACHE",
+  throttleTime: 1000,
+});
 
 const SLIDE_FROM_RIGHT = {
   animation: "slide_from_right" as const,
@@ -74,13 +94,17 @@ export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <ErrorBoundary>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider
+          client={queryClient}
+          persistOptions={{ persister, maxAge: ONE_DAY_MS }}
+        >
           <GestureHandlerRootView style={{ flex: 1 }}>
             <AuthProvider>
+              <OfflineBanner />
               <RootLayoutNav />
             </AuthProvider>
           </GestureHandlerRootView>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </ErrorBoundary>
     </SafeAreaProvider>
   );
