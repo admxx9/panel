@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLogin } from "@workspace/api-client-react";
 import * as Haptics from "expo-haptics";
 import * as WebBrowser from "expo-web-browser";
@@ -46,6 +47,16 @@ function GithubIcon({ size = 22 }: { size?: number }) {
 
 const POLL_INTERVAL = 2500;
 const POLL_TIMEOUT = 5 * 60 * 1000;
+const ONBOARDING_KEY = "ONBOARDING_SEEN";
+
+async function redirectAfterLogin() {
+  const seen = await AsyncStorage.getItem(ONBOARDING_KEY);
+  if (!seen) {
+    router.replace("/onboarding" as any);
+  } else {
+    router.replace("/(tabs)/");
+  }
+}
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -84,7 +95,7 @@ export default function LoginScreen() {
         if (data.status === "done") {
           stopPolling(); setGoogleLoading(false);
           await signIn(data.token, data.user);
-          router.replace("/(tabs)/");
+          void redirectAfterLogin();
         } else if (data.status === "error") {
           stopPolling(); setGoogleLoading(false);
           setError(data.message ?? "Erro ao fazer login com Google");
@@ -123,7 +134,7 @@ export default function LoginScreen() {
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       const data = await loginMutation.mutateAsync({ data: { phone: email.trim(), password } });
       await signIn(data.token, data.user);
-      router.replace("/(tabs)/");
+      void redirectAfterLogin();
     } catch (err) {
       const fe = parseLoginFieldErrors(err);
       setFieldErrors(fe);

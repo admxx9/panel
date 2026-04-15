@@ -50,6 +50,7 @@ function RootLayoutNav() {
       <Stack.Screen name="notifications" />
       <Stack.Screen name="edit-profile" />
       <Stack.Screen name="legal" />
+      <Stack.Screen name="onboarding" options={{ animation: "fade", gestureEnabled: false }} />
     </Stack>
   );
 }

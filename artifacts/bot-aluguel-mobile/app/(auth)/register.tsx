@@ -126,7 +126,7 @@ export default function RegisterScreen() {
         if (data.status === "done") {
           stopPolling(); setGoogleLoading(false);
           await signIn(data.token, data.user);
-          router.replace("/(tabs)/");
+          router.replace("/onboarding" as any);
         } else if (data.status === "error") {
           stopPolling(); setGoogleLoading(false);
           setError(data.message ?? "Erro ao fazer login com Google");
@@ -176,7 +176,7 @@ export default function RegisterScreen() {
         data: { name: name.trim(), phone: fullPhone || email.trim(), password },
       });
       await signIn(result.token, result.user);
-      router.replace("/(tabs)/");
+      router.replace("/onboarding" as any);
     } catch (err) {
       const fe2 = parseRegisterFieldErrors(err);
       setFieldErrors(fe2);

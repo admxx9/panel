@@ -1,3 +1,4 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import {
   View, Text, StyleSheet, Pressable, Alert, Modal,
@@ -670,6 +671,7 @@ export default function BuilderScreen() {
   const [showTemplates, setShowTemplates] = useState(false);
   const [hasUnsaved, setHasUnsaved] = useState(false);
   const [draggingPos, setDraggingPos] = useState<{ id: string; x: number; y: number } | null>(null);
+  const [showBuilderHint, setShowBuilderHint] = useState(false);
 
   const { data: commandData } = useGetBotCommands(botId ?? "", { query: { enabled: !!botId } });
   const saveMutation = useSaveBotCommands();
@@ -677,6 +679,17 @@ export default function BuilderScreen() {
   const canvasContainerRef = useRef<View>(null);
   const canvasOX = useSharedValue(0);
   const canvasOY = useSharedValue(0);
+
+  useEffect(() => {
+    AsyncStorage.getItem("BUILDER_HINT_SEEN").then((seen) => {
+      if (!seen) setShowBuilderHint(true);
+    });
+  }, []);
+
+  function dismissBuilderHint() {
+    setShowBuilderHint(false);
+    AsyncStorage.setItem("BUILDER_HINT_SEEN", "1");
+  }
 
   useEffect(() => {
     if (commandData) {
@@ -1254,6 +1267,23 @@ export default function BuilderScreen() {
         onSelect={applyTemplate}
         onClose={() => setShowTemplates(false)}
       />
+
+      {showBuilderHint && (
+        <View style={s.hintBanner} pointerEvents="box-none">
+          <View style={s.hintCard}>
+            <View style={s.hintIconWrap}>
+              <Feather name="info" size={16} color="#A78BFA" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={s.hintTitle}>Dica de uso</Text>
+              <Text style={s.hintBody}>Segure e arraste um bloco da paleta para o canvas. Toque em um nó para editá-lo.</Text>
+            </View>
+            <Pressable style={s.hintClose} onPress={dismissBuilderHint} accessibilityLabel="Fechar dica" accessibilityRole="button">
+              <Feather name="x" size={14} color="#8E8E9E" />
+            </Pressable>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
@@ -1694,4 +1724,39 @@ const s = StyleSheet.create({
   typeIcon: { width: 44, height: 44, borderRadius: 12, alignItems: "center", justifyContent: "center" },
   typeName: { fontSize: 15, fontWeight: "600" as const, fontFamily: "Inter_600SemiBold" },
   typeDesc: { fontSize: 12, fontFamily: "Inter_400Regular", marginTop: 2 },
+
+  hintBanner: {
+    position: "absolute",
+    bottom: 90,
+    left: 16,
+    right: 16,
+  },
+  hintCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#13131D",
+    borderWidth: 1,
+    borderColor: "#6D28D940",
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  hintIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#6D28D918",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  hintTitle: { fontSize: 13, color: "#EBEBF2", fontFamily: "Inter_600SemiBold", marginBottom: 2 },
+  hintBody: { fontSize: 11, color: "#8E8E9E", fontFamily: "Inter_400Regular", lineHeight: 16 },
+  hintClose: { padding: 6, flexShrink: 0 },
 });

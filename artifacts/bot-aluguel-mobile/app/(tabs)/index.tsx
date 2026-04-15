@@ -1,8 +1,9 @@
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useGetDashboardStats, useGetUnreadCount } from "@workspace/api-client-react";
 import { useListBots } from "@workspace/api-client-react";
 import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Platform,
   Pressable,
@@ -34,12 +35,21 @@ function formatNum(n: number): string {
   return String(n);
 }
 
+const ONBOARDING_KEY = "ONBOARDING_SEEN";
+
 export default function DashboardScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { data, isLoading, isError, refetch, isRefetching } = useGetDashboardStats();
   const { data: bots } = useListBots();
   const { data: unreadData } = useGetUnreadCount();
+  const [showFirstBotCta, setShowFirstBotCta] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem(ONBOARDING_KEY).then((seen) => {
+      if (seen) setShowFirstBotCta(true);
+    });
+  }, []);
   const unreadCount = (unreadData as any)?.count ?? 0;
   const paddingBottom = Platform.OS === "web" ? 34 + 110 : insets.bottom + 110;
 
@@ -173,6 +183,24 @@ export default function DashboardScreen() {
                 </View>
               </View>
             </View>
+
+            {bots && bots.length === 0 && showFirstBotCta && (
+              <Pressable
+                style={({ pressed }) => [s.firstBotCard, pressed && { opacity: 0.85 }]}
+                onPress={() => router.push("/(tabs)/bots")}
+                accessibilityLabel="Criar primeiro bot"
+                accessibilityRole="button"
+              >
+                <View style={s.firstBotIconWrap}>
+                  <Feather name="cpu" size={24} color="#A78BFA" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={s.firstBotTitle}>Crie seu primeiro bot</Text>
+                  <Text style={s.firstBotSub}>Você ainda não tem nenhum bot. Toque para criar agora.</Text>
+                </View>
+                <Feather name="chevron-right" size={18} color="#6D28D9" />
+              </Pressable>
+            )}
 
             {bots && bots.length > 0 && (
               <>
@@ -624,6 +652,42 @@ const s = StyleSheet.create({
     height: "100%",
     borderRadius: 3,
     backgroundColor: "#22C55E",
+  },
+
+  firstBotCard: {
+    marginHorizontal: 20,
+    marginBottom: 16,
+    backgroundColor: "#13131D",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
+    borderRadius: 16,
+    padding: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  firstBotIconWrap: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  firstBotTitle: {
+    fontSize: 15,
+    color: "#EBEBF2",
+    fontFamily: "Inter_700Bold",
+    marginBottom: 4,
+  },
+  firstBotSub: {
+    fontSize: 12,
+    color: "#8E8E9E",
+    fontFamily: "Inter_400Regular",
+    lineHeight: 17,
   },
 
   upgradeBanner: {
