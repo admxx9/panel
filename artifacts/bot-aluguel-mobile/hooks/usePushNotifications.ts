@@ -62,13 +62,15 @@ export function usePushNotifications(
       if (token) onToken(token);
     });
 
-    Notifications.getLastNotificationResponseAsync().then((response) => {
-      if (response) navigateToBotFromNotification(response);
-    });
+    if (Platform.OS !== "web") {
+      Notifications.getLastNotificationResponseAsync().then((response) => {
+        if (response) navigateToBotFromNotification(response);
+      });
 
-    responseListenerRef.current = Notifications.addNotificationResponseReceivedListener(
-      navigateToBotFromNotification
-    );
+      responseListenerRef.current = Notifications.addNotificationResponseReceivedListener(
+        navigateToBotFromNotification
+      );
+    }
 
     return () => {
       responseListenerRef.current?.remove();
