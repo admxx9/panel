@@ -70,7 +70,7 @@ export default function SettingsScreen() {
   const initial = (user?.name ?? "U").charAt(0).toUpperCase();
   const coins = stats?.coins ?? user?.coins ?? 0;
   const planName = stats?.activePlan ?? user?.plan ?? "Gratuito";
-  const planExpiresAt = (stats as any)?.planExpiresAt ?? null;
+  const planExpiresAt = stats?.planExpiresAt ?? null;
   const daysLeft = daysUntil(planExpiresAt);
   const botList = (bots as any[] | undefined) ?? [];
   const activeBots = botList.filter((b) => b.status === "active" || b.isConnected).length;

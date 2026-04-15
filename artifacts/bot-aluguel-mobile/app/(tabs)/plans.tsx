@@ -115,7 +115,7 @@ export default function PlansScreen() {
   const handleActivate = (plan: Plan) => {
     Alert.alert(
       "Ativar plano",
-      `Ativar "${plan.name}" por ${plan.coins} moedas?\n\nValidade: 30 dias a partir de hoje.`,
+      `Ativar "${plan.name}" por ${plan.coins} moedas?\n\nValidade: ${plan.days} dias a partir de hoje.`,
       [
         { text: "Cancelar", style: "cancel" },
         {
@@ -139,7 +139,7 @@ export default function PlansScreen() {
 
   const coins = stats?.coins ?? 0;
   const activePlan = stats?.activePlan;
-  const planExpiresAt = (stats as any)?.planExpiresAt ?? null;
+  const planExpiresAt = stats?.planExpiresAt ?? null;
   const daysLeft = daysUntil(planExpiresAt);
 
   async function handleRefresh() {

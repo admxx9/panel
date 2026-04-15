@@ -47,7 +47,7 @@ export default function DashboardScreen() {
   const activeBots = data?.activeBots ?? 0;
   const msgs = data?.totalMessages ?? 0;
   const activePlan = data?.activePlan ?? null;
-  const planExpiresAt = (data as any)?.planExpiresAt ?? null;
+  const planExpiresAt = data?.planExpiresAt ?? null;
   const daysLeft = daysUntil(planExpiresAt);
 
   const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
