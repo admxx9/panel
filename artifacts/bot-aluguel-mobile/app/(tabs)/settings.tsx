@@ -16,6 +16,12 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useAuth } from "@/context/AuthContext";
 import { useGetDashboardStats, useListBots, useDeleteAccount } from "@workspace/api-client-react";
 
+function daysUntil(date: string | Date | null | undefined): number | null {
+  if (!date) return null;
+  const diff = new Date(date).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+}
+
 type RowProps = {
   icon: string;
   label: string;
@@ -64,6 +70,8 @@ export default function SettingsScreen() {
   const initial = (user?.name ?? "U").charAt(0).toUpperCase();
   const coins = stats?.coins ?? user?.coins ?? 0;
   const planName = stats?.activePlan ?? user?.plan ?? "Gratuito";
+  const planExpiresAt = (stats as any)?.planExpiresAt ?? null;
+  const daysLeft = daysUntil(planExpiresAt);
   const botList = (bots as any[] | undefined) ?? [];
   const activeBots = botList.filter((b) => b.status === "active" || b.isConnected).length;
 
@@ -157,7 +165,12 @@ export default function SettingsScreen() {
             <Text style={s.statValue}>{coins}</Text>
             <Text style={s.statSub}>Moedas disponíveis</Text>
           </View>
-          <View style={s.statCard}>
+          <Pressable
+            style={({ pressed }) => [s.statCard, { opacity: pressed ? 0.8 : 1 }]}
+            onPress={() => router.push("/(tabs)/plans")}
+            accessibilityLabel="Ver planos"
+            accessibilityRole="button"
+          >
             <View style={s.statIconRow}>
               <View style={s.statIconWrap}>
                 <Feather name="credit-card" size={13} color="#EBEBF2" />
@@ -168,9 +181,15 @@ export default function SettingsScreen() {
               {planName}
             </Text>
             <Text style={s.statSub}>
-              {planName === "Gratuito" ? "Não há nenhum" : "Ativo no momento"}
+              {planName === "Gratuito"
+                ? "Toque para ativar"
+                : daysLeft !== null
+                ? daysLeft === 0
+                  ? "Expira hoje"
+                  : `Expira em ${daysLeft} dias`
+                : "Ativo no momento"}
             </Text>
-          </View>
+          </Pressable>
         </View>
 
         <View style={s.sectionHeader}>

@@ -18,6 +18,14 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { ErrorCard } from "@/components/ErrorCard";
+import { parseApiError } from "@/utils/parseApiError";
+
+function daysUntil(date: string | Date | null | undefined): number | null {
+  if (!date) return null;
+  const diff = new Date(date).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+}
 
 type Plan = {
   id: string;
@@ -96,8 +104,8 @@ function PlanCard({ plan, isActive, coins, onActivate, loading }: {
 
 export default function PlansScreen() {
   const insets = useSafeAreaInsets();
-  const { data: plans, isLoading: plansLoading } = useListPlans();
-  const { data: stats, refetch } = useGetDashboardStats();
+  const { data: plans, isLoading: plansLoading, isError: plansError, refetch: refetchPlans } = useListPlans();
+  const { data: stats, refetch: refetchStats, isRefetching } = useGetDashboardStats();
   const activatePlan = useActivatePlan();
   const [activatingId, setActivatingId] = useState<string | null>(null);
 
@@ -105,28 +113,38 @@ export default function PlansScreen() {
   const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
 
   const handleActivate = (plan: Plan) => {
-    Alert.alert("Ativar plano", `Ativar "${plan.name}" por ${plan.coins} moedas?`, [
-      { text: "Cancelar", style: "cancel" },
-      {
-        text: "Confirmar",
-        onPress: async () => {
-          setActivatingId(plan.id);
-          await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-          try {
-            await activatePlan.mutateAsync({ planId: plan.id });
-            await refetch();
-          } catch {
-            Alert.alert("Erro", "Não foi possível ativar o plano.");
-          } finally {
-            setActivatingId(null);
-          }
+    Alert.alert(
+      "Ativar plano",
+      `Ativar "${plan.name}" por ${plan.coins} moedas?\n\nValidade: 30 dias a partir de hoje.`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Confirmar",
+          onPress: async () => {
+            setActivatingId(plan.id);
+            await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            try {
+              await activatePlan.mutateAsync({ planId: plan.id });
+              await refetchStats();
+            } catch (err) {
+              Alert.alert("Erro ao ativar plano", parseApiError(err, "Não foi possível ativar o plano. Tente novamente."));
+            } finally {
+              setActivatingId(null);
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
   const coins = stats?.coins ?? 0;
   const activePlan = stats?.activePlan;
+  const planExpiresAt = (stats as any)?.planExpiresAt ?? null;
+  const daysLeft = daysUntil(planExpiresAt);
+
+  async function handleRefresh() {
+    await Promise.all([refetchStats(), refetchPlans()]);
+  }
 
   return (
     <View style={s.root}>
@@ -138,7 +156,7 @@ export default function PlansScreen() {
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom }}
         showsVerticalScrollIndicator={false}
-        refreshControl={<RefreshControl refreshing={false} onRefresh={refetch} tintColor="#6D28D9" />}
+        refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={handleRefresh} tintColor="#6D28D9" />}
       >
         <View style={s.coinsCard}>
           <View style={s.coinsIconWrap}>
@@ -151,6 +169,11 @@ export default function PlansScreen() {
           {activePlan && (
             <View style={s.activePlanBadge}>
               <Text style={s.activePlanText}>{activePlan}</Text>
+              {daysLeft !== null && (
+                <Text style={s.activePlanExpiry}>
+                  {daysLeft === 0 ? "Expira hoje" : `${daysLeft}d restantes`}
+                </Text>
+              )}
             </View>
           )}
         </View>
@@ -159,6 +182,11 @@ export default function PlansScreen() {
           <View style={s.loader}>
             <ActivityIndicator color="#6D28D9" size="large" />
           </View>
+        ) : plansError ? (
+          <ErrorCard
+            message="Não foi possível carregar os planos."
+            onRetry={refetchPlans}
+          />
         ) : (
           <View style={s.plansList}>
             {(plans as Plan[] | undefined)?.map((plan) => (
@@ -300,6 +328,7 @@ const s = StyleSheet.create({
     paddingVertical: 5,
   },
   activePlanText: { fontSize: 12, color: "#A78BFA", fontFamily: "Inter_700Bold" },
+  activePlanExpiry: { fontSize: 10, color: "#8E8E9E", fontFamily: "Inter_400Regular", marginTop: 2, textAlign: "right" },
 
   plansList: { gap: 14 },
   loader: { paddingVertical: 60, alignItems: "center" },

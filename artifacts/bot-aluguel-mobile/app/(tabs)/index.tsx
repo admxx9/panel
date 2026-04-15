@@ -17,6 +17,12 @@ import { useAuth } from "@/context/AuthContext";
 import { ErrorView } from "@/components/StateViews";
 import { DashboardSkeleton } from "@/components/SkeletonLoader";
 
+function daysUntil(date: string | Date | null | undefined): number | null {
+  if (!date) return null;
+  const diff = new Date(date).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+}
+
 const PLATFORM_CONFIG: Record<string, { color: string; bg: string; icon: string; label: string }> = {
   whatsapp:     { color: "#25D366", bg: "#25D36615", icon: "message-circle", label: "WhatsApp" },
   discord:      { color: "#5865F2", bg: "#5865F215", icon: "hash",           label: "Discord" },
@@ -40,6 +46,9 @@ export default function DashboardScreen() {
   const totalBots = data?.totalBots ?? 0;
   const activeBots = data?.activeBots ?? 0;
   const msgs = data?.totalMessages ?? 0;
+  const activePlan = data?.activePlan ?? null;
+  const planExpiresAt = (data as any)?.planExpiresAt ?? null;
+  const daysLeft = daysUntil(planExpiresAt);
 
   const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
 
@@ -229,39 +238,72 @@ export default function DashboardScreen() {
               </>
             )}
 
-            <View style={s.planCard}>
-              <View style={s.planTop}>
-                <View style={s.planIconWrap}>
-                  <Feather name="credit-card" size={18} color="#A78BFA" />
+            {activePlan ? (
+              <Pressable
+                style={({ pressed }) => [s.planCard, pressed && { opacity: 0.9 }]}
+                onPress={() => router.push("/(tabs)/plans")}
+                accessibilityLabel="Ver detalhes do plano"
+                accessibilityRole="button"
+              >
+                <View style={s.planTop}>
+                  <View style={s.planIconWrap}>
+                    <Feather name="credit-card" size={18} color="#A78BFA" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.planTitle}>{activePlan}</Text>
+                    <Text style={s.planSub}>
+                      {daysLeft === null
+                        ? "Plano ativo"
+                        : daysLeft === 0
+                        ? "Expira hoje"
+                        : `Expira em ${daysLeft} dias`}
+                    </Text>
+                  </View>
+                  <View style={s.planActiveBadge}>
+                    <Feather name="check-circle" size={12} color="#22C55E" />
+                    <Text style={s.planActiveText}>ATIVO</Text>
+                  </View>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={s.planTitle}>Pro Workspace</Text>
-                  <Text style={s.planSub}>Renova em 14 dias</Text>
+                <View style={s.meterSection}>
+                  <View style={s.meterHeader}>
+                    <Text style={s.meterLabel}>Mensagens hoje</Text>
+                    <Text style={s.meterValue}>{formatNum(msgs)}</Text>
+                  </View>
+                  <View style={s.meterTrack}>
+                    <View style={[s.meterFill, { width: `${Math.min((msgs / 1000) * 100, 100)}%` as any }]} />
+                  </View>
                 </View>
-                <View style={s.planActiveBadge}>
-                  <Feather name="check-circle" size={12} color="#22C55E" />
-                  <Text style={s.planActiveText}>ATIVO</Text>
+                <View style={s.meterSection}>
+                  <View style={s.meterHeader}>
+                    <Text style={s.meterLabel}>Bots ativos</Text>
+                    <Text style={s.meterValue}>{activeBots} <Text style={s.meterMax}>/ {totalBots} total</Text></Text>
+                  </View>
+                  <View style={s.meterTrack}>
+                    <View style={[s.meterFillGreen, { width: totalBots > 0 ? `${Math.min((activeBots / totalBots) * 100, 100)}%` as any : "0%" }]} />
+                  </View>
                 </View>
-              </View>
-              <View style={s.meterSection}>
-                <View style={s.meterHeader}>
-                  <Text style={s.meterLabel}>Mensagens (Mensal)</Text>
-                  <Text style={s.meterValue}>{formatNum(msgs)} <Text style={s.meterMax}>/ 100K</Text></Text>
+              </Pressable>
+            ) : (
+              <Pressable
+                style={({ pressed }) => [s.upgradeBanner, pressed && { opacity: 0.85 }]}
+                onPress={() => router.push("/(tabs)/plans")}
+                accessibilityLabel="Ativar plano"
+                accessibilityRole="button"
+              >
+                <View style={s.upgradeLeft}>
+                  <View style={s.upgradeIconWrap}>
+                    <Feather name="zap" size={20} color="#A78BFA" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.upgradeTitle}>Ative um plano</Text>
+                    <Text style={s.upgradeSub}>Desbloqueie mais grupos e recursos avançados</Text>
+                  </View>
                 </View>
-                <View style={s.meterTrack}>
-                  <View style={[s.meterFill, { width: `${Math.min((msgs / 100000) * 100, 100)}%` as any }]} />
+                <View style={s.upgradeArrow}>
+                  <Feather name="arrow-right" size={16} color="#A78BFA" />
                 </View>
-              </View>
-              <View style={s.meterSection}>
-                <View style={s.meterHeader}>
-                  <Text style={s.meterLabel}>Bots Ativos</Text>
-                  <Text style={s.meterValue}>{activeBots} <Text style={s.meterMax}>/ 5</Text></Text>
-                </View>
-                <View style={s.meterTrack}>
-                  <View style={[s.meterFillGreen, { width: `${Math.min((activeBots / 5) * 100, 100)}%` as any }]} />
-                </View>
-              </View>
-            </View>
+              </Pressable>
+            )}
           </>
         )}
       </ScrollView>
@@ -582,5 +624,58 @@ const s = StyleSheet.create({
     height: "100%",
     borderRadius: 3,
     backgroundColor: "#22C55E",
+  },
+
+  upgradeBanner: {
+    marginHorizontal: 20,
+    marginTop: 12,
+    backgroundColor: "#13131D",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
+    borderRadius: 16,
+    padding: 18,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  upgradeLeft: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+  },
+  upgradeIconWrap: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
+  },
+  upgradeTitle: {
+    fontSize: 15,
+    color: "#EBEBF2",
+    fontFamily: "Inter_700Bold",
+    marginBottom: 3,
+  },
+  upgradeSub: {
+    fontSize: 12,
+    color: "#8E8E9E",
+    fontFamily: "Inter_400Regular",
+    lineHeight: 17,
+  },
+  upgradeArrow: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: "#6D28D915",
+    borderWidth: 1,
+    borderColor: "#6D28D930",
+    alignItems: "center",
+    justifyContent: "center",
+    flexShrink: 0,
   },
 });
