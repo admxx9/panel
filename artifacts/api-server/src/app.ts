@@ -35,6 +35,7 @@ app.use(cors(allowedOrigins ? {
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
+      logger.warn({ origin, allowedOrigins }, "CORS blocked request from unknown origin");
       callback(new Error("Not allowed by CORS"));
     }
   },
