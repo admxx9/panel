@@ -1,7 +1,23 @@
-import { Link, Stack } from "expo-router";
-import { StyleSheet, Text, View } from "react-native";
+import { Link, Redirect, Stack, usePathname } from "expo-router";
+import { Platform, StyleSheet, Text, View } from "react-native";
 
 export default function NotFoundScreen() {
+  const pathname = usePathname();
+
+  if (Platform.OS === "web" && typeof window !== "undefined") {
+    const search = window.location.search;
+    const params = new URLSearchParams(search);
+    const initialPath = params.get("initialPath");
+
+    if (pathname.includes("workspace_iframe") && initialPath) {
+      return <Redirect href={initialPath as any} />;
+    }
+
+    if (pathname.includes("workspace_iframe")) {
+      return <Redirect href="/" />;
+    }
+  }
+
   return (
     <>
       <Stack.Screen options={{ title: "Oops!" }} />

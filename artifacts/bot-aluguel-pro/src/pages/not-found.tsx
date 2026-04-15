@@ -1,8 +1,18 @@
+import { useEffect } from "react";
 import { Link } from "wouter";
 import { AlertCircle, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function NotFound() {
+  useEffect(() => {
+    const path = window.location.pathname;
+    if (path.includes("workspace_iframe") || path.includes("__replco")) {
+      const params = new URLSearchParams(window.location.search);
+      const initialPath = params.get("initialPath") ?? "/";
+      window.location.replace(initialPath);
+    }
+  }, []);
+
   return (
     <div className="min-h-screen w-full flex items-center justify-center bg-background">
       <div className="text-center px-4">
