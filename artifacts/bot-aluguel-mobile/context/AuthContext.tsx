@@ -8,6 +8,7 @@ import React, {
   useRef,
   useState,
 } from "react";
+import { queryClient } from "@/lib/queryClient";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 type User = {
@@ -78,6 +79,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   usePushNotifications(isAuthenticated, handlePushToken);
 
   const signIn = useCallback(async (token: string, user: User) => {
+    queryClient.clear();
     await Promise.all([
       AsyncStorage.setItem(TOKEN_KEY, token),
       AsyncStorage.setItem(USER_KEY, JSON.stringify(user)),
@@ -88,9 +90,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const signOut = useCallback(async () => {
     updateProfile({ expoPushToken: null }).catch(() => {});
     registeredToken.current = null;
+    queryClient.clear();
     await Promise.all([
       AsyncStorage.removeItem(TOKEN_KEY),
       AsyncStorage.removeItem(USER_KEY),
+      AsyncStorage.removeItem("QUERY_CACHE"),
     ]);
     setState({ token: null, user: null, isLoading: false });
   }, []);

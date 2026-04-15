@@ -8,8 +8,8 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { setBaseUrl } from "@workspace/api-client-react";
-import { QueryClient } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { queryClient, ONE_DAY_MS } from "@/lib/queryClient";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import React, { useEffect } from "react";
@@ -33,18 +33,6 @@ if (typeof global !== "undefined" && (global as any).ErrorUtils) {
     origHandler?.(err, isFatal);
   });
 }
-
-const ONE_DAY_MS = 1000 * 60 * 60 * 24;
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      gcTime: ONE_DAY_MS,
-      staleTime: 1000 * 60 * 5,
-      retry: 2,
-    },
-  },
-});
 
 const persister = createAsyncStoragePersister({
   storage: AsyncStorage,

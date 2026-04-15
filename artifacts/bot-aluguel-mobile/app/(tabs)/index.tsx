@@ -118,9 +118,9 @@ export default function DashboardScreen() {
           </Pressable>
         </View>
 
-        {isLoading ? (
+        {isLoading && !data ? (
           <DashboardSkeleton />
-        ) : isError ? (
+        ) : isError && !data ? (
           <ErrorView message="Não foi possível carregar o painel" onRetry={refetch} />
         ) : (
           <>
