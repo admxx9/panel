@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from "uuid";
 import { db, usersTable, botsTable, botCommandsTable, activePlansTable, paymentsTable, notificationsTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 import { hashPassword, verifyPassword, signToken, requireAuth, type AuthRequest } from "../lib/auth.js";
+import { sendSms } from "../lib/sms.js";
 
 const router = Router();
 
@@ -153,7 +154,16 @@ router.post("/reset-password/request", async (req, res) => {
     }
     const code = String(Math.floor(100000 + Math.random() * 900000));
     resetCodes.set(cleanPhone, { code, expiresAt: Date.now() + 10 * 60 * 1000 });
-    req.log.info({ phone: cleanPhone, code }, "Reset code generated (mock — would send via SMS)");
+
+    const smsText = `BotAluguel Pro: seu código de verificação é ${code}. Válido por 10 minutos. Não compartilhe.`;
+    const result = await sendSms(cleanPhone, smsText, req.log);
+
+    if (!result.ok) {
+      resetCodes.delete(cleanPhone);
+      res.status(503).json({ message: "Não foi possível enviar o SMS. Tente novamente em instantes." });
+      return;
+    }
+
     res.json({ message: "Código de verificação enviado por SMS" });
   } catch (err) {
     req.log.error({ err }, "RequestResetCode error");

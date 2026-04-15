@@ -141,7 +141,7 @@ export default function ForgotPasswordScreen() {
             <>
               <Text style={s.heading}>Qual seu telefone?</Text>
               <Text style={s.desc}>
-                Digite o número de telefone cadastrado na sua conta. Enviaremos um código de verificação.
+                Digite o número cadastrado na sua conta. Você receberá um SMS com o código de verificação.
               </Text>
 
               <Text style={s.label}>TELEFONE</Text>
@@ -178,9 +178,11 @@ export default function ForgotPasswordScreen() {
 
           {step === "code" && (
             <>
-              <Text style={s.heading}>Código de verificação</Text>
+              <Text style={s.heading}>Código por SMS</Text>
               <Text style={s.desc}>
-                Digite o código de 6 dígitos enviado para seu telefone.
+                Digite o código de 6 dígitos que enviamos por SMS para{" "}
+                <Text style={s.descHighlight}>{phone || "seu telefone"}</Text>.{" "}
+                Válido por 10 minutos.
               </Text>
 
               <Text style={s.label}>CÓDIGO</Text>
@@ -325,6 +327,7 @@ const s = StyleSheet.create({
   stepDot: { width: 8, height: 8, borderRadius: 4 },
   heading: { fontSize: 24, color: "#EBEBF2", fontFamily: "Inter_700Bold", textAlign: "center", marginBottom: 8 },
   desc: { fontSize: 14, color: "#8E8E9E", fontFamily: "Inter_400Regular", textAlign: "center", lineHeight: 22, marginBottom: 32 },
+  descHighlight: { color: "#A78BFA", fontFamily: "Inter_600SemiBold" },
   label: {
     fontSize: 11, color: "#8E8E9E", fontFamily: "Inter_600SemiBold",
     letterSpacing: 1.5, marginBottom: 8, paddingLeft: 2,

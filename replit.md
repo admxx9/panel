@@ -82,6 +82,7 @@
 ## Notas Importantes
 
 - PIX: EFI Bank real — Client ID/Secret em env vars, certificado .p12 em `artifacts/api-server/certs/efi.p12` (gitignored), caminho via `EFI_CERT_PATH`. Chave PIX = chave aleatória EVP `a45331e2-840e-41dc-bc93-8f1bd2b6fd91` (a email `studiopecc@email.com` não está cadastrada no BACEN para essa conta EFI). `EFI_PIX_KEY` setada corretamente.
+- SMS (reset de senha): gateway Zenvia (`lib/sms.ts`). Var: `SMS_API_KEY` (secret Replit). Sem a chave, o código é apenas logado no servidor (modo mock — ok para dev). `SMS_SENDER_ID` (env, default `BotAluguel`) controla o nome do remetente. Código de 6 dígitos, expira em 10 min. Se o SMS falhar, o código é descartado e o cliente recebe HTTP 503. Documentado em `artifacts/api-server/.env.example`.
 - Google OAuth: `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET` configurados em env vars
 - Sticker: imagens convertidas para WebP 512x512 via sharp; video nao suportado
 - Sessoes WhatsApp: salvas em `artifacts/api-server/.baileys-sessions/` (gitignored)
