@@ -136,7 +136,7 @@ router.post("/pix/webhook", async (req, res) => {
   try {
     if (!WEBHOOK_PIX_TOKEN) {
       req.log.error({ ip: req.ip }, "PIX webhook called but WEBHOOK_PIX_TOKEN is not configured — rejecting");
-      res.status(503).json({ message: "Webhook não configurado" });
+      res.status(401).json({ message: "Token inválido" });
       return;
     }
 
