@@ -323,8 +323,8 @@ export default function BotsScreen() {
           body: form,
         });
         if (!res.ok) {
-          const body: { error?: string } = await res.json().catch(() => ({}));
-          throw new Error(body.error ?? "Erro ao fazer upload");
+          const body: { message?: string } = await res.json().catch(() => ({}));
+          throw new Error(body.message ?? "Erro ao fazer upload");
         }
         queryClient.invalidateQueries({ queryKey: getListHostedBotsQueryKey() });
         setHostedBotName("");
