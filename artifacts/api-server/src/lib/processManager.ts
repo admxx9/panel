@@ -5,15 +5,10 @@ import { logger } from "./logger.js";
 
 const SAFE_ENV_KEYS = new Set([
   "PATH",
-  "HOME",
-  "USER",
-  "SHELL",
   "LANG",
   "LC_ALL",
   "TERM",
-  "TMPDIR",
   "TZ",
-  "NODE_ENV",
 ]);
 
 const SENSITIVE_PATTERNS = [
@@ -34,26 +29,28 @@ const SENSITIVE_PATTERNS = [
 ];
 
 function buildSafeEnv(botId: string, cwd: string): Record<string, string> {
-  const safe: Record<string, string> = {
-    NODE_ENV: "production",
-    BOT_ID: botId,
-    HOME: cwd,
-    TMPDIR: cwd,
-  };
+  const safe: Record<string, string> = {};
 
   for (const key of SAFE_ENV_KEYS) {
-    if (key in process.env && !SENSITIVE_PATTERNS.some((p) => p.test(key))) {
-      safe[key] = process.env[key]!;
+    const val = process.env[key];
+    if (val !== undefined && !SENSITIVE_PATTERNS.some((p) => p.test(key))) {
+      safe[key] = val;
     }
   }
+
+  safe["NODE_ENV"] = "production";
+  safe["BOT_ID"] = botId;
+  safe["HOME"] = cwd;
+  safe["TMPDIR"] = cwd;
 
   return safe;
 }
 
 const MAX_MEMORY_MB = 256;
-const MAX_CPU_SECONDS = 300;
+const MAX_CPU_SECONDS = 30;
 const MAX_FILE_SIZE_MB = 50;
 const MAX_PROCESSES = 32;
+const WALL_CLOCK_TIMEOUT_MS = 10 * 60 * 1000;
 
 function buildResourceLimits(): string {
   return [
@@ -69,6 +66,7 @@ export interface ManagedProcess {
   botId: string;
   userId: string;
   cwd: string;
+  wallClockTimer?: ReturnType<typeof setTimeout>;
 }
 
 class ProcessManager extends EventEmitter {
@@ -95,6 +93,10 @@ class ProcessManager extends EventEmitter {
   stop(botId: string): boolean {
     const managed = this.processes.get(botId);
     if (!managed) return false;
+
+    if (managed.wallClockTimer) {
+      clearTimeout(managed.wallClockTimer);
+    }
 
     try {
       managed.proc.kill("SIGTERM");
@@ -143,9 +145,10 @@ class ProcessManager extends EventEmitter {
       "Starting sandboxed hosted bot process",
     );
 
+    const nodeCmd = `node --experimental-permission --allow-fs-read=${JSON.stringify(resolvedCwd)} --allow-fs-write=${JSON.stringify(resolvedCwd)} ${JSON.stringify(normalized)}`;
     const installAndRun = hasPackageJson
-      ? `${buildResourceLimits()} && npm install --ignore-scripts 2>&1 && exec node ${JSON.stringify(normalized)}`
-      : `${buildResourceLimits()} && exec node ${JSON.stringify(normalized)}`;
+      ? `${buildResourceLimits()} && npm install --ignore-scripts 2>&1 && exec ${nodeCmd}`
+      : `${buildResourceLimits()} && exec ${nodeCmd}`;
 
     const proc = spawn("bash", ["-c", installAndRun], {
       cwd: resolvedCwd,
@@ -155,6 +158,15 @@ class ProcessManager extends EventEmitter {
 
     const managed: ManagedProcess = { proc, botId, userId, cwd: resolvedCwd };
     this.processes.set(botId, managed);
+
+    managed.wallClockTimer = setTimeout(() => {
+      logger.warn(
+        { botId, userId, timeoutMs: WALL_CLOCK_TIMEOUT_MS },
+        "Hosted bot exceeded wall-clock timeout, killing",
+      );
+      this.appendLog(botId, `[sys] Bot encerrado: tempo máximo de execução atingido (${WALL_CLOCK_TIMEOUT_MS / 1000}s)`);
+      this.stop(botId);
+    }, WALL_CLOCK_TIMEOUT_MS);
 
     proc.stdout?.on("data", (data: Buffer) => {
       const text = data.toString();
@@ -173,6 +185,9 @@ class ProcessManager extends EventEmitter {
     });
 
     proc.on("exit", (code, signal) => {
+      if (managed.wallClockTimer) {
+        clearTimeout(managed.wallClockTimer);
+      }
       logger.info({ botId, code, signal }, "Hosted bot process exited");
       this.processes.delete(botId);
       this.emit(`exit:${botId}`, { code, signal });
