@@ -77,6 +77,8 @@ router.post("/", requireAuth, createResourceLimiter, upload.single("file"), asyn
     const userId = req.userId!;
     const { name, githubUrl } = req.body as { name?: string; githubUrl?: string };
 
+    logger.info({ body: req.body, hasFile: !!req.file, contentType: req.headers["content-type"] }, "Hosted bot creation request");
+
     if (!name) {
       res.status(400).json({ message: "Nome é obrigatório" });
       return;
