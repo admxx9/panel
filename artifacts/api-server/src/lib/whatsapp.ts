@@ -1542,6 +1542,14 @@ async function processMessage(
 
     logger.info({ botId, command: commandText, jid }, "Executing command");
     await executeFlow(sock, msg, commandNode, nodes, edges, botId);
+
+    await db
+      .update(botsTable)
+      .set({
+        messagesProcessed: sql`CASE WHEN messages_window_start IS NULL OR messages_window_start < NOW() - INTERVAL '24 hours' THEN 1 ELSE messages_processed + 1 END`,
+        messagesWindowStart: sql`CASE WHEN messages_window_start IS NULL OR messages_window_start < NOW() - INTERVAL '24 hours' THEN NOW() ELSE messages_window_start END`,
+      })
+      .where(eq(botsTable.id, botId));
   } catch (err) {
     logger.error({ err, botId }, "Error processing message");
   }
