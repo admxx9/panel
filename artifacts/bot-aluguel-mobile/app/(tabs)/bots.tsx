@@ -2,6 +2,14 @@ import {
   useCreateBot,
   useDeleteBot,
   useListBots,
+  useListHostedBots,
+  useCreateHostedBot,
+  useDeleteHostedBot,
+  useStartHostedBot,
+  useStopHostedBot,
+  useRestartHostedBot,
+  getListHostedBotsQueryKey,
+  type HostedBot,
 } from "@workspace/api-client-react";
 import * as Haptics from "expo-haptics";
 import { router } from "expo-router";
@@ -117,6 +125,98 @@ function BotCard({ bot, onDelete }: { bot: Bot; onDelete: (id: string, name: str
   );
 }
 
+const HOSTED_STATUS: Record<string, { color: string; label: string }> = {
+  running:  { color: "#22C55E", label: "Rodando" },
+  stopped:  { color: "#9CA3AF", label: "Parado" },
+  error:    { color: "#EF4444", label: "Erro" },
+};
+
+function HostedBotCard({
+  bot,
+  onStart,
+  onStop,
+  onRestart,
+  onDelete,
+  actionPending,
+}: {
+  bot: HostedBot;
+  onStart: (id: string) => void;
+  onStop: (id: string) => void;
+  onRestart: (id: string) => void;
+  onDelete: (id: string, name: string) => void;
+  actionPending: boolean;
+}) {
+  const isRunning = bot.isRunning ?? bot.status === "running";
+  const statusKey = isRunning ? "running" : (bot.status ?? "stopped");
+  const cfg = HOSTED_STATUS[statusKey] ?? HOSTED_STATUS.stopped;
+
+  return (
+    <Pressable
+      style={({ pressed }) => [hcard.wrap, pressed && { opacity: 0.88 }]}
+      onPress={() => router.push(`/hosted-bot/${bot.id}` as any)}
+    >
+      <View style={hcard.top}>
+        <View style={hcard.iconCircle}>
+          <Feather name="server" size={20} color="#A78BFA" />
+        </View>
+        <View style={{ flex: 1, minWidth: 0 }}>
+          <Text style={hcard.name} numberOfLines={1}>{bot.name}</Text>
+          <View style={hcard.metaRow}>
+            <View style={[hcard.statusPill, { borderColor: cfg.color + "40" }]}>
+              <View style={[hcard.statusDot, { backgroundColor: cfg.color }]} />
+              <Text style={[hcard.statusText, { color: cfg.color }]}>{cfg.label}</Text>
+            </View>
+            {bot.sourceType === "github" && (
+              <View style={hcard.srcBadge}>
+                <Feather name="github" size={9} color="#8E8E9E" />
+                <Text style={hcard.srcText}>GitHub</Text>
+              </View>
+            )}
+          </View>
+        </View>
+        <Feather name="chevron-right" size={16} color="#8E8E9E" />
+      </View>
+      <View style={hcard.actions}>
+        {isRunning ? (
+          <>
+            <Pressable
+              style={[hcard.btn, hcard.btnStop]}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onStop(bot.id!); }}
+              disabled={actionPending}
+            >
+              <Feather name="square" size={11} color="#EF4444" />
+              <Text style={hcard.btnStopText}>Parar</Text>
+            </Pressable>
+            <Pressable
+              style={[hcard.btn, hcard.btnRestart]}
+              onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); onRestart(bot.id!); }}
+              disabled={actionPending}
+            >
+              <Feather name="refresh-cw" size={11} color="#F59E0B" />
+              <Text style={hcard.btnRestartText}>Reiniciar</Text>
+            </Pressable>
+          </>
+        ) : (
+          <Pressable
+            style={[hcard.btn, hcard.btnStart]}
+            onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onStart(bot.id!); }}
+            disabled={actionPending}
+          >
+            <Feather name="play" size={11} color="#22C55E" />
+            <Text style={hcard.btnStartText}>Iniciar</Text>
+          </Pressable>
+        )}
+        <Pressable
+          style={[hcard.btn, hcard.btnDanger]}
+          onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); onDelete(bot.id!, bot.name ?? "Bot"); }}
+        >
+          <Feather name="trash-2" size={11} color="#EF4444" />
+        </Pressable>
+      </View>
+    </Pressable>
+  );
+}
+
 export default function BotsScreen() {
   const insets = useSafeAreaInsets();
   const { data: bots, isLoading, isError, refetch, isRefetching } = useListBots();
@@ -125,6 +225,18 @@ export default function BotsScreen() {
   const queryClient = useQueryClient();
   const [showCreate, setShowCreate] = useState(false);
   const [newBotName, setNewBotName] = useState("");
+
+  const [activeTab, setActiveTab] = useState<"whatsapp" | "hosted">("whatsapp");
+  const [showCreateHosted, setShowCreateHosted] = useState(false);
+  const [hostedBotName, setHostedBotName] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
+
+  const { data: hostedBots, isLoading: isHostedLoading, isError: isHostedError, refetch: refetchHosted, isRefetching: isHostedRefetching } = useListHostedBots();
+  const createHostedBot = useCreateHostedBot();
+  const deleteHostedBot = useDeleteHostedBot();
+  const startHostedBot = useStartHostedBot();
+  const stopHostedBot = useStopHostedBot();
+  const restartHostedBot = useRestartHostedBot();
 
   const paddingBottom = insets.bottom + 110;
 
@@ -157,6 +269,63 @@ export default function BotsScreen() {
     ]);
   };
 
+  const handleCreateHosted = async () => {
+    if (!hostedBotName.trim() || !githubUrl.trim()) return;
+    try {
+      await createHostedBot.mutateAsync({ data: { name: hostedBotName.trim(), githubUrl: githubUrl.trim() } });
+      queryClient.invalidateQueries({ queryKey: getListHostedBotsQueryKey() });
+      setHostedBotName("");
+      setGithubUrl("");
+      setShowCreateHosted(false);
+    } catch (err) {
+      Alert.alert("Erro ao criar bot hospedado", parseApiError(err));
+    }
+  };
+
+  const handleHostedStart = async (id: string) => {
+    try {
+      await startHostedBot.mutateAsync({ id });
+      queryClient.invalidateQueries({ queryKey: getListHostedBotsQueryKey() });
+    } catch (err) {
+      Alert.alert("Erro", parseApiError(err));
+    }
+  };
+
+  const handleHostedStop = async (id: string) => {
+    try {
+      await stopHostedBot.mutateAsync({ id });
+      queryClient.invalidateQueries({ queryKey: getListHostedBotsQueryKey() });
+    } catch (err) {
+      Alert.alert("Erro", parseApiError(err));
+    }
+  };
+
+  const handleHostedRestart = async (id: string) => {
+    try {
+      await restartHostedBot.mutateAsync({ id });
+      queryClient.invalidateQueries({ queryKey: getListHostedBotsQueryKey() });
+    } catch (err) {
+      Alert.alert("Erro", parseApiError(err));
+    }
+  };
+
+  const handleHostedDelete = (id: string, name: string) => {
+    Alert.alert("Remover bot hospedado", `Deseja remover "${name}"?`, [
+      { text: "Cancelar", style: "cancel" },
+      {
+        text: "Remover",
+        style: "destructive",
+        onPress: async () => {
+          await deleteHostedBot.mutateAsync({ id });
+          queryClient.invalidateQueries({ queryKey: getListHostedBotsQueryKey() });
+        },
+      },
+    ]);
+  };
+
+  const hostedBotList = (hostedBots as HostedBot[] | undefined) ?? [];
+  const hostedActionPending = startHostedBot.isPending || stopHostedBot.isPending || restartHostedBot.isPending;
+
   const botList = (bots as Bot[] | undefined) ?? [];
   const paddingTop = Platform.OS === "web" ? insets.top + 48 : insets.top + 12;
 
@@ -187,13 +356,30 @@ export default function BotsScreen() {
         <Text style={s.headerTitle}>Meus Bots</Text>
         <Pressable
           style={({ pressed }) => [s.addBtn, pressed && { opacity: 0.8 }]}
-          onPress={() => setShowCreate(true)}
+          onPress={() => activeTab === "whatsapp" ? setShowCreate(true) : setShowCreateHosted(true)}
         >
           <Feather name="plus" size={22} color="#EBEBF2" />
         </Pressable>
       </View>
 
-      {isLoading && botList.length === 0 ? (
+      <View style={s.tabSegment}>
+        <Pressable
+          style={[s.segBtn, activeTab === "whatsapp" && s.segBtnActive]}
+          onPress={() => setActiveTab("whatsapp")}
+        >
+          <Feather name="message-circle" size={13} color={activeTab === "whatsapp" ? "#EBEBF2" : "#8E8E9E"} />
+          <Text style={[s.segText, activeTab === "whatsapp" && s.segTextActive]}>WhatsApp</Text>
+        </Pressable>
+        <Pressable
+          style={[s.segBtn, activeTab === "hosted" && s.segBtnActive]}
+          onPress={() => setActiveTab("hosted")}
+        >
+          <Feather name="server" size={13} color={activeTab === "hosted" ? "#EBEBF2" : "#8E8E9E"} />
+          <Text style={[s.segText, activeTab === "hosted" && s.segTextActive]}>Hospedados</Text>
+        </Pressable>
+      </View>
+
+      {activeTab === "whatsapp" && (isLoading && botList.length === 0 ? (
         <BotListSkeleton />
       ) : (
         <FlatList
@@ -231,7 +417,56 @@ export default function BotsScreen() {
           }
           renderItem={({ item }) => <BotCard bot={item} onDelete={handleDelete} />}
         />
-      )}
+      ))}
+
+      {activeTab === "hosted" && (isHostedLoading && hostedBotList.length === 0 ? (
+        <BotListSkeleton />
+      ) : (
+        <FlatList
+          data={hostedBotList}
+          keyExtractor={(b) => b.id ?? ""}
+          contentContainerStyle={{ padding: 16, paddingBottom }}
+          showsVerticalScrollIndicator={false}
+          ItemSeparatorComponent={() => <View style={{ height: 14 }} />}
+          refreshControl={
+            <RefreshControl refreshing={isHostedRefetching} onRefresh={refetchHosted} tintColor="#6D28D9" />
+          }
+          ListEmptyComponent={
+            isHostedError ? (
+              <View style={s.empty}>
+                <ErrorCard
+                  message="Não foi possível carregar bots hospedados."
+                  onRetry={refetchHosted}
+                />
+              </View>
+            ) : (
+              <View style={s.empty}>
+                <View style={s.emptyIcon}>
+                  <Feather name="server" size={32} color="#A78BFA" />
+                </View>
+                <Text style={s.emptyTitle}>Nenhum bot hospedado</Text>
+                <Text style={s.emptyDesc}>
+                  Adicione um bot via URL do GitHub para hospedar aqui
+                </Text>
+                <Pressable style={s.emptyBtn} onPress={() => setShowCreateHosted(true)} accessibilityLabel="Adicionar bot hospedado" accessibilityRole="button">
+                  <Feather name="plus" size={14} color="#FFF" />
+                  <Text style={s.emptyBtnText}>Adicionar via GitHub</Text>
+                </Pressable>
+              </View>
+            )
+          }
+          renderItem={({ item }) => (
+            <HostedBotCard
+              bot={item}
+              onStart={handleHostedStart}
+              onStop={handleHostedStop}
+              onRestart={handleHostedRestart}
+              onDelete={handleHostedDelete}
+              actionPending={hostedActionPending}
+            />
+          )}
+        />
+      ))}
 
       <Modal
         visible={showCreate}
@@ -269,6 +504,59 @@ export default function BotsScreen() {
                   <ActivityIndicator color="#FFF" size="small" />
                 ) : (
                   <Text style={s.confirmText}>Criar Bot</Text>
+                )}
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal
+        visible={showCreateHosted}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowCreateHosted(false)}
+      >
+        <Pressable style={s.overlay} onPress={() => setShowCreateHosted(false)}>
+          <Pressable style={s.modal} onPress={() => {}}>
+            <View style={s.modalHeader}>
+              <View style={s.modalIconWrap}>
+                <Feather name="server" size={16} color="#A78BFA" />
+              </View>
+              <Text style={s.modalTitle}>Adicionar bot via GitHub</Text>
+            </View>
+            <Text style={s.modalLabel}>NOME DO BOT</Text>
+            <TextInput
+              style={s.modalInput}
+              placeholder="Ex: Meu Bot Node"
+              placeholderTextColor="#6B7280"
+              value={hostedBotName}
+              onChangeText={setHostedBotName}
+              autoFocus
+            />
+            <Text style={[s.modalLabel, { marginTop: 14 }]}>URL DO REPOSITÓRIO GITHUB</Text>
+            <TextInput
+              style={s.modalInput}
+              placeholder="https://github.com/user/repo"
+              placeholderTextColor="#6B7280"
+              value={githubUrl}
+              onChangeText={setGithubUrl}
+              autoCapitalize="none"
+              keyboardType="url"
+            />
+            <View style={s.modalActions}>
+              <Pressable style={s.cancelBtn} onPress={() => setShowCreateHosted(false)}>
+                <Text style={s.cancelText}>Cancelar</Text>
+              </Pressable>
+              <Pressable
+                style={[s.confirmBtn, { opacity: createHostedBot.isPending ? 0.7 : 1 }]}
+                onPress={handleCreateHosted}
+                disabled={createHostedBot.isPending}
+              >
+                {createHostedBot.isPending ? (
+                  <ActivityIndicator color="#FFF" size="small" />
+                ) : (
+                  <Text style={s.confirmText}>Adicionar</Text>
                 )}
               </Pressable>
             </View>
@@ -516,4 +804,110 @@ const s = StyleSheet.create({
     alignItems: "center",
   },
   confirmText: { color: "#FFF", fontSize: 15, fontFamily: "Inter_700Bold" },
+
+  tabSegment: {
+    flexDirection: "row",
+    paddingHorizontal: 16,
+    paddingBottom: 10,
+    gap: 8,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    borderBottomColor: "rgba(255,255,255,0.06)",
+  },
+  segBtn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 7,
+    paddingHorizontal: 16,
+    paddingVertical: 9,
+    borderRadius: 12,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+  },
+  segBtnActive: {
+    backgroundColor: "rgba(109,40,217,0.2)",
+    borderColor: "rgba(109,40,217,0.4)",
+  },
+  segText: { fontSize: 13, color: "#8E8E9E", fontFamily: "Inter_600SemiBold" },
+  segTextActive: { color: "#EBEBF2" },
+});
+
+const hcard = StyleSheet.create({
+  wrap: {
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.07)",
+    overflow: "hidden",
+    padding: 0,
+  },
+  top: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    padding: 16,
+    paddingBottom: 8,
+  },
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: "rgba(167,139,250,0.1)",
+    borderWidth: 1,
+    borderColor: "rgba(167,139,250,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  name: { fontSize: 16, color: "#EBEBF2", fontFamily: "Inter_600SemiBold", marginBottom: 5 },
+  metaRow: { flexDirection: "row", alignItems: "center", gap: 6 },
+  statusPill: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderRadius: 20,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  statusDot: { width: 6, height: 6, borderRadius: 3 },
+  statusText: { fontSize: 10, fontFamily: "Inter_600SemiBold", textTransform: "uppercase" },
+  srcBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.06)",
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  srcText: { fontSize: 9, color: "#8E8E9E", fontFamily: "Inter_500Medium" },
+  actions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+    paddingTop: 6,
+  },
+  btn: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    backgroundColor: "rgba(255,255,255,0.04)",
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.07)",
+  },
+  btnStart: { backgroundColor: "rgba(34,197,94,0.07)", borderColor: "rgba(34,197,94,0.25)" },
+  btnStop:  { backgroundColor: "rgba(239,68,68,0.07)", borderColor: "rgba(239,68,68,0.25)" },
+  btnRestart: { backgroundColor: "rgba(245,158,11,0.07)", borderColor: "rgba(245,158,11,0.25)" },
+  btnDanger: { borderColor: "rgba(239,68,68,0.25)", marginLeft: "auto" },
+  btnStartText: { fontSize: 12, color: "#22C55E", fontFamily: "Inter_600SemiBold" },
+  btnStopText: { fontSize: 12, color: "#EF4444", fontFamily: "Inter_600SemiBold" },
+  btnRestartText: { fontSize: 12, color: "#F59E0B", fontFamily: "Inter_600SemiBold" },
 });

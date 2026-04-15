@@ -54,6 +54,7 @@ function RootLayoutNav() {
       <Stack.Screen name="bot/[id]" />
       <Stack.Screen name="bot/settings/[id]" />
       <Stack.Screen name="builder/[id]" options={{ animation: "slide_from_bottom", gestureEnabled: false }} />
+      <Stack.Screen name="hosted-bot/[id]" />
       <Stack.Screen name="builder-picker" />
       <Stack.Screen name="notifications" />
       <Stack.Screen name="edit-profile" />

@@ -11,6 +11,23 @@ export interface ManagedProcess {
 
 class ProcessManager extends EventEmitter {
   private processes = new Map<string, ManagedProcess>();
+  private logBuffer = new Map<string, string[]>();
+  private readonly MAX_LOGS = 500;
+
+  private appendLog(botId: string, line: string): void {
+    const buf = this.logBuffer.get(botId) ?? [];
+    buf.push(line);
+    if (buf.length > this.MAX_LOGS) buf.splice(0, buf.length - this.MAX_LOGS);
+    this.logBuffer.set(botId, buf);
+  }
+
+  getLogs(botId: string): string[] {
+    return this.logBuffer.get(botId) ?? [];
+  }
+
+  clearLogs(botId: string): void {
+    this.logBuffer.delete(botId);
+  }
 
   start(botId: string, userId: string, cwd: string, mainFile: string): ManagedProcess {
     this.stop(botId);
@@ -29,11 +46,19 @@ class ProcessManager extends EventEmitter {
     this.processes.set(botId, managed);
 
     proc.stdout?.on("data", (data: Buffer) => {
-      this.emit(`stdout:${botId}`, data.toString());
+      const text = data.toString();
+      for (const line of text.split("\n").filter(Boolean)) {
+        this.appendLog(botId, `[out] ${line}`);
+      }
+      this.emit(`stdout:${botId}`, text);
     });
 
     proc.stderr?.on("data", (data: Buffer) => {
-      this.emit(`stderr:${botId}`, data.toString());
+      const text = data.toString();
+      for (const line of text.split("\n").filter(Boolean)) {
+        this.appendLog(botId, `[err] ${line}`);
+      }
+      this.emit(`stderr:${botId}`, text);
     });
 
     proc.on("exit", (code, signal) => {

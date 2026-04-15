@@ -365,6 +365,27 @@ router.get("/:id/files", requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
+router.get("/:id/logs", requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.userId!;
+    const botId = req.params.id;
+
+    const [bot] = await db.select().from(hostedBotsTable)
+      .where(and(eq(hostedBotsTable.id, botId), eq(hostedBotsTable.userId, userId)));
+
+    if (!bot) {
+      res.status(404).json({ message: "Bot não encontrado" });
+      return;
+    }
+
+    const logs = processManager.getLogs(botId);
+    res.json({ logs });
+  } catch (err) {
+    req.log.error({ err }, "GetHostedBotLogs error");
+    res.status(500).json({ message: "Erro interno" });
+  }
+});
+
 router.get("/:id/file", requireAuth, async (req: AuthRequest, res) => {
   try {
     const userId = req.userId!;
