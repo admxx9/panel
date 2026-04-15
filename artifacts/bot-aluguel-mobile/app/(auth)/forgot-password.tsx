@@ -3,8 +3,8 @@ import { router } from "expo-router";
 import { Feather } from "@expo/vector-icons";
 import React, { useState } from "react";
 import { parseApiError, FieldErrors } from "@/utils/parseApiError";
+import { LoadingButton } from "@/components/LoadingButton";
 import {
-  ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -165,22 +165,14 @@ export default function ForgotPasswordScreen() {
                 </View>
               ) : null}
 
-              <Pressable
-                style={({ pressed }) => [s.btn, { opacity: pressed ? 0.85 : 1 }]}
+              <LoadingButton
+                label="Enviar Código"
+                icon="arrow-right"
+                isLoading={requestCodeMutation.isPending}
                 onPress={handleRequestCode}
-                disabled={requestCodeMutation.isPending}
+                style={s.btn}
                 accessibilityLabel="Enviar código"
-                accessibilityRole="button"
-              >
-                {requestCodeMutation.isPending ? (
-                  <ActivityIndicator color="#FFF" size="small" />
-                ) : (
-                  <>
-                    <Text style={s.btnText}>Enviar Código</Text>
-                    <Feather name="arrow-right" size={18} color="#FFF" />
-                  </>
-                )}
-              </Pressable>
+              />
             </>
           )}
 
@@ -218,15 +210,13 @@ export default function ForgotPasswordScreen() {
                 </View>
               ) : null}
 
-              <Pressable
-                style={({ pressed }) => [s.btn, { opacity: pressed ? 0.85 : 1 }]}
+              <LoadingButton
+                label="Verificar"
+                icon="arrow-right"
                 onPress={handleVerifyCode}
+                style={s.btn}
                 accessibilityLabel="Verificar código"
-                accessibilityRole="button"
-              >
-                <Text style={s.btnText}>Verificar</Text>
-                <Feather name="arrow-right" size={18} color="#FFF" />
-              </Pressable>
+              />
 
               <Pressable
                 style={s.resendBtn}
@@ -299,22 +289,15 @@ export default function ForgotPasswordScreen() {
                 </View>
               ) : null}
 
-              <Pressable
-                style={({ pressed }) => [s.btn, { opacity: pressed ? 0.85 : 1 }]}
+              <LoadingButton
+                label="Redefinir Senha"
+                icon="check"
+                iconPosition="left"
+                isLoading={resetMutation.isPending}
                 onPress={handleReset}
-                disabled={resetMutation.isPending}
+                style={s.btn}
                 accessibilityLabel="Redefinir senha"
-                accessibilityRole="button"
-              >
-                {resetMutation.isPending ? (
-                  <ActivityIndicator color="#FFF" size="small" />
-                ) : (
-                  <>
-                    <Feather name="check" size={18} color="#FFF" />
-                    <Text style={s.btnText}>Redefinir Senha</Text>
-                  </>
-                )}
-              </Pressable>
+              />
             </>
           )}
         </ScrollView>

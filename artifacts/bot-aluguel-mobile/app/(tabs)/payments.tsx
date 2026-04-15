@@ -666,15 +666,4 @@ const s = StyleSheet.create({
     borderWidth: 1, borderColor: "#20202B", marginBottom: 16,
   },
   emptyText: { fontSize: 14, color: "#8E8E9E", fontFamily: "Inter_400Regular" },
-  retryBlock: {
-    alignItems: "center", gap: 10, paddingVertical: 24,
-    backgroundColor: "#13131D", borderRadius: 16,
-    borderWidth: 1, borderColor: "#EF444420", marginBottom: 16,
-  },
-  retryText: { fontSize: 14, color: "#8E8E9E", fontFamily: "Inter_400Regular", textAlign: "center" },
-  retryBtn: {
-    flexDirection: "row", alignItems: "center", gap: 6,
-    backgroundColor: "#6D28D9", borderRadius: 10, paddingHorizontal: 14, paddingVertical: 8, marginTop: 4,
-  },
-  retryBtnText: { fontSize: 13, color: "#FFF", fontFamily: "Inter_600SemiBold" },
 });
