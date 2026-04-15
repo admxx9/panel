@@ -9,6 +9,7 @@ export const usersTable = pgTable("users", {
   passwordHash: text("password_hash").notNull(),
   coins: integer("coins").notNull().default(30),
   isAdmin: boolean("is_admin").notNull().default(false),
+  expoPushToken: text("expo_push_token"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 

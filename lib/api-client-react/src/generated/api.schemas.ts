@@ -56,6 +56,7 @@ export interface AuthResponse {
 export interface UpdateProfileBody {
   name?: string;
   phone?: string;
+  expoPushToken?: string | null;
 }
 
 export interface ResetPasswordBody {

@@ -1,8 +1,9 @@
 import { Router } from "express";
 import { db, usersTable, botsTable, paymentsTable, notificationsTable } from "@workspace/db";
-import { eq, sum, count, desc } from "drizzle-orm";
+import { eq, sum, count, desc, inArray } from "drizzle-orm";
 import { requireAdmin, type AuthRequest } from "../lib/auth.js";
 import { randomUUID } from "crypto";
+import { sendExpoPush } from "../lib/expoPush.js";
 
 const router = Router();
 
@@ -101,6 +102,26 @@ router.post("/notifications/send", requireAdmin, async (req: AuthRequest, res) =
 
     if (notifications.length > 0) {
       await db.insert(notificationsTable).values(notifications);
+    }
+
+    if (targetUsers.length > 0) {
+      const userIds = targetUsers.map((u) => u.id);
+      const usersWithTokens = await db
+        .select({ id: usersTable.id, expoPushToken: usersTable.expoPushToken })
+        .from(usersTable)
+        .where(inArray(usersTable.id, userIds));
+      const pushMessages = usersWithTokens
+        .filter((u) => u.expoPushToken)
+        .map((u) => ({
+          to: u.expoPushToken!,
+          title: trimTitle,
+          body: trimBody,
+          sound: "default" as const,
+          data: { type: safeType },
+        }));
+      if (pushMessages.length > 0) {
+        void sendExpoPush(pushMessages);
+      }
     }
 
     res.json({ ok: true, sent: notifications.length });

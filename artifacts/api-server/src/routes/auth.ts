@@ -106,8 +106,8 @@ router.get("/me", requireAuth, async (req: AuthRequest, res) => {
 
 router.patch("/profile", requireAuth, async (req: AuthRequest, res) => {
   try {
-    const { name, phone } = req.body as { name?: string; phone?: string };
-    const updates: Record<string, string> = {};
+    const { name, phone, expoPushToken } = req.body as { name?: string; phone?: string; expoPushToken?: string | null };
+    const updates: Record<string, string | null> = {};
     if (name && name.trim()) updates.name = name.trim();
     if (phone && phone.trim()) {
       const cleanPhone = phone.replace(/\D/g, "");
@@ -117,6 +117,13 @@ router.patch("/profile", requireAuth, async (req: AuthRequest, res) => {
         return;
       }
       updates.phone = cleanPhone;
+    }
+    if (expoPushToken !== undefined) {
+      if (expoPushToken === null || expoPushToken === "") {
+        updates.expoPushToken = null;
+      } else if (expoPushToken.startsWith("ExponentPushToken[")) {
+        updates.expoPushToken = expoPushToken;
+      }
     }
     if (Object.keys(updates).length === 0) {
       res.status(400).json({ message: "Nenhum campo para atualizar" });

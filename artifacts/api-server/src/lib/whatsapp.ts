@@ -17,6 +17,25 @@ import { v4 as uuidv4 } from "uuid";
 import { db, botsTable, botCommandsTable, usersTable, botMessageEventsTable } from "@workspace/db";
 import { eq, sql } from "drizzle-orm";
 import type { Response } from "express";
+import { sendExpoPush } from "./expoPush.js";
+
+async function notifyBotOwner(botId: string, title: string, body: string, extraData?: Record<string, string>): Promise<void> {
+  try {
+    const [bot] = await db.select({ userId: botsTable.userId, name: botsTable.name }).from(botsTable).where(eq(botsTable.id, botId));
+    if (!bot) return;
+    const [user] = await db.select({ expoPushToken: usersTable.expoPushToken }).from(usersTable).where(eq(usersTable.id, bot.userId));
+    if (!user?.expoPushToken) return;
+    await sendExpoPush([{
+      to: user.expoPushToken,
+      title,
+      body,
+      sound: "default",
+      data: { botId, ...extraData },
+    }]);
+  } catch (err) {
+    logger.warn({ err, botId }, "Failed to send push notification to bot owner (non-fatal)");
+  }
+}
 
 const SESSION_DIR = path.join(process.cwd(), ".baileys-sessions");
 
@@ -1685,6 +1704,7 @@ export async function startWhatsAppSession(
         })
         .where(eq(botsTable.id, botId));
       sendSse(botId, "status", { status: "connected", phone: phoneNumber });
+      void notifyBotOwner(botId, "Bot conectado ✅", `Seu bot está online e pronto para uso.`);
     }
 
     if (connection === "close") {
@@ -1704,6 +1724,7 @@ export async function startWhatsAppSession(
           .set({ status: "disconnected", qrCode: null, pairCode: null })
           .where(eq(botsTable.id, botId));
         sendSse(botId, "status", { status: "disconnected" });
+        void notifyBotOwner(botId, "Bot desconectado ⚠️", `Seu bot foi desconectado. Toque para reconectar.`);
       }
     }
   });

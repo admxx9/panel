@@ -1,12 +1,14 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { setAuthTokenGetter } from "@workspace/api-client-react";
+import { setAuthTokenGetter, updateProfile } from "@workspace/api-client-react";
 import React, {
   createContext,
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 type User = {
   id: string;
@@ -41,6 +43,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     isLoading: true,
   });
 
+  const registeredToken = useRef<string | null>(null);
+
   useEffect(() => {
     async function load() {
       try {
@@ -61,6 +65,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setAuthTokenGetter(() => state.token);
   }, [state.token]);
 
+  const handlePushToken = useCallback(
+    (token: string) => {
+      if (registeredToken.current === token) return;
+      registeredToken.current = token;
+      updateProfile({ expoPushToken: token }).catch(() => {});
+    },
+    []
+  );
+
+  const isAuthenticated = !!state.token && !state.isLoading;
+  usePushNotifications(isAuthenticated, handlePushToken);
+
   const signIn = useCallback(async (token: string, user: User) => {
     await Promise.all([
       AsyncStorage.setItem(TOKEN_KEY, token),
@@ -70,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
+    registeredToken.current = null;
     await Promise.all([
       AsyncStorage.removeItem(TOKEN_KEY),
       AsyncStorage.removeItem(USER_KEY),
