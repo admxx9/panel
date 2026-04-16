@@ -4,8 +4,7 @@ import { logger } from "./lib/logger";
 import { restoreSessions } from "./lib/whatsapp.js";
 import { setupTerminalWs } from "./lib/terminalWs.js";
 import { registerWebhook } from "./lib/efiBank.js";
-import { db } from "@workspace/db";
-import { users as usersTable } from "@workspace/db";
+import { db, usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
 
 const rawPort = process.env["PORT"];
