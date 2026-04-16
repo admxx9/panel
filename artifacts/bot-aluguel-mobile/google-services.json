@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1051608701848",
+    "project_id": "bot-what-39093",
+    "storage_bucket": "bot-what-39093.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1051608701848:android:ef76d83e495d28e51e29ed",
+        "android_client_info": {
+          "package_name": "com.nextbot.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD6sNothdq352hlFt3qylwlhIixUZ5FzoQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
