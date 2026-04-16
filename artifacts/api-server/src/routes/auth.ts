@@ -244,6 +244,10 @@ function cleanOldStates() {
 }
 
 function getGoogleRedirectUri(req: any): string {
+  // Explicit override takes highest priority (set this in production)
+  if (process.env["APP_PUBLIC_URL"]) {
+    return `${process.env["APP_PUBLIC_URL"].replace(/\/+$/, "")}/api/auth/google/callback`;
+  }
   const host = process.env["REPLIT_DEV_DOMAIN"]
     ? `https://${process.env["REPLIT_DEV_DOMAIN"]}`
     : `${req.protocol}://${req.get("host")}`;

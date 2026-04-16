@@ -358,6 +358,11 @@ export async function customFetch<T = unknown>(
     }
   }
 
+  // Required by Replit's proxy to prevent CSRF — mobile apps don't set this automatically.
+  if (!headers.has("x-requested-with")) {
+    headers.set("x-requested-with", "XMLHttpRequest");
+  }
+
   const requestInfo = { method, url: resolveUrl(input) };
 
   const response = await fetch(input, { ...init, method, headers });
