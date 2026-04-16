@@ -1,0 +1,12 @@
+{
+  "expo": {
+    "extra": {
+      "eas": {
+        "projectId": "383f1dcf-145a-441f-90f2-65e5fda3eb67"
+      }
+    },
+    "android": {
+      "package": "com.lunexnyn.workspace"
+    }
+  }
+}
