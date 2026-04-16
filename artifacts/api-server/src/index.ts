@@ -4,6 +4,9 @@ import { logger } from "./lib/logger";
 import { restoreSessions } from "./lib/whatsapp.js";
 import { setupTerminalWs } from "./lib/terminalWs.js";
 import { registerWebhook } from "./lib/efiBank.js";
+import { db } from "@workspace/db";
+import { users as usersTable } from "@workspace/db";
+import { eq } from "drizzle-orm";
 
 const rawPort = process.env["PORT"];
 
@@ -31,6 +34,20 @@ server.listen(port, () => {
       logger.error({ err }, "Failed to restore sessions on startup");
     });
   }, 3000);
+
+  // Auto-promote admin user on startup if ADMIN_PHONE is set
+  const adminPhone = process.env["ADMIN_PHONE"];
+  if (adminPhone) {
+    db.update(usersTable)
+      .set({ isAdmin: true })
+      .where(eq(usersTable.phone, adminPhone))
+      .then((result) => {
+        logger.info({ phone: adminPhone, rows: result.rowCount }, "Admin phone promotion applied");
+      })
+      .catch((err) => {
+        logger.warn({ err }, "Admin phone promotion failed (non-fatal)");
+      });
+  }
 
   const replitDomains = process.env["REPLIT_DOMAINS"];
   const appUrl = process.env["APP_PUBLIC_URL"] ?? (replitDomains ? `https://${replitDomains}` : null);
