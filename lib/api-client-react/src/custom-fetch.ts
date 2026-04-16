@@ -362,11 +362,22 @@ export async function customFetch<T = unknown>(
   if (!headers.has("x-requested-with")) {
     headers.set("x-requested-with", "XMLHttpRequest");
   }
-  if (!headers.has("origin") && _baseUrl) {
-    headers.set("origin", _baseUrl);
-  }
-  if (!headers.has("referer") && _baseUrl) {
-    headers.set("referer", _baseUrl + "/");
+  // Derive the origin from the request URL as fallback when _baseUrl is not set.
+  const originValue = _baseUrl || (() => {
+    try {
+      const u = new URL(resolveUrl(input));
+      return `${u.protocol}//${u.host}`;
+    } catch {
+      return null;
+    }
+  })();
+  if (originValue) {
+    if (!headers.has("origin")) {
+      headers.set("origin", originValue);
+    }
+    if (!headers.has("referer")) {
+      headers.set("referer", originValue + "/");
+    }
   }
 
   const requestInfo = { method, url: resolveUrl(input) };
