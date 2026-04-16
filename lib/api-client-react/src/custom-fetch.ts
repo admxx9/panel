@@ -358,12 +358,14 @@ export async function customFetch<T = unknown>(
     }
   }
 
-  // Required by Replit's proxy to prevent CSRF — mobile apps don't set these automatically.
+  // Required by Replit's proxy CSRF protection — native mobile apps don't set these automatically.
+  // NOTE: Do NOT set "origin" header. Replit's proxy does its own CORS validation on "origin"
+  // and returns 500 for unrecognized origins. "x-requested-with" + "referer" is sufficient.
   if (!headers.has("x-requested-with")) {
     headers.set("x-requested-with", "XMLHttpRequest");
   }
-  // Derive the origin from the request URL as fallback when _baseUrl is not set.
-  const originValue = _baseUrl || (() => {
+  // Derive the referer from the base URL or the request URL as fallback.
+  const refererBase = _baseUrl || (() => {
     try {
       const u = new URL(resolveUrl(input));
       return `${u.protocol}//${u.host}`;
@@ -371,13 +373,8 @@ export async function customFetch<T = unknown>(
       return null;
     }
   })();
-  if (originValue) {
-    if (!headers.has("origin")) {
-      headers.set("origin", originValue);
-    }
-    if (!headers.has("referer")) {
-      headers.set("referer", originValue + "/");
-    }
+  if (refererBase && !headers.has("referer")) {
+    headers.set("referer", refererBase + "/");
   }
 
   const requestInfo = { method, url: resolveUrl(input) };

@@ -58,17 +58,29 @@ if (!allowedOrigins) {
   logger.warn("CORS_ORIGINS and REPLIT_DEV_DOMAIN not set — CORS is unrestricted in development. Set CORS_ORIGINS for stricter control.");
 }
 
-app.use(cors(allowedOrigins ? {
+// Only enforce strict CORS when CORS_ORIGINS is explicitly set.
+// The API uses JWT (not cookies) so CSRF via CORS doesn't apply.
+// Native mobile apps don't send Origin at all, so restricting origins breaks them.
+const strictCorsOrigins = process.env["CORS_ORIGINS"]
+  ? process.env["CORS_ORIGINS"].split(",").map(o => o.trim())
+  : null;
+
+app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    if (!origin) {
+      // Native apps, server-to-server: always allow
       callback(null, true);
-    } else {
-      logger.warn({ origin, allowedOrigins }, "CORS blocked request from unknown origin");
-      callback(new Error("Not allowed by CORS"));
+      return;
     }
+    if (strictCorsOrigins && !strictCorsOrigins.includes(origin)) {
+      logger.warn({ origin, strictCorsOrigins }, "CORS blocked request from unknown origin");
+      callback(new Error("Not allowed by CORS"));
+      return;
+    }
+    callback(null, true);
   },
   credentials: true,
-} : { credentials: true }));
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
