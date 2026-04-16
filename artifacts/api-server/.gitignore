@@ -1,5 +1,5 @@
 
 .hosted-bots/
 
-# EFI Bank certificate
-certs/
+# EFI Bank certificate intentionally included in build
+# certs/
