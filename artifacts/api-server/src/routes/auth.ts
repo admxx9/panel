@@ -120,14 +120,19 @@ router.patch("/profile", requireAuth, async (req: AuthRequest, res) => {
       updates.phone = cleanPhone;
     }
     if (expoPushToken !== undefined) {
+      req.log.info({ expoPushToken: expoPushToken ? expoPushToken.slice(0, 60) : expoPushToken, userId: req.userId }, "[PushToken] received in PATCH /profile");
       if (expoPushToken === null || expoPushToken === "") {
         updates.expoPushToken = null;
+        req.log.info({ userId: req.userId }, "[PushToken] clearing token (null/empty)");
       } else if (expoPushToken.startsWith("ExponentPushToken[")) {
         await db
           .update(usersTable)
           .set({ expoPushToken: null })
           .where(and(eq(usersTable.expoPushToken, expoPushToken), ne(usersTable.id, req.userId!)));
         updates.expoPushToken = expoPushToken;
+        req.log.info({ userId: req.userId, token: expoPushToken.slice(0, 60) }, "[PushToken] saving valid token");
+      } else {
+        req.log.warn({ userId: req.userId, tokenPrefix: expoPushToken.slice(0, 30) }, "[PushToken] token rejected — invalid format");
       }
     }
     if (Object.keys(updates).length === 0) {

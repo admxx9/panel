@@ -15,7 +15,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Constants from "expo-constants";
 import { useAuth } from "@/context/AuthContext";
-import { useGetDashboardStats, useListBots, useDeleteAccount } from "@workspace/api-client-react";
+import { useGetDashboardStats, useListBots, useDeleteAccount, updateProfile } from "@workspace/api-client-react";
 
 async function diagnosePushNotification() {
   const isExpoGo = Constants.appOwnership === "expo";
@@ -46,13 +46,18 @@ async function diagnosePushNotification() {
       Constants.expoConfig?.extra?.eas?.projectId ??
       Constants.easConfig?.projectId;
 
-    Alert.alert("Push Diagnóstico", `⏳ Gerando token...\nProjectId: ${projectId ?? "não encontrado"}`);
-
     const tokenData = projectId
       ? await Notifications.getExpoPushTokenAsync({ projectId })
       : await Notifications.getExpoPushTokenAsync();
 
-    Alert.alert("Push Diagnóstico", `✅ Token obtido!\n\n${tokenData.data}`);
+    const token = tokenData.data;
+
+    try {
+      await updateProfile({ expoPushToken: token });
+      Alert.alert("Push Diagnóstico", `✅ Token registrado com sucesso!\n\n${token}`);
+    } catch (saveErr: any) {
+      Alert.alert("Push Diagnóstico", `✅ Token gerado, mas erro ao salvar:\n${saveErr?.message ?? String(saveErr)}\n\nToken: ${token}`);
+    }
   } catch (e: any) {
     Alert.alert("Push Diagnóstico", `❌ Erro ao obter token:\n${e?.message ?? String(e)}`);
   }
