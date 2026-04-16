@@ -70,9 +70,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (token: string) => {
       if (registeredToken.current === token) return;
       registeredToken.current = token;
-      updateProfile({ expoPushToken: token }).catch((err) => {
-        console.warn("[PushToken] Failed to register push token:", err?.message ?? err);
-      });
+      updateProfile({ expoPushToken: token })
+        .then(() => {
+          console.log("[PushToken] Registered successfully:", token);
+        })
+        .catch((err) => {
+          console.warn("[PushToken] Failed to register push token:", err?.message ?? err);
+        });
     },
     []
   );

@@ -24,29 +24,45 @@ if (!isExpoGo) {
 }
 
 async function getExpoPushToken(): Promise<string | null> {
-  if (Platform.OS === "web" || !Notifications) return null;
+  if (Platform.OS === "web") {
+    console.log("[Push] Skipped: platform is web");
+    return null;
+  }
+  if (!Notifications) {
+    console.warn("[Push] Skipped: expo-notifications not loaded (isExpoGo or module missing)");
+    return null;
+  }
 
   try {
     const { status: existing } = await Notifications.getPermissionsAsync();
+    console.log("[Push] Permission status:", existing);
     let finalStatus = existing;
 
     if (existing !== "granted") {
       const { status } = await Notifications.requestPermissionsAsync();
       finalStatus = status;
+      console.log("[Push] Requested permission, result:", status);
     }
 
-    if (finalStatus !== "granted") return null;
+    if (finalStatus !== "granted") {
+      console.warn("[Push] Permission not granted, status:", finalStatus);
+      return null;
+    }
 
     const projectId =
       Constants.expoConfig?.extra?.eas?.projectId ??
       Constants.easConfig?.projectId;
 
+    console.log("[Push] Using projectId:", projectId);
+
     const tokenData = projectId
       ? await Notifications.getExpoPushTokenAsync({ projectId })
       : await Notifications.getExpoPushTokenAsync();
 
+    console.log("[Push] Token obtained:", tokenData.data);
     return tokenData.data;
-  } catch {
+  } catch (err: any) {
+    console.error("[Push] Failed to get push token:", err?.message ?? err);
     return null;
   }
 }
