@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Next Bot",
-    "slug": "nextbot",
+    "name": "BotAluguel Pro",
+    "slug": "botaluguel-pro",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
