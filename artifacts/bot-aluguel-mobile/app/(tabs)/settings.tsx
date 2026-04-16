@@ -42,21 +42,19 @@ async function diagnosePushNotification() {
       }
     }
 
-    const projectId =
-      Constants.expoConfig?.extra?.eas?.projectId ??
-      Constants.easConfig?.projectId;
+    const deviceTokenData = await Notifications.getDevicePushTokenAsync();
+    const token = typeof deviceTokenData.data === "string" ? deviceTokenData.data : null;
 
-    const tokenData = projectId
-      ? await Notifications.getExpoPushTokenAsync({ projectId })
-      : await Notifications.getExpoPushTokenAsync();
-
-    const token = tokenData.data;
+    if (!token) {
+      Alert.alert("Push Diagnóstico", "❌ Token FCM não gerado (verifíque o Firebase)");
+      return;
+    }
 
     try {
       await updateProfile({ expoPushToken: token });
-      Alert.alert("Push Diagnóstico", `✅ Token registrado com sucesso!\n\n${token}`);
+      Alert.alert("Push Diagnóstico", `✅ Token FCM registrado!\n\n${token.slice(0, 60)}...`);
     } catch (saveErr: any) {
-      Alert.alert("Push Diagnóstico", `✅ Token gerado, mas erro ao salvar:\n${saveErr?.message ?? String(saveErr)}\n\nToken: ${token}`);
+      Alert.alert("Push Diagnóstico", `✅ Token gerado, erro ao salvar:\n${saveErr?.message ?? String(saveErr)}`);
     }
   } catch (e: any) {
     Alert.alert("Push Diagnóstico", `❌ Erro ao obter token:\n${e?.message ?? String(e)}`);
