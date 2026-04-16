@@ -13,8 +13,50 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Constants from "expo-constants";
 import { useAuth } from "@/context/AuthContext";
 import { useGetDashboardStats, useListBots, useDeleteAccount } from "@workspace/api-client-react";
+
+async function diagnosePushNotification() {
+  const isExpoGo = Constants.appOwnership === "expo";
+  if (isExpoGo) {
+    Alert.alert("Push Diagnóstico", "❌ Rodando no Expo Go — push não suportado.\nInstale o APK standalone.");
+    return;
+  }
+
+  let Notifications: typeof import("expo-notifications") | null = null;
+  try {
+    Notifications = require("expo-notifications");
+  } catch (e: any) {
+    Alert.alert("Push Diagnóstico", `❌ Módulo expo-notifications não carregou:\n${e?.message}`);
+    return;
+  }
+
+  try {
+    const { status } = await Notifications.getPermissionsAsync();
+    if (status !== "granted") {
+      const { status: newStatus } = await Notifications.requestPermissionsAsync();
+      if (newStatus !== "granted") {
+        Alert.alert("Push Diagnóstico", `❌ Permissão negada: ${newStatus}`);
+        return;
+      }
+    }
+
+    const projectId =
+      Constants.expoConfig?.extra?.eas?.projectId ??
+      Constants.easConfig?.projectId;
+
+    Alert.alert("Push Diagnóstico", `⏳ Gerando token...\nProjectId: ${projectId ?? "não encontrado"}`);
+
+    const tokenData = projectId
+      ? await Notifications.getExpoPushTokenAsync({ projectId })
+      : await Notifications.getExpoPushTokenAsync();
+
+    Alert.alert("Push Diagnóstico", `✅ Token obtido!\n\n${tokenData.data}`);
+  } catch (e: any) {
+    Alert.alert("Push Diagnóstico", `❌ Erro ao obter token:\n${e?.message ?? String(e)}`);
+  }
+}
 
 function formatPlanExpiry(date: string | Date | null | undefined): string | null {
   if (!date) return null;
@@ -224,6 +266,7 @@ export default function SettingsScreen() {
         </View>
         <View style={s.card}>
           <RowItem icon="bell" label="Notificações" value="Ativadas" />
+          <RowItem icon="bell" label="Testar Push" onPress={diagnosePushNotification} />
           <RowItem icon="shield" label="Privacidade" onPress={() => router.push("/legal/privacy" as any)} />
           <RowItem icon="file-text" label="Termos de Uso" onPress={() => router.push("/legal/terms" as any)} />
           <RowItem icon="help-circle" label="Central de Ajuda" onPress={() => {}} last />
