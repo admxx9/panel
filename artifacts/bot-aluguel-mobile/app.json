@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "BotAluguel Pro",
-    "slug": "bot-aluguel-mobile",
+    "name": "Next Bot",
+    "slug": "nextbot",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "botaluguel",
+    "scheme": "nextbot",
     "userInterfaceStyle": "dark",
     "newArchEnabled": true,
     "splash": {
@@ -15,19 +15,21 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.botaluguel.pro",
+      "bundleIdentifier": "com.nextbot.app",
       "infoPlist": {
         "NSCameraUsageDescription": "Necessário para escanear QR Code do WhatsApp",
         "CFBundleURLTypes": [
           {
-            "CFBundleURLSchemes": ["botaluguel"]
+            "CFBundleURLSchemes": [
+              "botaluguel"
+            ]
           }
         ]
       }
     },
     "android": {
       "backgroundColor": "#090A0F",
-      "package": "com.botaluguel.pro",
+      "package": "com.nextbot.app",
       "intentFilters": [
         {
           "action": "VIEW",
@@ -37,7 +39,10 @@
               "scheme": "botaluguel"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
