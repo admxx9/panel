@@ -358,9 +358,15 @@ export async function customFetch<T = unknown>(
     }
   }
 
-  // Required by Replit's proxy to prevent CSRF — mobile apps don't set this automatically.
+  // Required by Replit's proxy to prevent CSRF — mobile apps don't set these automatically.
   if (!headers.has("x-requested-with")) {
     headers.set("x-requested-with", "XMLHttpRequest");
+  }
+  if (!headers.has("origin") && _baseUrl) {
+    headers.set("origin", _baseUrl);
+  }
+  if (!headers.has("referer") && _baseUrl) {
+    headers.set("referer", _baseUrl + "/");
   }
 
   const requestInfo = { method, url: resolveUrl(input) };
