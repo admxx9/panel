@@ -137,3 +137,9 @@ id = "wFKJ1pyz9QbxxEJbH8e13"
 uri = "file://RELATORIO_BOTALUGUEL_PRO.md"
 type = "text"
 title = "Relatório Completo — BotAluguel Pro"
+
+[[outputs]]
+id = "anz2QxWnaDyYaTHt95T2V"
+uri = "file://README.md"
+type = "text"
+title = "BotAluguel Pro — Como o App Funciona por Dentro"
